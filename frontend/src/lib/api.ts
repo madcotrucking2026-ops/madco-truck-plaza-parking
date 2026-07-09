@@ -1,0 +1,271 @@
+import { clearToken, getToken } from "@/lib/auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    // Only a session that WAS authenticated and got rejected (expired/
+    // invalid token) should bounce to /login — a bare 401 with no token to
+    // begin with is a normal login failure or a public endpoint's own logic,
+    // and must stay an in-place error the caller handles itself.
+    if (res.status === 401 && token && typeof window !== "undefined") {
+      clearToken();
+      window.location.href = "/login";
+    }
+    throw new ApiError(body.detail ?? "Request failed", res.status);
+  }
+
+  return res.json() as Promise<T>;
+}
+
+export const api = {
+  get: <T>(path: string) => request<T>(path),
+  post: <T>(path: string, data: unknown) =>
+    request<T>(path, { method: "POST", body: JSON.stringify(data) }),
+  patch: <T>(path: string, data: unknown) =>
+    request<T>(path, { method: "PATCH", body: JSON.stringify(data) }),
+};
+
+export type AuthStatus = {
+  needs_setup: boolean;
+};
+
+export type UserRead = {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "manager" | "attendant";
+};
+
+export type TokenResponse = {
+  access_token: string;
+  token_type: string;
+  user: UserRead;
+};
+
+export type DashboardStats = {
+  todays_revenue: number;
+  todays_vehicles: number;
+  active_daily_passes: number;
+  active_weekly_passes: number;
+  active_monthly_passes: number;
+  expired_passes: number;
+  expiring_today: number;
+  expiring_tomorrow: number;
+  companies_needing_follow_up: number;
+  occupied_spaces: number;
+  monthly_revenue: number;
+  weekly_revenue: number;
+};
+
+export type LotCheckResult = {
+  found: boolean;
+  status?: "active" | "expiring_soon" | "expired" | "cancelled";
+  company_name?: string;
+  phone?: string;
+  truck_number?: string;
+  trailer_number?: string;
+  license_plate?: string;
+  pass_type?: "daily" | "weekly" | "monthly";
+  expiration_date?: string;
+  notes?: string;
+};
+
+export type VehicleType = "truck" | "trailer" | "bobtail" | "flatbed" | "car" | "other";
+export type PassType = "daily" | "weekly" | "monthly";
+export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "check" | "phone";
+
+export type IssuePassRequest = {
+  company_name: string;
+  truck_number?: string;
+  trailer_number?: string;
+  license_plate?: string;
+  phone: string;
+  vehicle_type: VehicleType;
+  pass_type: PassType;
+  price?: number;
+  issue_date: string;
+  end_date?: string;
+  payment_method: PaymentMethod;
+  check_number?: string;
+};
+
+export type CreatePaymentRequest = {
+  kind: "issue" | "renew";
+  issue?: {
+    company_name: string;
+    truck_number?: string;
+    trailer_number?: string;
+    license_plate?: string;
+    phone: string;
+    vehicle_type: VehicleType;
+    pass_type: PassType;
+    issue_date: string;
+    end_date?: string;
+    price?: number;
+  };
+  renew?: { pass_id: number; end_date: string };
+};
+
+export type PaymentRequestCreated = {
+  token: string;
+  pay_url: string;
+  amount: number;
+  summary: string;
+  status: string;
+};
+
+export type PaymentRequestStatus = {
+  status: "pending" | "paid" | "cancelled";
+  kind: string;
+  amount: number;
+  summary: string;
+  receipt_number: string | null;
+};
+
+export type ReminderCustomer = {
+  monthly_customer_id: number;
+  company_name: string;
+  phone: string | null;
+  monthly_price: number;
+  renewal_date: string;
+  days_until_renewal: number;
+  reminder_status: string;
+  last_reminder_at: string | null;
+};
+
+export type RemindersOverview = {
+  sms_configured: boolean;
+  auto_enabled: boolean;
+  customers: ReminderCustomer[];
+};
+
+export type SendReminderResult = {
+  sent: boolean;
+  message: string;
+  reminder_status: string;
+};
+
+export type SweepResult = {
+  enabled: boolean;
+  checked: number;
+  sent: number;
+  skipped: number;
+};
+
+export type PassVerifyResult = {
+  valid: boolean;
+  status: "active" | "expiring_soon" | "expired" | "cancelled" | null;
+  company_name: string | null;
+  truck_number: string | null;
+  trailer_number: string | null;
+  license_plate: string | null;
+  pass_type: PassType | null;
+  issue_date: string | null;
+  expiration_date: string | null;
+  price: number | null;
+  receipt_number: string | null;
+};
+
+export type RenewPassRequest = {
+  end_date: string;
+  payment_method: PaymentMethod;
+  check_number?: string;
+};
+
+export type CreateIntentRequest = {
+  client_request_id: string;
+  company_name: string;
+  truck_number?: string;
+  trailer_number?: string;
+  license_plate?: string;
+  phone: string;
+  vehicle_type: VehicleType;
+  pass_type: PassType;
+  issue_date: string;
+  end_date?: string;
+};
+
+export type CreateIntentResponse = {
+  client_secret: string;
+  payment_intent_id: string;
+  amount: number;
+};
+
+export type FinalizeStripePaymentRequest = {
+  payment_intent_id: string;
+};
+
+export type SearchResultItem = {
+  type: "company" | "vehicle";
+  label: string;
+  sublabel?: string;
+  query: string;
+};
+
+export type CompanyLookupResult = {
+  found: boolean;
+  company_id: number | null;
+  monthly_price: number | null;
+  trucks: { truck_number: string | null; license_plate: string | null; price: number; expiration_date: string }[];
+};
+
+export type PassRead = {
+  id: number;
+  pass_type: PassType;
+  status: string;
+  price: number;
+  issue_date: string;
+  expiration_date: string;
+  receipt_number: string | null;
+  qr_code: string | null;
+  barcode: string | null;
+};
+
+export type PassListItem = {
+  id: number;
+  pass_type: PassType;
+  status: "active" | "expiring_soon" | "expired" | "cancelled";
+  price: number;
+  issue_date: string;
+  expiration_date: string;
+  receipt_number: string | null;
+  qr_code: string | null;
+  company_name: string | null;
+  truck_number: string | null;
+  trailer_number: string | null;
+  license_plate: string | null;
+};
+
+export type ReportsSummary = {
+  revenue_series: { date: string; amount: number }[];
+  revenue_30d: number;
+  passes_30d: number;
+  avg_price: number;
+  active_companies: number;
+  top_companies: { company_name: string; visits: number; total_paid: number }[];
+  payment_methods: { method: string; count: number; total: number }[];
+  frequent_trucks: { truck_number: string | null; company_name: string | null; visits: number }[];
+  outstanding_balances: { company_name: string; balance: number }[];
+};

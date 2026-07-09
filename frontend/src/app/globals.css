@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-inter);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Madco Truck Plaza brand palette: forest green + warm ivory + amber, */
+  /* skeuomorphic paper-ticket cards. Supports light (default) and dark. */
+  --forest-950: #0f1b17;
+  --forest-900: #14251f;
+  --forest-800: #1b3129;
+  --forest-700: #173f35; /* brand primary */
+  --forest-600: #1f5445;
+  --stone-500: #7c8a82;
+  --stone-300: #a8b3ac;
+  --ivory-100: #f3efe4;
+  --cream: #efe7d8; /* brand secondary #E6E0D4, lifted for card gradient */
+  --cream-foreground: #2a2a22;
+  --amber-500: #d6862b; /* brand accent */
+  --amber-600: #bf7420;
+  --success: #1faf67;
+  --danger: #d74a4a;
+  --warning: #e7b416;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", var(--font-inter), sans-serif;
+
+  --background: #faf6ed; /* warm ivory */
+  --foreground: var(--forest-900);
+  --card: #fffdf8;
+  --card-foreground: var(--forest-900);
+  --popover: #fffdf8;
+  --popover-foreground: var(--forest-900);
+  --primary: var(--amber-500);
+  --primary-foreground: var(--forest-950);
+  --secondary: #e6e0d4;
+  --secondary-foreground: var(--forest-700);
+  --muted: #ede6d7;
+  --muted-foreground: #746c5c;
+  --accent: var(--forest-700);
+  --accent-foreground: var(--ivory-100);
+  --destructive: var(--danger);
+  --border: oklch(0.3 0.05 152 / 14%);
+  --input: oklch(0.3 0.05 152 / 16%);
+  --ring: var(--amber-500);
+  --chart-1: var(--amber-500);
+  --chart-2: var(--forest-600);
+  --chart-3: var(--stone-500);
+  --chart-4: var(--success);
+  --chart-5: var(--forest-900);
+  --radius: 0.625rem;
+  --sidebar: var(--forest-700);
+  --sidebar-foreground: var(--ivory-100);
+  --sidebar-primary: var(--amber-500);
+  --sidebar-primary-foreground: var(--forest-950);
+  --sidebar-accent: oklch(1 0 0 / 8%);
+  --sidebar-accent-foreground: var(--ivory-100);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: var(--amber-500);
+}
+
+.dark {
+  --background: var(--forest-950);
+  --foreground: var(--ivory-100);
+  --card: var(--forest-900);
+  --card-foreground: var(--ivory-100);
+  --popover: var(--forest-900);
+  --popover-foreground: var(--ivory-100);
+  --primary: var(--amber-500);
+  --primary-foreground: var(--forest-950);
+  --secondary: var(--forest-800);
+  --secondary-foreground: var(--ivory-100);
+  --muted: var(--forest-800);
+  --muted-foreground: var(--stone-300);
+  --accent: var(--forest-600);
+  --accent-foreground: var(--ivory-100);
+  --destructive: var(--danger);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: var(--amber-500);
+  --chart-1: var(--amber-500);
+  --chart-2: var(--forest-600);
+  --chart-3: var(--stone-300);
+  --chart-4: var(--success);
+  --chart-5: var(--ivory-100);
+  --sidebar: var(--forest-950);
+  --sidebar-foreground: var(--ivory-100);
+  --sidebar-primary: var(--amber-500);
+  --sidebar-primary-foreground: var(--forest-950);
+  --sidebar-accent: oklch(1 0 0 / 6%);
+  --sidebar-accent-foreground: var(--ivory-100);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: var(--amber-500);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  /* Embossed / physical button feel */
+  .btn-embossed {
+    box-shadow:
+      0 1px 0 0 oklch(1 0 0 / 25%) inset,
+      0 -2px 4px 0 oklch(0 0 0 / 25%) inset,
+      0 2px 3px 0 oklch(0 0 0 / 35%);
+  }
+  .btn-embossed:active {
+    box-shadow:
+      0 -1px 0 0 oklch(1 0 0 / 15%) inset,
+      0 1px 2px 0 oklch(0 0 0 / 35%) inset;
+    transform: translateY(1px);
+  }
+
+  /* Cream paper ticket / card — a fixed warm paper tone in both light */
+  /* and dark mode, the app's one skeuomorphic signature surface. */
+  /* Rescope the semantic tokens locally so anything inside (Input, */
+  /* Select, Label, ...) always renders dark-on-cream, even in dark mode */
+  /* where the page-level --foreground is light-on-dark. */
+  .card-paper {
+    background: linear-gradient(180deg, #fffdf8, var(--cream));
+    color: var(--cream-foreground);
+    --foreground: var(--cream-foreground);
+    --card-foreground: var(--cream-foreground);
+    --popover-foreground: var(--cream-foreground);
+    --muted-foreground: #746c5c;
+    --card: transparent;
+    --border: oklch(0.3 0.05 152 / 16%);
+    --input: oklch(0.3 0.05 152 / 18%);
+    box-shadow:
+      0 1px 0 0 oklch(1 0 0 / 60%) inset,
+      0 1px 2px 0 oklch(0 0 0 / 10%),
+      0 8px 20px -8px oklch(0 0 0 / 30%);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .card-paper:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 0 0 oklch(1 0 0 / 60%) inset,
+      0 2px 4px 0 oklch(0 0 0 / 12%),
+      0 14px 28px -10px oklch(0 0 0 / 40%);
+  }
+
+  /* Brushed forest-green panel (sidebar, headers) */
+  .panel-steel {
+    background: linear-gradient(180deg, var(--forest-700), var(--forest-800));
+    border-right: 1px solid oklch(1 0 0 / 8%);
+  }
+}

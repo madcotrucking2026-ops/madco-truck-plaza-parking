@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+*.db
+.env
+.jwt_secret
+uvicorn.out.log
+uvicorn.err.log
+logs/
