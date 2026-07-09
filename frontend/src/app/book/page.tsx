@@ -319,11 +319,12 @@ export default function BookPage() {
           </Field>
 
           <Field label="Parking Type">
-            <div className="grid grid-cols-3 gap-2">
+            <div role="group" aria-label="Parking type" className="grid grid-cols-3 gap-2">
               {PASS_TYPES.map((p) => (
                 <button
                   key={p.value}
                   type="button"
+                  aria-pressed={form.pass_type === p.value}
                   data-selected={form.pass_type === p.value}
                   onClick={() => setPassType(p.value)}
                   className="tile-option flex flex-col items-center gap-0.5 px-2 py-3 text-center"
@@ -361,9 +362,10 @@ export default function BookPage() {
           )}
 
           <Field label="How would you like to pay?">
-            <div className="grid grid-cols-2 gap-3">
+            <div role="group" aria-label="Payment method" className="grid grid-cols-2 gap-3">
               <button
                 type="button"
+                aria-pressed={payWay === "card"}
                 data-selected={payWay === "card"}
                 disabled={!stripeConfigured() || startingCheckout}
                 onClick={() => setPayWay("card")}
@@ -374,6 +376,7 @@ export default function BookPage() {
               </button>
               <button
                 type="button"
+                aria-pressed={payWay === "cash_check"}
                 data-selected={payWay === "cash_check"}
                 disabled={startingCheckout}
                 onClick={() => setPayWay("cash_check")}

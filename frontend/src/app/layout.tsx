@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
@@ -18,6 +18,16 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Madco Truck Plaza | Parking Management",
   description: "Parking pass issuance, lot check, and monthly customer management for Madco Truck Plaza.",
+};
+
+// Theme-color follows the brand surfaces: warm ivory in light, forest-950 in
+// dark — so the mobile browser chrome matches the page instead of flashing white.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf6ed" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1b17" },
+  ],
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({
