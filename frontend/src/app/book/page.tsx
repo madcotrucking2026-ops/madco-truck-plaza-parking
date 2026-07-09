@@ -2,7 +2,7 @@
 
 import { isValidElement, cloneElement, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Truck, CreditCard, Banknote } from "lucide-react";
+import { Truck, CreditCard, Banknote, ShieldCheck, CheckCircle2, Lock } from "lucide-react";
 import {
   api,
   ApiError,
@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 const PASS_TYPES: { value: PassType; label: string; hint: string }[] = [
   { value: "daily", label: "Daily", hint: "$20" },
   { value: "weekly", label: "Weekly", hint: "$100" },
-  { value: "monthly", label: "Monthly", hint: "custom rate" },
+  { value: "monthly", label: "Monthly", hint: "custom" },
 ];
 
 type PayWay = "card" | "cash_check";
@@ -221,20 +221,33 @@ export default function BookPage() {
     setPayWay(stripeConfigured() ? "card" : "cash_check");
   }
 
+  const selectedPassLabel = PASS_TYPES.find((p) => p.value === form.pass_type)?.label;
+
   return (
     <div className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-md items-center gap-3 pb-6">
-        <div className="btn-embossed flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--amber-500)] text-[var(--forest-950)]">
+      <header className="mx-auto mb-6 flex max-w-md items-center gap-3">
+        <div className="btn-embossed flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--amber-500)] text-[var(--forest-950)]">
           <Truck className="h-5 w-5" strokeWidth={2.5} />
         </div>
-        <div>
-          <p className="font-semibold tracking-tight text-foreground">Madco Truck Plaza</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold leading-tight tracking-tight text-foreground">Madco Truck Plaza</p>
           <p className="text-xs text-muted-foreground">Parking Payment</p>
         </div>
-      </div>
+        <span className="flex items-center gap-1 whitespace-nowrap rounded-full bg-[var(--forest-700)]/10 px-2.5 py-1 text-[11px] font-medium text-[var(--forest-700)] dark:text-[var(--ivory-100)]">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Secure
+        </span>
+      </header>
 
       {issued ? (
-        <div className="mx-auto max-w-md space-y-4">
+        <div className="animate-rise mx-auto max-w-md space-y-4">
+          <div className="flex flex-col items-center gap-2 pb-1 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--success)]/12 text-[var(--success)]">
+              <CheckCircle2 className="h-8 w-8" strokeWidth={2} />
+            </div>
+            <p className="text-lg font-semibold text-foreground">You&rsquo;re all set</p>
+            <p className="text-sm text-muted-foreground">Keep this pass handy — show it if an attendant asks.</p>
+          </div>
           <PassTicket pass={issued} />
           <Button
             className="btn-embossed w-full bg-[var(--amber-500)] py-6 text-base font-semibold text-[var(--forest-950)] hover:bg-[var(--amber-600)]"
@@ -244,14 +257,21 @@ export default function BookPage() {
           </Button>
         </div>
       ) : checkoutStep === "card-payment" && clientSecret ? (
-        <div className="card-paper mx-auto max-w-md space-y-4 rounded-2xl p-6">
-          <div className="rounded-lg bg-[var(--forest-700)]/8 p-3 text-sm">
-            <p className="font-semibold text-foreground">
-              {form.truck_number} — {form.company_name}
-            </p>
-            <p className="text-muted-foreground">
-              {PASS_TYPES.find((p) => p.value === form.pass_type)?.label} · {form.start_date} → {form.end_date}
-            </p>
+        <div className="animate-rise card-paper mx-auto max-w-md space-y-4 rounded-2xl p-6">
+          <div className="flex items-start justify-between gap-3 border-b border-black/5 pb-4">
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-[var(--cream-foreground)]">
+                {form.truck_number} — {form.company_name}
+              </p>
+              <p className="text-sm text-[var(--cream-foreground)]/60">
+                {selectedPassLabel} · {form.start_date} → {form.end_date}
+              </p>
+            </div>
+            {finalPrice !== null && (
+              <span className="whitespace-nowrap font-mono text-lg font-bold tabular-nums text-[var(--cream-foreground)]">
+                {currency(finalPrice)}
+              </span>
+            )}
           </div>
           <CardCheckout
             clientSecret={clientSecret}
@@ -266,7 +286,7 @@ export default function BookPage() {
             e.preventDefault();
             if (payWay === "card") startCardCheckout();
           }}
-          className="card-paper mx-auto max-w-md space-y-5 rounded-2xl p-6"
+          className="animate-rise card-paper mx-auto max-w-md space-y-5 rounded-2xl p-6"
         >
           <Field label="Truck Number" required>
             {form.pass_type === "monthly" && companyMatch ? (
@@ -299,16 +319,20 @@ export default function BookPage() {
           </Field>
 
           <Field label="Parking Type">
-            <Select value={form.pass_type} onValueChange={(v) => setPassType(v as PassType)}>
-              <SelectTrigger className="w-full">
-                <SelectValue>{(v: PassType) => PASS_TYPES.find((p) => p.value === v)?.label ?? v}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {PASS_TYPES.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>{p.label} ({p.hint})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-3 gap-2">
+              {PASS_TYPES.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  data-selected={form.pass_type === p.value}
+                  onClick={() => setPassType(p.value)}
+                  className="tile-option flex flex-col items-center gap-0.5 px-2 py-3 text-center"
+                >
+                  <span className="text-sm font-semibold text-[var(--cream-foreground)]">{p.label}</span>
+                  <span className="font-mono text-[11px] tabular-nums text-[var(--cream-foreground)]/60">{p.hint}</span>
+                </button>
+              ))}
+            </div>
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
@@ -340,24 +364,20 @@ export default function BookPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
+                data-selected={payWay === "card"}
                 disabled={!stripeConfigured() || startingCheckout}
                 onClick={() => setPayWay("card")}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40",
-                  payWay === "card" ? "border-[var(--amber-500)] bg-[var(--amber-500)]/10" : "border-input",
-                )}
+                className="tile-option flex flex-col items-center gap-1.5 px-2 py-3 text-sm font-medium text-[var(--cream-foreground)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <CreditCard className="h-5 w-5" />
                 Card
               </button>
               <button
                 type="button"
+                data-selected={payWay === "cash_check"}
                 disabled={startingCheckout}
                 onClick={() => setPayWay("cash_check")}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40",
-                  payWay === "cash_check" ? "border-[var(--amber-500)] bg-[var(--amber-500)]/10" : "border-input",
-                )}
+                className="tile-option flex flex-col items-center gap-1.5 px-2 py-3 text-sm font-medium text-[var(--cream-foreground)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Banknote className="h-5 w-5" />
                 Cash / Check
@@ -370,6 +390,18 @@ export default function BookPage() {
             )}
           </Field>
 
+          {/* Total — the money made unmistakable, mono + tabular, receipt-style. */}
+          {finalPrice !== null && (
+            <div className="flex items-baseline justify-between border-t border-black/5 pt-4">
+              <span className="text-sm text-[var(--cream-foreground)]/70">
+                Total{form.pass_type === "daily" && days > 1 ? ` · ${days} days` : ""}
+              </span>
+              <span className="font-mono text-2xl font-bold tabular-nums text-[var(--cream-foreground)]">
+                {currency(finalPrice)}
+              </span>
+            </div>
+          )}
+
           {payWay === "cash_check" ? (
             <p className="rounded-lg bg-[var(--forest-700)]/8 p-3 text-sm text-foreground">
               Please come inside — our team will help you pay by cash or check and get your pass started.
@@ -378,14 +410,22 @@ export default function BookPage() {
             <Button
               type="submit"
               disabled={startingCheckout || monthlyNotSetUp || weeklyInvalid}
-              className="btn-embossed w-full bg-[var(--amber-500)] py-6 text-base font-semibold text-[var(--forest-950)] hover:bg-[var(--amber-600)] disabled:opacity-50"
+              className="btn-embossed w-full whitespace-nowrap bg-[var(--amber-500)] py-6 text-base font-semibold text-[var(--forest-950)] hover:bg-[var(--amber-600)] disabled:opacity-50"
             >
-              {startingCheckout ? "Loading…" : `Continue to Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`}
+              {startingCheckout ? "Loading…" : "Continue to Payment"}
             </Button>
           )}
-          <p className="text-center text-xs text-muted-foreground">
-            First come, first served. No reservations, no refunds.
-          </p>
+          {payWay === "card" && stripeConfigured() && (
+            <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              Secured by Stripe · First come, first served · No refunds
+            </p>
+          )}
+          {payWay === "cash_check" && (
+            <p className="text-center text-xs text-muted-foreground">
+              First come, first served. No reservations, no refunds.
+            </p>
+          )}
         </form>
       )}
     </div>

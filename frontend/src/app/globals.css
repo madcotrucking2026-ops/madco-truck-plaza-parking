@@ -200,4 +200,51 @@
     background: linear-gradient(180deg, var(--forest-700), var(--forest-800));
     border-right: 1px solid oklch(1 0 0 / 8%);
   }
+
+  /* Tactile segmented option tile — pass-type / pay-method selectors. Same */
+  /* cream-paper material as .card-paper so selectors feel embossed into the */
+  /* ticket rather than bolted on. Selected state = amber ring + deeper lift. */
+  .tile-option {
+    position: relative;
+    border-radius: 0.85rem;
+    background: linear-gradient(180deg, #fffdf8, var(--cream));
+    box-shadow:
+      0 1px 0 0 oklch(1 0 0 / 55%) inset,
+      0 1px 2px 0 oklch(0 0 0 / 10%);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .tile-option:hover {
+    transform: translateY(-1px);
+  }
+  .tile-option:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px 0 oklch(0 0 0 / 20%) inset;
+  }
+  .tile-option:focus-visible {
+    outline: 2px solid var(--amber-500);
+    outline-offset: 2px;
+  }
+  .tile-option[data-selected="true"] {
+    box-shadow:
+      0 0 0 2px var(--amber-500),
+      0 1px 0 0 oklch(1 0 0 / 55%) inset,
+      0 2px 6px -1px oklch(0 0 0 / 22%);
+  }
+}
+
+/* One orchestrated page entrance — a single rise+fade on load, not a */
+/* scroll-triggered fade on every element. Collapses under reduced-motion. */
+@keyframes kiosk-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@layer utilities {
+  .animate-rise {
+    animation: kiosk-rise 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise { animation: none; }
+  .tile-option,
+  .card-paper { transition: none; }
 }
