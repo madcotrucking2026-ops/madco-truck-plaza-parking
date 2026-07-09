@@ -175,7 +175,15 @@ async def webhook(request: Request, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(status_code=400, detail="Invalid webhook signature.") from exc
 
     if event["type"] == "payment_intent.succeeded":
-        _finalize_intent(db, event["data"]["object"])
+        intent = event["data"]["object"]
+        md = intent.metadata.to_dict() if intent.metadata else {}
+        # This safety-net only owns the kiosk direct-pay intents, which carry the
+        # full pass metadata (company_name etc). Payment-request intents finalize
+        # via their own client-driven route, and unrelated charges (e.g. a manual
+        # Dashboard charge) aren't ours at all — ack and ignore both so Stripe
+        # doesn't retry a payment we can't turn into a pass for ~3 days.
+        if "company_name" in md:
+            _finalize_intent(db, intent)
 
     return {"received": True}
 
