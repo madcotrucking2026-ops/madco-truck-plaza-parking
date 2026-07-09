@@ -270,8 +270,16 @@ def apply_renewal(
     """Applies a validated renewal: extends the pass, records a Payment, and
     updates the monthly customer. `price_from_charge` (a real Stripe amount)
     wins over the recomputed quote when present — same rule as issue."""
-    _, quoted_price = renewal_quote(db, parking_pass, end_date)
-    price = price_from_charge if price_from_charge is not None else quoted_price
+    # For a Stripe renewal the customer has ALREADY been charged an amount that
+    # was locked when the payment request was created. Re-running renewal_quote
+    # here would re-validate the date/span AFTER the charge, and its "renew from
+    # today" floor can shift between link-creation and payment (e.g. a weekly span
+    # is no longer exactly 7 days a day later), raising 400 and leaving the
+    # customer charged with no pass. Trust the amount actually paid instead.
+    if price_from_charge is not None:
+        price = price_from_charge
+    else:
+        _, price = renewal_quote(db, parking_pass, end_date)
 
     parking_pass.expiration_date = end_date
     parking_pass.price = price

@@ -132,7 +132,7 @@ def create_intent(payload: CreateIntentRequest, db: Session = Depends(get_db)) -
 
     try:
         intent = stripe.PaymentIntent.create(
-            amount=round(price * 100),
+            amount=int(round(float(price) * 100)),
             currency="usd",
             payment_method_types=["card"],
             metadata=_metadata_from_payload(payload),
@@ -182,9 +182,17 @@ async def webhook(request: Request, db: Session = Depends(get_db)) -> dict:
 
 @router.post("/cancel-intent")
 def cancel_intent(payload: CancelIntentRequest) -> dict:
+    """Best-effort cleanup when a customer abandons checkout. This endpoint is
+    unauthenticated (the kiosk/self-pay pages are public), so it will ONLY cancel
+    a PaymentIntent that THIS app created — recognised by our own metadata marker.
+    Without that check a leaked pi_ id would let anyone cancel any pending intent."""
     if not is_configured():
         return {"cancelled": False}
     try:
+        intent = stripe.PaymentIntent.retrieve(payload.payment_intent_id)
+        md = intent.metadata.to_dict() if intent.metadata else {}
+        if "company_name" not in md and "payment_request_token" not in md:
+            return {"cancelled": False}  # not one of ours — refuse to touch it
         stripe.PaymentIntent.cancel(payload.payment_intent_id)
     except stripe.error.StripeError:
         pass  # already succeeded/canceled/unknown — best-effort cleanup only
