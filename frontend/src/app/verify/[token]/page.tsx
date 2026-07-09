@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldAlert, Truck } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, ShieldAlert, ShieldCheck, Truck } from "lucide-react";
 import { api, type PassVerifyResult } from "@/lib/api";
 
 const currency = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -54,22 +54,26 @@ export default function VerifyPage() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-md items-center gap-3 pb-6">
-        <div className="btn-embossed flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--amber-500)] text-[var(--forest-950)]">
+      <header className="mx-auto mb-6 flex max-w-md items-center gap-3">
+        <div className="btn-embossed flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--amber-500)] text-[var(--forest-950)]">
           <Truck className="h-5 w-5" strokeWidth={2.5} />
         </div>
-        <div>
-          <p className="font-semibold tracking-tight text-foreground">Madco Truck Plaza</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold leading-tight tracking-tight text-foreground">Madco Truck Plaza</p>
           <p className="text-xs text-muted-foreground">Pass Verification</p>
         </div>
-      </div>
+        <span className="flex items-center gap-1 whitespace-nowrap rounded-full bg-[var(--forest-700)]/10 px-2.5 py-1 text-[11px] font-medium text-[var(--forest-700)] dark:text-[var(--ivory-100)]">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Secure
+        </span>
+      </header>
 
       {loading ? (
-        <div className="card-paper mx-auto max-w-md rounded-2xl p-8 text-center text-sm text-muted-foreground">
+        <div className="animate-rise card-paper mx-auto max-w-md rounded-2xl p-8 text-center text-sm text-muted-foreground">
           Checking…
         </div>
       ) : (
-        <div className="mx-auto max-w-md space-y-4">
+        <div className="animate-rise mx-auto max-w-md space-y-4">
           <div
             className="flex flex-col items-center gap-2 rounded-2xl px-6 py-10 text-center shadow-lg"
             style={{ backgroundColor: look.bg, color: look.fg }}

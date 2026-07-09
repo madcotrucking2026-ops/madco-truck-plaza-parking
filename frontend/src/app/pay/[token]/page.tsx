@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, Truck } from "lucide-react";
+import { CheckCircle2, Truck, ShieldCheck, Lock } from "lucide-react";
 import {
   api,
   ApiError,
@@ -63,34 +63,45 @@ export default function PayPage() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-md items-center gap-3 pb-6">
-        <div className="btn-embossed flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--amber-500)] text-[var(--forest-950)]">
+      <header className="mx-auto mb-6 flex max-w-md items-center gap-3">
+        <div className="btn-embossed flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--amber-500)] text-[var(--forest-950)]">
           <Truck className="h-5 w-5" strokeWidth={2.5} />
         </div>
-        <div>
-          <p className="font-semibold tracking-tight text-foreground">Madco Truck Plaza</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold leading-tight tracking-tight text-foreground">Madco Truck Plaza</p>
           <p className="text-xs text-muted-foreground">Parking Payment</p>
         </div>
-      </div>
+        <span className="flex items-center gap-1 whitespace-nowrap rounded-full bg-[var(--forest-700)]/10 px-2.5 py-1 text-[11px] font-medium text-[var(--forest-700)] dark:text-[var(--ivory-100)]">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Secure
+        </span>
+      </header>
 
       <div className="mx-auto max-w-md">
         {loading ? (
-          <div className="card-paper rounded-2xl p-8 text-center text-sm text-muted-foreground">Loading…</div>
+          <div className="animate-rise card-paper rounded-2xl p-8 text-center text-sm text-muted-foreground">Loading…</div>
         ) : paidReceipt !== null || info?.status === "paid" ? (
-          <div className="card-paper flex flex-col items-center gap-3 rounded-2xl p-8 text-center">
-            <CheckCircle2 className="h-16 w-16 text-[var(--success)]" />
+          <div className="animate-rise card-paper flex flex-col items-center gap-3 rounded-2xl p-8 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--success)]/12 text-[var(--success)]">
+              <CheckCircle2 className="h-9 w-9" strokeWidth={2} />
+            </div>
             <p className="text-xl font-bold text-foreground">Payment complete</p>
             <p className="text-sm text-muted-foreground">{info?.summary}</p>
-            {paidReceipt && <p className="font-mono text-sm text-foreground">Receipt {paidReceipt}</p>}
-            <p className="mt-2 text-xs text-muted-foreground">You're all set. You can close this page.</p>
+            {paidReceipt && <p className="font-mono text-sm tabular-nums text-foreground">Receipt {paidReceipt}</p>}
+            <p className="mt-2 text-xs text-muted-foreground">You&rsquo;re all set. You can close this page.</p>
           </div>
         ) : error ? (
-          <div className="card-paper rounded-2xl p-8 text-center text-sm text-[var(--danger)]">{error}</div>
+          <div className="animate-rise card-paper rounded-2xl p-8 text-center text-sm text-[var(--danger)]">{error}</div>
         ) : (
-          <div className="card-paper space-y-4 rounded-2xl p-6">
-            <div className="rounded-lg bg-[var(--forest-700)]/8 p-3 text-sm">
-              <p className="font-semibold text-foreground">{info?.summary}</p>
-              <p className="text-muted-foreground">{info ? currency(info.amount) : ""}</p>
+          <div className="animate-rise card-paper space-y-4 rounded-2xl p-6">
+            {/* Receipt-style header — summary left, mono tabular total right. */}
+            <div className="flex items-start justify-between gap-3 border-b border-black/5 pb-4">
+              <p className="min-w-0 break-words font-semibold text-[var(--cream-foreground)]">{info?.summary}</p>
+              {info && (
+                <span className="whitespace-nowrap font-mono text-lg font-bold tabular-nums text-[var(--cream-foreground)]">
+                  {currency(info.amount)}
+                </span>
+              )}
             </div>
             {clientSecret && info && (
               <CardCheckout
@@ -100,8 +111,9 @@ export default function PayPage() {
                 onCancel={() => setError("Payment cancelled. Please see the front desk to try again.")}
               />
             )}
-            <p className="text-center text-xs text-muted-foreground">
-              First come, first served. No reservations, no refunds.
+            <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              Secured by Stripe · First come, first served · No refunds
             </p>
           </div>
         )}
