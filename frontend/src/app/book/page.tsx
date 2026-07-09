@@ -170,8 +170,9 @@ export default function BookPage() {
     try {
       const payload: FinalizeStripePaymentRequest = { payment_intent_id: intentId };
       const pass = await api.post<PassRead>("/api/payments/stripe/finalize", payload);
+      // Silent success: the PassTicket that replaces the form already shows the
+      // receipt number, so a celebratory toast would just repeat what's on screen.
       setIssued({ ...pass, company_name: form.company_name, truck_number: form.truck_number });
-      toast.success(`Paid — receipt ${pass.receipt_number}`);
       setCheckoutStep("form");
       setClientSecret(null);
       setPaymentIntentId(null);
@@ -290,7 +291,7 @@ export default function BookPage() {
           </Field>
 
           <Field label="Company Name" required>
-            <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="Acme Trucking" />
+            <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="Bell City Freight" />
           </Field>
 
           <Field label="Phone Number" required>
