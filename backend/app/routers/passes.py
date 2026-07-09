@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
@@ -77,11 +77,67 @@ def _validate_weekly_span(pass_type: PassType, issue_date: date, end_date: date 
             )
 
 
+def _find_company(db: Session, name: str) -> Company | None:
+    """Match a company by name case-insensitively, ignoring surrounding
+    whitespace — the SAME normalization the company-profile lookup uses. Without
+    this the freeform name a customer types at the kiosk/Stripe ("abc trucking")
+    would miss the manager-created "ABC Trucking" and spawn a duplicate company,
+    fragmenting its trucks, monthly rate, and history across two profiles."""
+    # " ".join(split()) collapses runs of internal whitespace AND strips ends, so
+    # "ABC  Trucking " and "abc trucking" resolve to the same company. Names are
+    # stored canonicalized the same way on creation, so lower(column) always lines
+    # up with this normalized input.
+    return db.scalar(select(Company).where(func.lower(Company.name) == " ".join(name.split()).lower()))
+
+
+def _find_or_create_vehicle(
+    db: Session,
+    company_id: int,
+    vehicle_type: VehicleType,
+    truck_number: str | None,
+    trailer_number: str | None,
+    license_plate: str | None,
+) -> Vehicle:
+    """Reuse the company's existing vehicle instead of inserting a new row every
+    time the same truck comes back — otherwise visit-frequency, history, and the
+    'all trucks under one company' counts fragment across duplicate vehicles.
+    Matches on the strongest identifier provided (truck # > plate > trailer #),
+    case-insensitive; falls back to creating one when nothing matches."""
+    ident_field, ident_value = None, None
+    if truck_number and truck_number.strip():
+        ident_field, ident_value = Vehicle.truck_number, truck_number
+    elif license_plate and license_plate.strip():
+        ident_field, ident_value = Vehicle.license_plate, license_plate
+    elif trailer_number and trailer_number.strip():
+        ident_field, ident_value = Vehicle.trailer_number, trailer_number
+
+    if ident_field is not None:
+        existing = db.scalar(
+            select(Vehicle).where(
+                Vehicle.company_id == company_id,
+                func.lower(func.trim(ident_field)) == ident_value.strip().lower(),
+            )
+        )
+        if existing is not None:
+            return existing
+
+    vehicle = Vehicle(
+        company_id=company_id,
+        vehicle_type=vehicle_type,
+        truck_number=truck_number,
+        trailer_number=trailer_number,
+        license_plate=license_plate,
+    )
+    db.add(vehicle)
+    db.flush()
+    return vehicle
+
+
 def _lookup_monthly_rate(db: Session, company_name: str) -> float | None:
     """The company's established per-month rate, or None if it has no monthly
     plan on file yet (a brand-new monthly company — self-service checkouts,
     kiosk or Stripe, can never bootstrap a new rate; only the manager can)."""
-    company = db.scalar(select(Company).where(Company.name == company_name))
+    company = _find_company(db, company_name)
     if company is None:
         return None
     monthly_customer = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == company.id))
@@ -116,24 +172,18 @@ def _issue_pass_and_payment(
     actually confirms it charged (`intent.amount_received`) IS the price by
     definition; there is no more authoritative number to recompute towards.
     """
-    company = db.scalar(select(Company).where(Company.name == company_name))
+    company = _find_company(db, company_name)
     monthly_customer = None
     if company is not None and pass_type == PassType.monthly:
         monthly_customer = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == company.id))
     if company is None:
-        company = Company(name=company_name, phone=phone)
+        company = Company(name=" ".join(company_name.split()), phone=phone)
         db.add(company)
         db.flush()
 
-    vehicle = Vehicle(
-        company_id=company.id,
-        vehicle_type=vehicle_type,
-        truck_number=truck_number,
-        trailer_number=trailer_number,
-        license_plate=license_plate,
+    vehicle = _find_or_create_vehicle(
+        db, company.id, vehicle_type, truck_number, trailer_number, license_plate
     )
-    db.add(vehicle)
-    db.flush()
 
     expiration_date = _expiration_for(pass_type, issue_date, end_date)
     if price_from_charge is not None:
