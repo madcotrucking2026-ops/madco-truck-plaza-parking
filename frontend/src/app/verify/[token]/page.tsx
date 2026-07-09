@@ -22,13 +22,13 @@ function lookFor(result: PassVerifyResult | null): Look {
   }
   switch (result.status) {
     case "active":
-      return { label: "PAID · VALID", sub: "This pass is active.", Icon: CheckCircle2, bg: "#1FAF67", fg: "#fff" };
+      return { label: "PAID · VALID", sub: "This pass is active.", Icon: CheckCircle2, bg: "var(--success)", fg: "#fff" };
     case "expiring_soon":
-      return { label: "EXPIRES SOON", sub: "Still valid — renewal due shortly.", Icon: AlertTriangle, bg: "#E7B416", fg: "#173F35" };
+      return { label: "EXPIRES SOON", sub: "Still valid — renewal due shortly.", Icon: AlertTriangle, bg: "var(--warning)", fg: "var(--forest-700)" };
     case "expired":
-      return { label: "EXPIRED", sub: "This pass is no longer valid.", Icon: XCircle, bg: "#D74A4A", fg: "#fff" };
+      return { label: "EXPIRED", sub: "This pass is no longer valid.", Icon: XCircle, bg: "var(--danger)", fg: "#fff" };
     case "cancelled":
-      return { label: "CANCELLED", sub: "This pass was cancelled.", Icon: XCircle, bg: "#D74A4A", fg: "#fff" };
+      return { label: "CANCELLED", sub: "This pass was cancelled.", Icon: XCircle, bg: "var(--danger)", fg: "#fff" };
     default:
       return { label: "UNKNOWN", sub: "Status unavailable.", Icon: ShieldAlert, bg: "#6B7280", fg: "#fff" };
   }
