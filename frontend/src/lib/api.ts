@@ -94,6 +94,16 @@ export type ConversionLeads = {
   leads: ConversionLead[];
 };
 
+export type AuditLogEntry = {
+  id: number;
+  action: string;
+  entity_type: string;
+  entity_id: number | null;
+  summary: string;
+  employee_name: string | null;
+  created_at: string;
+};
+
 export type LotCheckResult = {
   found: boolean;
   status?: "active" | "expiring_soon" | "expired" | "cancelled";

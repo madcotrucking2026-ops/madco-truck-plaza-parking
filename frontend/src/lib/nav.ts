@@ -8,6 +8,7 @@ import {
   CreditCard,
   BarChart3,
   BellRing,
+  History,
   Settings,
 } from "lucide-react";
 
@@ -26,5 +27,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Reminders", href: "/reminders", icon: BellRing },
+  { label: "Activity Log", href: "/audit-log", icon: History },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
