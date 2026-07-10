@@ -26,7 +26,7 @@ export function StatCard({
             accent === "orange" && "bg-[var(--amber-500)]/20 text-[var(--amber-600)]",
             accent === "forest" && "bg-[var(--forest-600)]/20 text-[var(--forest-600)]",
             accent === "success" && "bg-[var(--success)]/15 text-[var(--success)]",
-            accent === "destructive" && "bg-red-500/15 text-red-600",
+            accent === "destructive" && "bg-[var(--danger)]/15 text-[var(--danger-ink)]",
             accent === "steel" && "bg-[var(--stone-500)]/15 text-[var(--stone-500)]",
           )}
         >

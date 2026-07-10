@@ -7,10 +7,13 @@ import { api, type LotCheckResult } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const STATUS_STYLE: Record<string, { bg: string; label: string }> = {
-  active: { bg: "bg-[var(--success)]", label: "ACTIVE" },
-  expiring_soon: { bg: "bg-[var(--warning)]", label: "EXPIRING SOON" },
-  expired: { bg: "bg-[var(--danger)]", label: "EXPIRED" },
+// Per-status text colour: the amber "expiring" band is light, so white text on
+// it fails contrast (~1.7:1) — it wears dark forest ink instead. The dark bands
+// (green/red/stone) keep white. Mirrors the /verify status banner.
+const STATUS_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
+  active: { bg: "bg-[var(--success)]", fg: "text-white", label: "ACTIVE" },
+  expiring_soon: { bg: "bg-[var(--warning)]", fg: "text-[var(--forest-950)]", label: "EXPIRING SOON" },
+  expired: { bg: "bg-[var(--danger)]", fg: "text-white", label: "EXPIRED" },
 };
 
 export default function LotCheckPage() {
@@ -49,7 +52,7 @@ function LotCheckInner() {
     runSearch(query);
   }
 
-  const style = result?.found && result.status ? STATUS_STYLE[result.status] : { bg: "bg-[var(--stone-500)]", label: "NOT FOUND" };
+  const style = result?.found && result.status ? STATUS_STYLE[result.status] : { bg: "bg-[var(--stone-500)]", fg: "text-white", label: "NOT FOUND" };
 
   return (
     <div className="max-w-xl space-y-6">
@@ -80,7 +83,7 @@ function LotCheckInner() {
       {result && (
         <div className="space-y-4">
           <div className={`${style.bg} rounded-2xl py-10 text-center shadow-lg`}>
-            <p className="text-4xl font-extrabold tracking-wide text-white">{style.label}</p>
+            <p className={`text-4xl font-extrabold tracking-wide ${style.fg}`}>{style.label}</p>
           </div>
 
           {result.found && (
