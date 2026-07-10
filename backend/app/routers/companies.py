@@ -2,11 +2,23 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from datetime import date
+
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models import Company, MonthlyCustomer, ParkingPass, User, Vehicle
-from app.models.enums import PassType
-from app.schemas.company import CompanyCreate, CompanyLookupResult, CompanyMonthlyTruck, CompanyRead
+from app.core.pass_status import live_status
+from app.models import Company, MonthlyCustomer, ParkingPass, Payment, User, Vehicle
+from app.models.enums import PassStatus, PassType
+from app.schemas.company import (
+    CompanyCreate,
+    CompanyLookupResult,
+    CompanyMonthlyTruck,
+    CompanyProfile,
+    CompanyRead,
+    ProfilePass,
+    ProfilePayment,
+    ProfileTruck,
+)
 
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
@@ -80,3 +92,96 @@ def get_company(
     if company is None:
         raise HTTPException(status_code=404, detail="Company not found")
     return company
+
+
+@router.get("/{company_id}/profile", response_model=CompanyProfile)
+def company_profile(
+    company_id: int, db: Session = Depends(get_db), _user: User = Depends(get_current_user)
+) -> CompanyProfile:
+    """Everything about one company in one place: totals, trucks, recent passes
+    and payments, monthly status + outstanding balance, and a simple loyalty
+    score (a heuristic from visit count + currently-active passes)."""
+    company = db.get(Company, company_id)
+    if company is None:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    today = date.today()
+    passes = list(
+        db.scalars(
+            select(ParkingPass)
+            .where(ParkingPass.company_id == company_id)
+            .order_by(ParkingPass.issue_date.desc(), ParkingPass.id.desc())
+        )
+    )
+    payments = list(
+        db.scalars(
+            select(Payment)
+            .join(ParkingPass, Payment.parking_pass_id == ParkingPass.id)
+            .where(ParkingPass.company_id == company_id)
+            .order_by(Payment.paid_at.desc())
+        )
+    )
+    monthly_customer = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == company_id))
+
+    total_spent = float(sum(p.amount for p in payments))
+    active_passes = sum(
+        1 for p in passes if p.status != PassStatus.cancelled and p.expiration_date >= today
+    )
+    issue_dates = [p.issue_date for p in passes]
+
+    # Group passes into per-truck rows (visits + last seen).
+    trucks_by_vehicle: dict[int, dict] = {}
+    for p in passes:
+        v = p.vehicle
+        row = trucks_by_vehicle.setdefault(
+            v.id,
+            {"truck": v.truck_number, "plate": v.license_plate, "trailer": v.trailer_number,
+             "visits": 0, "last": p.issue_date},
+        )
+        row["visits"] += 1
+        row["last"] = max(row["last"], p.issue_date)
+
+    loyalty_score = min(100, len(passes) * 4 + active_passes * 10)
+
+    return CompanyProfile(
+        id=company.id,
+        name=company.name,
+        phone=company.phone,
+        is_monthly=monthly_customer is not None,
+        monthly_price=float(monthly_customer.monthly_price) if monthly_customer else None,
+        renewal_date=monthly_customer.renewal_date if monthly_customer else None,
+        outstanding_balance=float(monthly_customer.current_balance) if monthly_customer else 0.0,
+        total_visits=len(passes),
+        total_spent=total_spent,
+        active_passes=active_passes,
+        first_seen=min(issue_dates) if issue_dates else None,
+        last_seen=max(issue_dates) if issue_dates else None,
+        loyalty_score=loyalty_score,
+        trucks=[
+            ProfileTruck(
+                truck_number=r["truck"], license_plate=r["plate"], trailer_number=r["trailer"],
+                visits=r["visits"], last_seen=r["last"],
+            )
+            for r in trucks_by_vehicle.values()
+        ],
+        recent_passes=[
+            ProfilePass(
+                id=p.id,
+                pass_type=p.pass_type,
+                status=live_status(p.expiration_date, today, p.status),
+                price=float(p.price),
+                issue_date=p.issue_date,
+                expiration_date=p.expiration_date,
+            )
+            for p in passes[:10]
+        ],
+        recent_payments=[
+            ProfilePayment(
+                amount=float(pmt.amount),
+                method=pmt.method,
+                paid_at=pmt.paid_at,
+                receipt_number=pmt.receipt_number,
+            )
+            for pmt in payments[:10]
+        ],
+    )
