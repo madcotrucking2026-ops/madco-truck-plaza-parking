@@ -79,6 +79,21 @@ export type DashboardStats = {
   weekly_revenue: number;
 };
 
+export type ConversionLead = {
+  company_id: number;
+  company_name: string;
+  phone: string | null;
+  visits: number;
+  total_spent: number;
+  suggested_monthly: number;
+  tier: "hot" | "warm" | "cold";
+};
+
+export type ConversionLeads = {
+  window_days: number;
+  leads: ConversionLead[];
+};
+
 export type LotCheckResult = {
   found: boolean;
   status?: "active" | "expiring_soon" | "expired" | "cancelled";

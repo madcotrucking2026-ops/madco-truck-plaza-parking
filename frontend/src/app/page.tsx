@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {
   api,
+  type ConversionLeads,
   type DashboardStats,
   type PassListItem,
   type RemindersOverview,
@@ -50,6 +51,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [passes, setPasses] = useState<PassListItem[] | null>(null);
   const [reminders, setReminders] = useState<RemindersOverview | null>(null);
+  const [leads, setLeads] = useState<ConversionLeads | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [renewingPass, setRenewingPass] = useState<PassListItem | null>(null);
   const [sendingId, setSendingId] = useState<number | null>(null);
@@ -60,6 +62,7 @@ export default function DashboardPage() {
     );
     api.get<PassListItem[]>("/api/passes").then(setPasses).catch(() => setPasses([]));
     api.get<RemindersOverview>("/api/reminders").then(setReminders).catch(() => setReminders(null));
+    api.get<ConversionLeads>("/api/insights/conversion-leads").then(setLeads).catch(() => setLeads(null));
   }
   useEffect(loadAll, []);
 
@@ -237,6 +240,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Conversion opportunities — daily/weekly customers worth a monthly pitch */}
+      <ConversionOpportunities leads={leads} />
+
       {renewingPass && (
         <RenewDialog
           pass={renewingPass}
@@ -265,5 +271,63 @@ function SnapshotRow({
       <span className="flex-1 text-sm text-[var(--cream-foreground)]/70">{label}</span>
       <span className="font-mono text-lg font-semibold text-[var(--cream-foreground)]">{value}</span>
     </div>
+  );
+}
+
+const LEAD_TIER: Record<string, { label: string; className: string }> = {
+  hot: { label: "Hot", className: "bg-[var(--amber-500)]/15 text-[var(--amber-600)]" },
+  warm: { label: "Warm", className: "bg-[var(--forest-700)]/12 text-[var(--forest-700)]" },
+  cold: { label: "Cold", className: "bg-black/5 text-[var(--cream-foreground)]/60" },
+};
+
+function ConversionOpportunities({ leads }: { leads: ConversionLeads | null }) {
+  const money = (n: number) =>
+    n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+  return (
+    <section className="card-paper rounded-2xl p-5">
+      <div className="mb-1 flex items-center gap-2">
+        <TrendingUp className="h-4 w-4 text-[var(--forest-700)]" />
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/70">
+          Conversion Opportunities
+        </h2>
+      </div>
+      <p className="mb-4 text-xs text-[var(--cream-foreground)]/50">
+        Daily &amp; weekly customers who come often enough to pitch a monthly plan.
+      </p>
+      {leads === null ? (
+        <p className="text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+      ) : leads.leads.length === 0 ? (
+        <p className="text-sm text-[var(--cream-foreground)]/60">
+          Nobody to pitch right now — frequent visitors show up here automatically.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {leads.leads.map((l) => {
+            const tier = LEAD_TIER[l.tier] ?? LEAD_TIER.cold;
+            return (
+              <div
+                key={l.company_id}
+                className="flex items-center gap-3 rounded-xl border border-black/5 bg-black/[0.015] p-3"
+              >
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tier.className}`}>
+                  {tier.label}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-[var(--cream-foreground)]">{l.company_name}</p>
+                  <p className="text-xs text-[var(--cream-foreground)]/60">
+                    {l.visits} visits · {money(l.total_spent)} in {leads.window_days}d
+                    {l.phone ? ` · ${l.phone}` : ""}
+                  </p>
+                </div>
+                <p className="whitespace-nowrap text-right font-mono text-sm font-semibold text-[var(--cream-foreground)]">
+                  {money(l.suggested_monthly)}/mo
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
