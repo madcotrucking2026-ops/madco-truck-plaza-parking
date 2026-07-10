@@ -131,7 +131,7 @@ export default function PaymentsPage() {
               className={cn(
                 "rounded-lg px-3.5 py-1.5 text-sm font-medium transition",
                 period === p.value
-                  ? "btn-embossed bg-[var(--amber-500)] text-[var(--forest-950)]"
+                  ? "btn-embossed bg-[var(--forest-700)] text-[var(--ivory-100)]"
                   : "text-[var(--cream-foreground)]/70 hover:text-[var(--cream-foreground)]",
               )}
             >

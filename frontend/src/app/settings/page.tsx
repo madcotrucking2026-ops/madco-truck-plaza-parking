@@ -16,7 +16,7 @@ export default function SettingsPage() {
         <Link
           href="/book"
           target="_blank"
-          className="btn-embossed flex shrink-0 items-center gap-2 rounded-lg bg-[var(--amber-500)] px-4 py-2 text-sm font-semibold text-[var(--forest-950)] hover:bg-[var(--amber-600)]"
+          className="btn-embossed flex shrink-0 items-center gap-2 rounded-lg bg-[var(--forest-700)] px-4 py-2 text-sm font-semibold text-[var(--ivory-100)] hover:bg-[var(--forest-600)]"
         >
           Open Kiosk <ExternalLink className="h-3.5 w-3.5" />
         </Link>

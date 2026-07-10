@@ -70,7 +70,7 @@ export default function ReportsPage() {
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-black/5">
                     <div
-                      className="h-full rounded-full bg-[var(--amber-500)]"
+                      className="h-full rounded-full bg-[var(--forest-700)]"
                       style={{ width: `${Math.max((m.total / maxMethodTotal) * 100, 3)}%` }}
                     />
                   </div>
