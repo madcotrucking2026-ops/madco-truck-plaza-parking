@@ -97,7 +97,7 @@ export default function DashboardPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">{error}</div>
+        <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger-ink)]">{error}</div>
       )}
 
       {/* Quick actions — the few things a manager starts from */}

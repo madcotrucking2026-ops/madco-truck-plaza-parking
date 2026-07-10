@@ -72,6 +72,9 @@
   --amber-600: #bf7420;
   --success: #1faf67;
   --danger: #d74a4a;
+  /* Darker red for danger TEXT so it clears WCAG AA on cream/ivory (the bright
+     --danger is only 3.4:1 as text). --danger stays for fills, borders, icons. */
+  --danger-ink: #b23c3c;
   --warning: #e7b416;
   --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", var(--font-inter), sans-serif;
 
@@ -112,6 +115,9 @@
 .dark {
   --background: var(--forest-950);
   --foreground: var(--ivory-100);
+  /* On dark page surfaces danger text must be LIGHT, not the dark ink red.
+     (Inside .card-paper, which is always cream, --danger-ink is re-pinned dark.) */
+  --danger-ink: #ef9b9b;
   --card: var(--forest-900);
   --card-foreground: var(--ivory-100);
   --popover: var(--forest-900);
@@ -184,7 +190,8 @@
     --foreground: var(--cream-foreground);
     --card-foreground: var(--cream-foreground);
     --popover-foreground: var(--cream-foreground);
-    --muted-foreground: #746c5c;
+    --muted-foreground: #6a6252; /* darkened from #746c5c -> clears 4.5:1 on cream */
+    --danger-ink: #b23c3c;       /* card is always cream, so pin danger text dark in both modes */
     --card: transparent;
     --border: oklch(0.3 0.05 152 / 16%);
     --input: oklch(0.3 0.05 152 / 18%);

@@ -18,7 +18,7 @@ type Look = {
 
 function lookFor(result: PassVerifyResult | null): Look {
   if (!result || !result.valid) {
-    return { label: "NOT A VALID PASS", sub: "This code isn't recognized.", Icon: ShieldAlert, bg: "#6B7280", fg: "#fff" };
+    return { label: "NOT A VALID PASS", sub: "This code isn't recognized.", Icon: ShieldAlert, bg: "#4b5563", fg: "#fff" };
   }
   switch (result.status) {
     case "active":
@@ -30,7 +30,7 @@ function lookFor(result: PassVerifyResult | null): Look {
     case "cancelled":
       return { label: "CANCELLED", sub: "This pass was cancelled.", Icon: XCircle, bg: "var(--danger)", fg: "#fff" };
     default:
-      return { label: "UNKNOWN", sub: "Status unavailable.", Icon: ShieldAlert, bg: "#6B7280", fg: "#fff" };
+      return { label: "UNKNOWN", sub: "Status unavailable.", Icon: ShieldAlert, bg: "#4b5563", fg: "#fff" };
   }
 }
 
@@ -80,7 +80,7 @@ export default function VerifyPage() {
           >
             <Icon className="h-16 w-16" strokeWidth={2} />
             <p className="text-2xl font-bold tracking-tight">{look.label}</p>
-            <p className="text-sm opacity-90">{look.sub}</p>
+            <p className="text-sm">{look.sub}</p>
           </div>
 
           {result?.valid && (

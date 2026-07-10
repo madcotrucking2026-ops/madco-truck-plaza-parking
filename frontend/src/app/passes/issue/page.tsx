@@ -388,7 +388,7 @@ function IssuePassForm() {
           <Field label="End Date">
             <Input type="date" value={form.end_date} onChange={(e) => set("end_date", e.target.value)} />
             {weeklyInvalid && (
-              <p className="mt-1.5 text-xs text-[var(--danger)]">
+              <p className="mt-1.5 text-xs text-[var(--danger-ink)]">
                 Weekly passes must be exactly 7 days (currently {days} day{days === 1 ? "" : "s"}). Choose Daily for a custom range.
               </p>
             )}

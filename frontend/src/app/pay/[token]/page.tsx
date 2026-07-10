@@ -91,7 +91,7 @@ export default function PayPage() {
             <p className="mt-2 text-xs text-muted-foreground">You&rsquo;re all set. You can close this page.</p>
           </div>
         ) : error ? (
-          <div className="animate-rise card-paper rounded-2xl p-8 text-center text-sm text-[var(--danger)]">{error}</div>
+          <div className="animate-rise card-paper rounded-2xl p-8 text-center text-sm text-[var(--danger-ink)]">{error}</div>
         ) : (
           <div className="animate-rise card-paper space-y-4 rounded-2xl p-6">
             {/* Receipt-style header — summary left, mono tabular total right. */}

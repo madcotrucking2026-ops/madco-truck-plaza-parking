@@ -164,7 +164,7 @@ export default function PassesPage() {
                               size="sm"
                               disabled={cancellingId === p.id}
                               onClick={() => cancel(p.id)}
-                              className="text-[var(--danger)] hover:text-[var(--danger)]"
+                              className="text-[var(--danger-ink)] hover:text-[var(--danger-ink)]"
                             >
                               <X className="h-3.5 w-3.5" />
                               Cancel

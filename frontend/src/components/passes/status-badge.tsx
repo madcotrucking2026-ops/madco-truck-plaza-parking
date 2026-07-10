@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 const STATUS_STYLE: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-[var(--success)]/15 text-[var(--success)]" },
   expiring_soon: { label: "Expiring Soon", className: "bg-[var(--warning)]/15 text-[var(--warning)]" },
-  expired: { label: "Expired", className: "bg-[var(--danger)]/15 text-[var(--danger)]" },
+  expired: { label: "Expired", className: "bg-[var(--danger)]/15 text-[var(--danger-ink)]" },
   cancelled: { label: "Cancelled", className: "bg-muted text-muted-foreground" },
 };
 

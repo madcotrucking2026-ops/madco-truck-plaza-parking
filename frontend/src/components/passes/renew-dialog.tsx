@@ -191,7 +191,7 @@ export function RenewDialog({
               <Field label="New Expiration Date">
                 <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} min={renewalStart} />
                 {weeklyInvalid && (
-                  <p className="mt-1.5 text-xs text-[var(--danger)]">
+                  <p className="mt-1.5 text-xs text-[var(--danger-ink)]">
                     Weekly passes must be exactly 7 days (currently {days} day{days === 1 ? "" : "s"}).
                   </p>
                 )}

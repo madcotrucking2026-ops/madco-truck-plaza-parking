@@ -345,7 +345,7 @@ export default function BookPage() {
             </Field>
           </div>
           {weeklyInvalid && (
-            <p className="rounded-lg bg-[var(--danger)]/10 p-3 text-xs text-[var(--danger)]">
+            <p className="rounded-lg bg-[var(--danger)]/10 p-3 text-xs text-[var(--danger-ink)]">
               Weekly passes must be exactly 7 days (currently {days} day{days === 1 ? "" : "s"}). Choose Daily for a custom range.
             </p>
           )}
@@ -356,7 +356,7 @@ export default function BookPage() {
           )}
 
           {monthlyNotSetUp && (
-            <p className="rounded-lg bg-[var(--danger)]/10 p-3 text-xs text-[var(--danger)]">
+            <p className="rounded-lg bg-[var(--danger)]/10 p-3 text-xs text-[var(--danger-ink)]">
               {`${form.company_name} isn't set up for monthly parking yet. Please see the front desk to get started.`}
             </p>
           )}
