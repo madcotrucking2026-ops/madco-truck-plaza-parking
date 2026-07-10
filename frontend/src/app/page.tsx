@@ -154,7 +154,16 @@ export default function DashboardPage() {
                   className="flex items-center gap-3 rounded-xl border border-black/5 bg-black/[0.015] p-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-[var(--cream-foreground)]">{p.company_name ?? "—"}</p>
+                    {p.company_id ? (
+                      <Link
+                        href={`/companies/${p.company_id}`}
+                        className="block truncate font-medium text-[var(--cream-foreground)] hover:underline"
+                      >
+                        {p.company_name ?? "—"}
+                      </Link>
+                    ) : (
+                      <p className="truncate font-medium text-[var(--cream-foreground)]">{p.company_name ?? "—"}</p>
+                    )}
                     <p className="font-mono text-xs text-[var(--cream-foreground)]/60">
                       {p.truck_number ?? p.trailer_number ?? p.license_plate ?? "—"} · {p.pass_type}
                     </p>
@@ -314,7 +323,12 @@ function ConversionOpportunities({ leads }: { leads: ConversionLeads | null }) {
                   {tier.label}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-[var(--cream-foreground)]">{l.company_name}</p>
+                  <Link
+                    href={`/companies/${l.company_id}`}
+                    className="block truncate font-medium text-[var(--cream-foreground)] hover:underline"
+                  >
+                    {l.company_name}
+                  </Link>
                   <p className="text-xs text-[var(--cream-foreground)]/60">
                     {l.visits} visits · {money(l.total_spent)} in {leads.window_days}d
                     {l.phone ? ` · ${l.phone}` : ""}

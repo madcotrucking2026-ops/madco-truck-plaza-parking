@@ -47,15 +47,15 @@ def reports_summary(db: Session = Depends(get_db)) -> ReportsSummary:
     active_companies = db.scalar(select(func.count(func.distinct(ParkingPass.company_id)))) or 0
 
     top_companies_rows = db.execute(
-        select(Company.name, func.count(ParkingPass.id), func.coalesce(func.sum(ParkingPass.price), 0))
+        select(Company.id, Company.name, func.count(ParkingPass.id), func.coalesce(func.sum(ParkingPass.price), 0))
         .join(ParkingPass, ParkingPass.company_id == Company.id)
         .group_by(Company.id)
         .order_by(func.sum(ParkingPass.price).desc())
         .limit(8)
     ).all()
     top_companies = [
-        CompanyStat(company_name=name, visits=visits, total_paid=float(total))
-        for name, visits, total in top_companies_rows
+        CompanyStat(company_id=cid, company_name=name, visits=visits, total_paid=float(total))
+        for cid, name, visits, total in top_companies_rows
     ]
 
     method_rows = db.execute(

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { DollarSign, Ticket, Wallet, Building2 } from "lucide-react";
 import { api, type ReportsSummary } from "@/lib/api";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -121,7 +122,15 @@ export default function ReportsPage() {
               <tbody>
                 {data.top_companies.map((c) => (
                   <tr key={c.company_name} className="border-b border-black/5 text-[var(--cream-foreground)] last:border-none">
-                    <td className="py-2">{c.company_name}</td>
+                    <td className="py-2">
+                      {c.company_id ? (
+                        <Link href={`/companies/${c.company_id}`} className="hover:underline">
+                          {c.company_name}
+                        </Link>
+                      ) : (
+                        c.company_name
+                      )}
+                    </td>
                     <td className="py-2 font-mono">{c.visits}</td>
                     <td className="py-2 text-right font-mono">{currency(c.total_paid)}</td>
                   </tr>

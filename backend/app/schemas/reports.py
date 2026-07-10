@@ -8,6 +8,7 @@ class RevenuePoint(BaseModel):
 
 class CompanyStat(BaseModel):
     company_name: str
+    company_id: int | None = None
     visits: int
     total_paid: float
 

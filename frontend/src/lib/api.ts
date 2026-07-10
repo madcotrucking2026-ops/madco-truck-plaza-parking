@@ -330,6 +330,7 @@ export type PassListItem = {
   receipt_number: string | null;
   qr_code: string | null;
   company_name: string | null;
+  company_id: number | null;
   truck_number: string | null;
   trailer_number: string | null;
   license_plate: string | null;
@@ -341,7 +342,7 @@ export type ReportsSummary = {
   passes_30d: number;
   avg_price: number;
   active_companies: number;
-  top_companies: { company_name: string; visits: number; total_paid: number }[];
+  top_companies: { company_name: string; company_id: number | null; visits: number; total_paid: number }[];
   payment_methods: { method: string; count: number; total: number }[];
   frequent_trucks: { truck_number: string | null; company_name: string | null; visits: number }[];
   outstanding_balances: { company_name: string; balance: number }[];

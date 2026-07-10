@@ -55,6 +55,7 @@ class PassListItem(BaseModel):
     receipt_number: str | None
     qr_code: str | None
     company_name: str | None
+    company_id: int | None = None
     truck_number: str | None
     trailer_number: str | None
     license_plate: str | None

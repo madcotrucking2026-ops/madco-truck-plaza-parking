@@ -137,7 +137,15 @@ export default function PassesPage() {
               <tbody>
                 {(filtered ?? []).map((p) => (
                   <tr key={p.id} className="border-b border-black/5 text-[var(--cream-foreground)] last:border-none">
-                    <td className="px-4 py-3">{p.company_name ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      {p.company_id ? (
+                        <Link href={`/companies/${p.company_id}`} className="hover:underline">
+                          {p.company_name ?? "—"}
+                        </Link>
+                      ) : (
+                        p.company_name ?? "—"
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-mono">{p.truck_number ?? p.trailer_number ?? p.license_plate ?? "—"}</td>
                     <td className="px-4 py-3 capitalize">{p.pass_type}</td>
                     <td className="px-4 py-3 font-mono">{currency(p.price)}</td>
