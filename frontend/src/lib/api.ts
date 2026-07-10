@@ -104,6 +104,58 @@ export type AuditLogEntry = {
   created_at: string;
 };
 
+export type CompanySummary = {
+  id: number;
+  name: string;
+  phone: string | null;
+  is_vip: boolean;
+  needs_follow_up: boolean;
+  high_risk: boolean;
+};
+
+export type ProfileTruck = {
+  truck_number: string | null;
+  license_plate: string | null;
+  trailer_number: string | null;
+  visits: number;
+  last_seen: string | null;
+};
+
+export type ProfilePass = {
+  id: number;
+  pass_type: string;
+  status: string;
+  price: number;
+  issue_date: string;
+  expiration_date: string;
+};
+
+export type ProfilePayment = {
+  amount: number;
+  method: string;
+  paid_at: string;
+  receipt_number: string | null;
+};
+
+export type CompanyProfile = {
+  id: number;
+  name: string;
+  phone: string | null;
+  is_monthly: boolean;
+  monthly_price: number | null;
+  renewal_date: string | null;
+  outstanding_balance: number;
+  total_visits: number;
+  total_spent: number;
+  active_passes: number;
+  first_seen: string | null;
+  last_seen: string | null;
+  loyalty_score: number;
+  trucks: ProfileTruck[];
+  recent_passes: ProfilePass[];
+  recent_payments: ProfilePayment[];
+};
+
 export type LotCheckResult = {
   found: boolean;
   status?: "active" | "expiring_soon" | "expired" | "cancelled";
