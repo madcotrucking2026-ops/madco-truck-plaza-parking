@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type MonthlyCustomer = {
   id: number;
@@ -37,6 +45,19 @@ export default function MonthlyCustomersPage() {
       .then(setCustomers)
       .catch(() => setCustomers([]));
   }, []);
+
+  // Attendant flips a spot's occupancy as trucks come and go (a car "holding
+  // spot" gives way to "truck parked", etc). Optimistic; reverts on failure.
+  async function setStatus(id: number, status: string) {
+    const prev = customers;
+    setCustomers((cs) => cs?.map((c) => (c.id === id ? { ...c, status } : c)) ?? cs);
+    try {
+      await api.patch(`/api/monthly-customers/${id}/status`, { status });
+    } catch {
+      toast.error("Couldn't update spot status.");
+      setCustomers(prev);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -82,7 +103,20 @@ export default function MonthlyCustomersPage() {
                     <td className="px-4 py-3 font-mono">{c.number_of_trucks}</td>
                     <td className="px-4 py-3 font-mono">{currency(c.monthly_price)}</td>
                     <td className="px-4 py-3 font-mono">{c.renewal_date}</td>
-                    <td className="px-4 py-3">{STATUS_LABEL[c.status] ?? c.status}</td>
+                    <td className="px-4 py-3">
+                      <Select value={c.status} onValueChange={(v) => v && setStatus(c.id, v)}>
+                        <SelectTrigger className="h-8 w-[150px]">
+                          <SelectValue>{(v: string) => STATUS_LABEL[v] ?? v}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
                     <td className="px-4 py-3 font-mono">{currency(c.current_balance)}</td>
                   </tr>
                 ))}
