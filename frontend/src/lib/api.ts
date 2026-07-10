@@ -75,6 +75,9 @@ export type DashboardStats = {
   expiring_tomorrow: number;
   companies_needing_follow_up: number;
   occupied_spaces: number;
+  capacity: number;
+  available_spaces: number;
+  occupancy_pct: number;
   monthly_revenue: number;
   weekly_revenue: number;
 };

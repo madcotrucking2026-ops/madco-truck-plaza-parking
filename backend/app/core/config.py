@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     weekly_price: float = 100.0
     monthly_price: float = 250.0
 
+    # Total parking spots on the lot — drives the occupancy / available-spots
+    # readout on the dashboard. Override with PARKING_CAPACITY in .env.
+    parking_capacity: int = 150
+
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     # Base URL the customer-facing app is reachable at — used to build the

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.models import Company, ParkingPass, Payment
 from app.models.enums import PassType
@@ -52,6 +53,9 @@ def dashboard_stats(db: Session = Depends(get_db)) -> DashboardStats:
     occupied_spaces = db.scalar(
         select(func.count(ParkingPass.id)).where(ParkingPass.expiration_date >= today)
     ) or 0
+    capacity = settings.parking_capacity
+    available_spaces = max(capacity - occupied_spaces, 0)
+    occupancy_pct = round(occupied_spaces / capacity * 100) if capacity else 0
 
     return DashboardStats(
         todays_revenue=todays_revenue,
@@ -64,6 +68,9 @@ def dashboard_stats(db: Session = Depends(get_db)) -> DashboardStats:
         expiring_tomorrow=expiring_tomorrow,
         companies_needing_follow_up=companies_needing_follow_up,
         occupied_spaces=occupied_spaces,
+        capacity=capacity,
+        available_spaces=available_spaces,
+        occupancy_pct=occupancy_pct,
         monthly_revenue=revenue_since(month_start),
         weekly_revenue=revenue_since(week_start),
     )

@@ -12,5 +12,8 @@ class DashboardStats(BaseModel):
     expiring_tomorrow: int
     companies_needing_follow_up: int
     occupied_spaces: int
+    capacity: int
+    available_spaces: int
+    occupancy_pct: int
     monthly_revenue: float
     weekly_revenue: float

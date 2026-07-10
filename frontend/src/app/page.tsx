@@ -15,6 +15,7 @@ import {
   RefreshCcw,
   CheckCircle2,
   Truck,
+  SquareParking,
 } from "lucide-react";
 import {
   api,
@@ -190,8 +191,32 @@ export default function DashboardPage() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/70">
               Lot Snapshot
             </h2>
+            {/* Occupancy bar — forest until the lot fills, amber near-full, danger at/over capacity */}
+            <div className="mb-4">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-[var(--cream-foreground)]/70">Occupancy</span>
+                <span className="font-mono text-sm font-semibold tabular-nums text-[var(--cream-foreground)]">
+                  {stats?.occupied_spaces ?? "—"} / {stats?.capacity ?? "—"} · {stats?.occupancy_pct ?? 0}%
+                </span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/5">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(stats?.occupancy_pct ?? 0, 100)}%`,
+                    backgroundColor:
+                      (stats?.occupancy_pct ?? 0) >= 100
+                        ? "var(--danger)"
+                        : (stats?.occupancy_pct ?? 0) >= 85
+                          ? "var(--amber-500)"
+                          : "var(--forest-700)",
+                  }}
+                />
+              </div>
+            </div>
             <div className="space-y-3">
               <SnapshotRow icon={Truck} label="Trucks on lot" value={stats?.occupied_spaces ?? "—"} />
+              <SnapshotRow icon={SquareParking} label="Available spots" value={stats?.available_spaces ?? "—"} />
               <SnapshotRow
                 icon={CalendarClock}
                 label="Active monthly plans"
