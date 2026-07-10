@@ -107,7 +107,7 @@ export default function DashboardPage() {
             key={action.label}
             render={<Link href={action.href} />}
             nativeButton={false}
-            className="btn-embossed h-auto flex-col gap-2 rounded-xl bg-[var(--amber-500)] py-4 text-[var(--forest-950)] hover:bg-[var(--amber-600)]"
+            className="btn-embossed h-auto flex-col gap-2 rounded-xl bg-[var(--forest-700)] py-4 text-[var(--ivory-100)] hover:bg-[var(--forest-600)]"
           >
             <action.icon className="h-5 w-5" strokeWidth={2.25} />
             <span className="text-xs font-semibold">{action.label}</span>

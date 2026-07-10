@@ -51,6 +51,13 @@
 :root {
   /* Madco Truck Plaza brand palette: forest green + warm ivory + amber, */
   /* skeuomorphic paper-ticket cards. Supports light (default) and dark. */
+  /* Colour balance — 60-30-10:
+   *   60% warm ivory / cream  -> page background + .card-paper surfaces
+   *   30% forest green        -> structure, headings, sidebar, selected states,
+   *                              secondary actions
+   *   10% amber (accent)      -> the ONE primary action per view + key money
+   *                              highlights only. Filling many buttons with
+   *                              amber dilutes the 10% — reach for forest first. */
   --forest-950: #0f1b17;
   --forest-900: #14251f;
   --forest-800: #1b3129;
@@ -224,9 +231,11 @@
     outline: 2px solid var(--amber-500);
     outline-offset: 2px;
   }
+  /* Selected = a persistent structural state, so it wears forest (the 30%),
+     not amber. Amber stays reserved for the one primary action (the CTA). */
   .tile-option[data-selected="true"] {
     box-shadow:
-      0 0 0 2px var(--amber-500),
+      0 0 0 2px var(--forest-700),
       0 1px 0 0 oklch(1 0 0 / 55%) inset,
       0 2px 6px -1px oklch(0 0 0 / 22%);
   }
