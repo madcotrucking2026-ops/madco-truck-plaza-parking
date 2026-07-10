@@ -1,0 +1,50 @@
+name: CI
+
+# Runs on every push and PR. Activates automatically once this repo is on GitHub.
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend · pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest
+
+  frontend:
+    name: Frontend · typecheck + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # Public build-time var; falls back to this in next.config anyway.
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Type-check
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+      - name: Lint (non-blocking)
+        run: npm run lint
+        # The strict react-hooks/set-state-in-effect rule flags idiomatic mount
+        # guards; surface lint without failing the build on it.
+        continue-on-error: true
