@@ -15,6 +15,7 @@ from app.routers import (
     auth,
     companies,
     dashboard,
+    insights,
     lot_check,
     monthly_customers,
     passes,
@@ -82,6 +83,7 @@ app.include_router(companies.router)
 app.include_router(passes.router, dependencies=_require_login)
 app.include_router(lot_check.router, dependencies=_require_login)
 app.include_router(dashboard.router, dependencies=_require_login)
+app.include_router(insights.router, dependencies=_require_login)
 app.include_router(monthly_customers.router, dependencies=_require_login)
 app.include_router(reminders.router, dependencies=_require_login)
 app.include_router(payments.router, dependencies=_require_login)
