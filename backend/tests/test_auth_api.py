@@ -1,6 +1,6 @@
 """Auth endpoints + route protection (FastAPI TestClient over an in-memory DB)."""
 
-EMAIL = "admin@madco.test"
+EMAIL = "admin@madcotruckplaza.com"
 PASSWORD = "supersecret1"
 
 
@@ -23,7 +23,7 @@ def test_register_returns_token_then_second_is_forbidden(client):
     assert r.status_code == 200
     assert r.json()["access_token"]
     # SetupLock makes bootstrap one-shot — a second register is refused.
-    r2 = _register(client, email="other@madco.test")
+    r2 = _register(client, email="other@madcotruckplaza.com")
     assert r2.status_code == 403
 
 

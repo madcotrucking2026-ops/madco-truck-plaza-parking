@@ -16,3 +16,4 @@ python-barcode>=0.15
 reportlab>=4.2
 twilio>=9.4
 stripe>=11.1
+email-validator>=2.2

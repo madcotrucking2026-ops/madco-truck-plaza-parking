@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -7,6 +7,7 @@ from datetime import date
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.pass_status import live_status
+from app.core.rate_limit import lookup_limiter
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, User, Vehicle
 from app.models.enums import PassStatus, PassType
 from app.schemas.company import (
@@ -44,10 +45,19 @@ def create_company(
     return company
 
 
-@router.get("/lookup", response_model=CompanyLookupResult)
-def lookup_company(name: str, db: Session = Depends(get_db)) -> CompanyLookupResult:
+@router.get("/lookup", response_model=CompanyLookupResult, dependencies=[Depends(lookup_limiter)])
+def lookup_company(
+    name: str = Query(min_length=1, max_length=255), db: Session = Depends(get_db)
+) -> CompanyLookupResult:
     """Used by Issue Pass (monthly) to auto-fill an existing company's negotiated
-    monthly rate and show which trucks are already parking under it."""
+    monthly rate and show which trucks are already parking under it.
+
+    NOTE: this is deliberately unauthenticated (the kiosk needs it before anyone
+    signs in), which means it answers "does company X exist, what does it pay per
+    month, and which trucks park under it" to anyone who can guess the name. The
+    rate limit blunts wordlist enumeration; it does not eliminate the exposure.
+    If that ever matters, gate the rate/trucks behind a matching phone number.
+    """
     company = db.scalar(select(Company).where(func.lower(Company.name) == name.strip().lower()))
     if company is None:
         return CompanyLookupResult(found=False)

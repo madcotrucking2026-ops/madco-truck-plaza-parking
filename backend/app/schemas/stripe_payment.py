@@ -1,8 +1,18 @@
 from datetime import date
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.enums import PassType, VehicleType
+
+# This request comes from the PUBLIC kiosk — no login. Every field is attacker
+# controlled, so every field is bounded. Unbounded strings here would flow
+# straight into Stripe metadata and into the database.
+NAME_MAX = 255
+IDENT_MAX = 64
+PHONE_MAX = 32
+# Two years. Nobody prepays truck parking further out, and without a cap a
+# crafted end_date turns into an absurd price (and an absurd Stripe charge).
+MAX_PASS_DAYS = 730
 
 
 class CreateIntentRequest(BaseModel):
@@ -10,16 +20,25 @@ class CreateIntentRequest(BaseModel):
     # regenerated on every render/retry) — forwarded to Stripe as an
     # idempotency key so a double-click or network retry can never mint two
     # separate PaymentIntents for the same attempt.
-    client_request_id: str
-    company_name: str
-    truck_number: str | None = None
-    trailer_number: str | None = None
-    license_plate: str | None = None
-    phone: str
+    client_request_id: str = Field(min_length=1, max_length=IDENT_MAX)
+    company_name: str = Field(min_length=1, max_length=NAME_MAX)
+    truck_number: str | None = Field(default=None, max_length=IDENT_MAX)
+    trailer_number: str | None = Field(default=None, max_length=IDENT_MAX)
+    license_plate: str | None = Field(default=None, max_length=IDENT_MAX)
+    phone: str = Field(min_length=1, max_length=PHONE_MAX)
     vehicle_type: VehicleType
     pass_type: PassType
     issue_date: date
     end_date: date | None = None
+
+    @model_validator(mode="after")
+    def _sane_span(self):
+        if self.end_date is not None:
+            if self.end_date <= self.issue_date:
+                raise ValueError("end_date must be after issue_date")
+            if (self.end_date - self.issue_date).days > MAX_PASS_DAYS:
+                raise ValueError(f"A pass cannot run longer than {MAX_PASS_DAYS} days")
+        return self
 
 
 class CreateIntentResponse(BaseModel):
@@ -33,8 +52,8 @@ class FinalizeStripePaymentRequest(BaseModel):
     # dates, etc.) is read back from the PaymentIntent's own Stripe metadata,
     # recorded server-side at create-intent time. A client can no longer
     # submit different pass details than what was actually priced and paid for.
-    payment_intent_id: str
+    payment_intent_id: str = Field(min_length=1, max_length=IDENT_MAX)
 
 
 class CancelIntentRequest(BaseModel):
-    payment_intent_id: str
+    payment_intent_id: str = Field(min_length=1, max_length=IDENT_MAX)

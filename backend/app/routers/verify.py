@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.pass_status import live_status
 from app.core.pass_token import verify_pass_token
+from app.core.rate_limit import verify_limiter
 from app.models import ParkingPass
 from app.schemas.verify import PassVerifyResult
 
@@ -16,7 +17,7 @@ from app.schemas.verify import PassVerifyResult
 router = APIRouter(prefix="/api/verify", tags=["verify"])
 
 
-@router.get("/{token}", response_model=PassVerifyResult)
+@router.get("/{token}", response_model=PassVerifyResult, dependencies=[Depends(verify_limiter)])
 def verify_pass(token: str, db: Session = Depends(get_db)) -> PassVerifyResult:
     pass_id = verify_pass_token(token)
     if pass_id is None:

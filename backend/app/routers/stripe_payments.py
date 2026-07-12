@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.rate_limit import checkout_limiter
 from app.core.stripe_client import is_configured
 from app.models import ParkingPass, Payment
 from app.models.enums import PassType, PaymentMethod, VehicleType
@@ -124,7 +125,13 @@ def _finalize_intent(db: Session, intent) -> ParkingPass:
         raise
 
 
-@router.post("/create-intent", response_model=CreateIntentResponse)
+@router.post(
+    "/create-intent",
+    response_model=CreateIntentResponse,
+    # Public + unauthenticated, and every call mints a real PaymentIntent on the
+    # plaza's Stripe account. Throttle it.
+    dependencies=[Depends(checkout_limiter)],
+)
 def create_intent(payload: CreateIntentRequest, db: Session = Depends(get_db)) -> CreateIntentResponse:
     _require_configured()
     _validate_weekly_span(payload.pass_type, payload.issue_date, payload.end_date)
@@ -144,7 +151,7 @@ def create_intent(payload: CreateIntentRequest, db: Session = Depends(get_db)) -
     return CreateIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, amount=price)
 
 
-@router.post("/finalize", response_model=PassRead)
+@router.post("/finalize", response_model=PassRead, dependencies=[Depends(checkout_limiter)])
 def finalize(payload: FinalizeStripePaymentRequest, db: Session = Depends(get_db)):
     _require_configured()
     try:
@@ -188,7 +195,7 @@ async def webhook(request: Request, db: Session = Depends(get_db)) -> dict:
     return {"received": True}
 
 
-@router.post("/cancel-intent")
+@router.post("/cancel-intent", dependencies=[Depends(checkout_limiter)])
 def cancel_intent(payload: CancelIntentRequest) -> dict:
     """Best-effort cleanup when a customer abandons checkout. This endpoint is
     unauthenticated (the kiosk/self-pay pages are public), so it will ONLY cancel

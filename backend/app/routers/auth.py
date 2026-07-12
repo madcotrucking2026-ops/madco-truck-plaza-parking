@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_admin
 from app.core.logging_config import get_logger
+from app.core.rate_limit import login_limiter, register_limiter
 from app.core.security import DUMMY_PASSWORD_HASH, create_access_token, hash_password, verify_password
 from app.models import SetupLock, User
 from app.models.enums import EmployeeRole
@@ -41,7 +42,7 @@ def auth_status(db: Session = Depends(get_db)) -> AuthStatus:
     return AuthStatus(needs_setup=db.get(SetupLock, 1) is None)
 
 
-@router.post("/register", response_model=TokenResponse)
+@router.post("/register", response_model=TokenResponse, dependencies=[Depends(register_limiter)])
 def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> TokenResponse:
     """Bootstrap only — creates the very first account (as admin). The
     SetupLock insert is what makes this race-safe: its fixed primary key
@@ -67,7 +68,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> TokenRe
     return TokenResponse(access_token=create_access_token(subject=str(user.id)), user=UserRead.model_validate(user))
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, dependencies=[Depends(login_limiter)])
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
     user = db.scalar(select(User).where(User.email == payload.email))
     invalid = HTTPException(status_code=401, detail="Invalid email or password")

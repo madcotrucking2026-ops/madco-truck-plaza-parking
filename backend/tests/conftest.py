@@ -14,6 +14,27 @@ import app.models  # noqa: F401 — registers every table on Base.metadata
 from app.core.database import Base
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limits():
+    """The limiters are module-level singletons keyed by client IP, and every
+    TestClient request comes from the same host — without this, one test's
+    requests would eat the next test's budget and it would 429 for no reason."""
+    from app.core import rate_limit
+
+    limiters = [
+        rate_limit.login_limiter,
+        rate_limit.register_limiter,
+        rate_limit.checkout_limiter,
+        rate_limit.lookup_limiter,
+        rate_limit.verify_limiter,
+    ]
+    for limiter in limiters:
+        limiter.reset()
+    yield
+    for limiter in limiters:
+        limiter.reset()
+
+
 def _fresh_engine():
     # StaticPool keeps every connection pointed at the same in-memory database
     # (a plain sqlite:// pool would hand out fresh, empty DBs per connection).

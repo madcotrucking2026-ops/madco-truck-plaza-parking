@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.logging_config import get_logger
+from app.core.rate_limit import checkout_limiter
 from app.core.stripe_client import is_configured
 from app.models import ParkingPass, Payment, PaymentRequest, User
 from app.models.enums import PassType, PaymentMethod, VehicleType
@@ -110,7 +111,7 @@ def _get_request(db: Session, token: str) -> PaymentRequest:
     return req
 
 
-@router.get("/{token}", response_model=PaymentRequestStatus)
+@router.get("/{token}", response_model=PaymentRequestStatus, dependencies=[Depends(checkout_limiter)])
 def get_payment_request(token: str, db: Session = Depends(get_db)) -> PaymentRequestStatus:
     req = _get_request(db, token)
     receipt = None
@@ -122,7 +123,11 @@ def get_payment_request(token: str, db: Session = Depends(get_db)) -> PaymentReq
     )
 
 
-@router.post("/{token}/create-intent", response_model=CreateIntentResponse)
+@router.post(
+    "/{token}/create-intent",
+    response_model=CreateIntentResponse,
+    dependencies=[Depends(checkout_limiter)],
+)
 def create_intent(token: str, db: Session = Depends(get_db)) -> CreateIntentResponse:
     _require_configured()
     req = _get_request(db, token)
@@ -148,7 +153,7 @@ def create_intent(token: str, db: Session = Depends(get_db)) -> CreateIntentResp
     return CreateIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, amount=float(req.amount))
 
 
-@router.post("/{token}/finalize", response_model=PassRead)
+@router.post("/{token}/finalize", response_model=PassRead, dependencies=[Depends(checkout_limiter)])
 def finalize(token: str, db: Session = Depends(get_db)):
     _require_configured()
     req = _get_request(db, token)
