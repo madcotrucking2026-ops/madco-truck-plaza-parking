@@ -261,6 +261,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-rise { animation: none; }
+  /* Skeleton placeholders stay visible, they just stop pulsing. */
+  .animate-pulse { animation: none; }
   .tile-option,
   .card-paper { transition: none; }
 }

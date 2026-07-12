@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   DollarSign,
@@ -14,8 +14,7 @@ import {
   Send,
   RefreshCcw,
   CheckCircle2,
-  Truck,
-  SquareParking,
+  AlertTriangle,
 } from "lucide-react";
 import {
   api,
@@ -53,19 +52,35 @@ export default function DashboardPage() {
   const [passes, setPasses] = useState<PassListItem[] | null>(null);
   const [reminders, setReminders] = useState<RemindersOverview | null>(null);
   const [leads, setLeads] = useState<ConversionLeads | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // Per-section failure flags. A failed fetch must NEVER fall through to the
+  // section's empty state — "All caught up" when the API is down is a false
+  // all-clear on the one screen whose job is telling the manager what's wrong.
+  const [statsErr, setStatsErr] = useState(false);
+  const [passesErr, setPassesErr] = useState(false);
+  const [remindersErr, setRemindersErr] = useState(false);
+  const [leadsErr, setLeadsErr] = useState(false);
+
   const [renewingPass, setRenewingPass] = useState<PassListItem | null>(null);
   const [sendingId, setSendingId] = useState<number | null>(null);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function loadAll() {
-    api.get<DashboardStats>("/api/dashboard/stats").then(setStats).catch(() =>
-      setError("Could not reach the backend API. Is it running on port 8000?"),
-    );
-    api.get<PassListItem[]>("/api/passes").then(setPasses).catch(() => setPasses([]));
-    api.get<RemindersOverview>("/api/reminders").then(setReminders).catch(() => setReminders(null));
-    api.get<ConversionLeads>("/api/insights/conversion-leads").then(setLeads).catch(() => setLeads(null));
+    setStatsErr(false);
+    setPassesErr(false);
+    setRemindersErr(false);
+    setLeadsErr(false);
+    setStats(null);
+    setPasses(null);
+    setReminders(null);
+    setLeads(null);
+    api.get<DashboardStats>("/api/dashboard/stats").then(setStats).catch(() => setStatsErr(true));
+    api.get<PassListItem[]>("/api/passes").then(setPasses).catch(() => setPassesErr(true));
+    api.get<RemindersOverview>("/api/reminders").then(setReminders).catch(() => setRemindersErr(true));
+    api.get<ConversionLeads>("/api/insights/conversion-leads").then(setLeads).catch(() => setLeadsErr(true));
   }
   useEffect(loadAll, []);
+  useEffect(() => () => clearTimeout(confirmTimer.current ?? undefined), []);
 
   const today = todayISO();
   const tomorrow = addDaysISO(1);
@@ -76,22 +91,33 @@ export default function DashboardPage() {
     .filter((p) => p.status !== "cancelled" && (p.expiration_date === today || p.expiration_date === tomorrow))
     .sort((a, b) => a.expiration_date.localeCompare(b.expiration_date));
 
-  // Upcoming monthly renewals within ~10 days — money to secure.
   const upcomingRenewals = (reminders?.customers ?? [])
     .filter((c) => c.days_until_renewal <= 10)
     .slice(0, 6);
 
+  // Texting a customer can't be undone, so it takes two taps: the first arms the
+  // button, the second sends. Inline (no modal), auto-disarms after 4s.
+  function armConfirm(id: number) {
+    setConfirmingId(id);
+    clearTimeout(confirmTimer.current ?? undefined);
+    confirmTimer.current = setTimeout(() => setConfirmingId(null), 4000);
+  }
+
   async function sendReminder(id: number, company: string) {
+    setConfirmingId(null);
     setSendingId(id);
     try {
       const res = await api.post<SendReminderResult>(`/api/reminders/${id}/send`, {});
       toast.success(res.sent ? `Text sent to ${company}.` : `Reminder recorded for ${company}.`);
     } catch {
-      toast.error("Couldn't send reminder.");
+      toast.error(`Couldn't send the reminder to ${company}.`);
     } finally {
       setSendingId(null);
     }
   }
+
+  // Never render a number we don't have — a placeholder $0 reads as "no revenue".
+  const money = (v: number | undefined) => (stats ? currency(v ?? 0) : "—");
 
   return (
     <div className="space-y-8">
@@ -100,60 +126,72 @@ export default function DashboardPage() {
         <p className="text-sm text-muted-foreground">Madco Truck Plaza &middot; 27416 Ecorse Rd, Romulus, MI</p>
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger-ink)]">{error}</div>
+      {statsErr && (
+        <div className="flex items-center gap-3 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--danger-ink)]" />
+          <p className="flex-1 text-sm text-[var(--danger-ink)]">
+            Can&rsquo;t reach the system, so today&rsquo;s numbers aren&rsquo;t loading.
+          </p>
+          <Button variant="outline" size="sm" onClick={loadAll}>
+            Retry
+          </Button>
+        </div>
       )}
 
-      {/* Quick actions — the few things a manager starts from */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {QUICK_ACTIONS.map((action) => (
-          <Button
-            key={action.label}
-            render={<Link href={action.href} />}
-            nativeButton={false}
-            className="btn-embossed h-auto flex-col gap-2 rounded-xl bg-[var(--forest-700)] py-4 text-[var(--ivory-100)] hover:bg-[var(--forest-600)]"
-          >
-            <action.icon className="h-5 w-5" strokeWidth={2.25} />
-            <span className="text-xs font-semibold">{action.label}</span>
-          </Button>
-        ))}
-      </div>
+      {/* Tight group: how you start, and how the day's going. */}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {QUICK_ACTIONS.map((action) => (
+            <Button
+              key={action.label}
+              render={<Link href={action.href} />}
+              nativeButton={false}
+              className="btn-embossed h-auto flex-col gap-2 rounded-xl bg-[var(--forest-700)] py-4 text-[var(--ivory-100)] hover:bg-[var(--forest-600)]"
+            >
+              <action.icon className="h-5 w-5" strokeWidth={2.25} />
+              <span className="text-xs font-semibold">{action.label}</span>
+            </Button>
+          ))}
+        </div>
 
-      {/* Money — three real windows */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Today's Revenue" value={currency(stats?.todays_revenue ?? 0)} icon={DollarSign} accent="orange" />
-        <StatCard label="This Week" value={currency(stats?.weekly_revenue ?? 0)} icon={CalendarClock} accent="forest" />
-        <StatCard label="This Month" value={currency(stats?.monthly_revenue ?? 0)} icon={TrendingUp} accent="forest" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard label="Today's Revenue" value={money(stats?.todays_revenue)} icon={DollarSign} accent="orange" />
+          <StatCard label="This Week" value={money(stats?.weekly_revenue)} icon={CalendarClock} accent="forest" />
+          <StatCard label="This Month" value={money(stats?.monthly_revenue)} icon={TrendingUp} accent="forest" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Needs attention — the actionable centerpiece (2/3 width) */}
-        <section className="card-paper rounded-2xl p-5 lg:col-span-2">
-          <div className="mb-4 flex items-center gap-2">
-            <AlarmClock className="h-4 w-4 text-[var(--danger)]" />
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/70">
-              Needs Attention — Expiring Today &amp; Tomorrow
-            </h2>
+        {/* THE screen's primary job. Deliberately the loudest thing here. */}
+        <section className="card-paper rounded-2xl p-6 lg:col-span-2">
+          <div className="mb-4 flex items-start gap-3">
+            <AlarmClock className="mt-0.5 h-5 w-5 shrink-0 text-[var(--danger)]" />
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-semibold leading-tight text-[var(--cream-foreground)]">Needs attention</h2>
+              <p className="text-xs text-[var(--cream-foreground)]/55">Passes expiring today &amp; tomorrow</p>
+            </div>
             {needsAttention.length > 0 && (
-              <span className="ml-auto rounded-full bg-[var(--danger)] px-2 py-0.5 text-xs font-bold text-white">
+              <span className="rounded-full bg-[var(--danger)] px-2.5 py-1 text-sm font-bold tabular-nums text-white">
                 {needsAttention.length}
               </span>
             )}
           </div>
-          {passes === null ? (
-            <p className="text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+
+          {passesErr ? (
+            <LoadError what="expiring passes" onRetry={loadAll} />
+          ) : passes === null ? (
+            <SkeletonRows n={3} />
           ) : needsAttention.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <div className="flex flex-col items-center gap-2 py-10 text-center">
               <CheckCircle2 className="h-8 w-8 text-[var(--success)]" />
-              <p className="text-sm text-[var(--cream-foreground)]/70">All caught up — nothing expiring today or tomorrow.</p>
+              <p className="text-sm text-[var(--cream-foreground)]/70">
+                All caught up — nothing expiring today or tomorrow.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
               {needsAttention.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-3 rounded-xl border border-black/5 bg-black/[0.015] p-3"
-                >
+                <div key={p.id} className={ROW}>
                   <div className="min-w-0 flex-1">
                     {p.company_id ? (
                       <Link
@@ -165,17 +203,17 @@ export default function DashboardPage() {
                     ) : (
                       <p className="truncate font-medium text-[var(--cream-foreground)]">{p.company_name ?? "—"}</p>
                     )}
-                    <p className="font-mono text-xs text-[var(--cream-foreground)]/60">
+                    <p className="truncate font-mono text-xs text-[var(--cream-foreground)]/60">
                       {p.truck_number ?? p.trailer_number ?? p.license_plate ?? "—"} · {p.pass_type}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="shrink-0 text-right">
                     <StatusBadge status={p.status} />
                     <p className="mt-0.5 text-xs text-[var(--cream-foreground)]/60">
                       {p.expiration_date === today ? "expires today" : "expires tomorrow"}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setRenewingPass(p)}>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setRenewingPass(p)}>
                     <RefreshCcw className="h-3.5 w-3.5" />
                     Renew
                   </Button>
@@ -185,97 +223,133 @@ export default function DashboardPage() {
           )}
         </section>
 
-        {/* Side column: lot snapshot + upcoming renewals */}
         <div className="space-y-6">
           <section className="card-paper rounded-2xl p-5">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/70">
-              Lot Snapshot
-            </h2>
-            {/* Occupancy bar — forest until the lot fills, amber near-full, danger at/over capacity */}
-            <div className="mb-4">
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm text-[var(--cream-foreground)]/70">Occupancy</span>
-                <span className="font-mono text-sm font-semibold tabular-nums text-[var(--cream-foreground)]">
-                  {stats?.occupied_spaces ?? "—"} / {stats?.capacity ?? "—"} · {stats?.occupancy_pct ?? 0}%
-                </span>
-              </div>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/5">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(stats?.occupancy_pct ?? 0, 100)}%`,
-                    backgroundColor:
-                      (stats?.occupancy_pct ?? 0) >= 100
-                        ? "var(--danger)"
-                        : (stats?.occupancy_pct ?? 0) >= 85
-                          ? "var(--amber-500)"
-                          : "var(--forest-700)",
-                  }}
-                />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <SnapshotRow icon={Truck} label="Trucks on lot" value={stats?.occupied_spaces ?? "—"} />
-              <SnapshotRow icon={SquareParking} label="Available spots" value={stats?.available_spaces ?? "—"} />
-              <SnapshotRow
-                icon={CalendarClock}
-                label="Active monthly plans"
-                value={stats?.active_monthly_passes ?? "—"}
-              />
-              <SnapshotRow
-                icon={UserPlus}
-                label="Companies to follow up"
-                value={stats?.companies_needing_follow_up ?? "—"}
-              />
-            </div>
+            <h2 className={SUBHEAD}>Lot snapshot</h2>
+
+            {statsErr ? (
+              <LoadError what="lot status" onRetry={loadAll} />
+            ) : (
+              <>
+                {/* Lead with the number a manager actually needs when a truck
+                    pulls in: is there room? Occupied + capacity live under it,
+                    so the old duplicate "trucks on lot" row is gone. */}
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-mono text-3xl font-semibold tabular-nums text-[var(--cream-foreground)]">
+                      {stats?.available_spaces ?? "—"}
+                    </span>
+                    <span className="text-sm text-[var(--cream-foreground)]/60">
+                      spots free of {stats?.capacity ?? "—"}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/5">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(stats?.occupancy_pct ?? 0, 100)}%`,
+                        backgroundColor:
+                          (stats?.occupancy_pct ?? 0) >= 100
+                            ? "var(--danger)"
+                            : (stats?.occupancy_pct ?? 0) >= 85
+                              ? "var(--amber-500)"
+                              : "var(--forest-700)",
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1.5 text-xs text-[var(--cream-foreground)]/55">
+                    {stats?.occupied_spaces ?? "—"} parked · {stats?.occupancy_pct ?? 0}% full
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <SnapshotRow
+                    icon={CalendarClock}
+                    label="Active monthly plans"
+                    value={stats?.active_monthly_passes ?? "—"}
+                  />
+                  <SnapshotRow
+                    icon={UserPlus}
+                    label="Companies to follow up"
+                    value={stats?.companies_needing_follow_up ?? "—"}
+                  />
+                </div>
+              </>
+            )}
           </section>
 
           <section className="card-paper rounded-2xl p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/70">
-                Renewals Due Soon
-              </h2>
+              <h2 className={SUBHEAD}>Renewals due soon</h2>
               <Link href="/reminders" className="text-xs text-[var(--amber-600)] hover:underline">
                 View all
               </Link>
             </div>
-            {upcomingRenewals.length === 0 ? (
+            {remindersErr ? (
+              <LoadError what="renewals" onRetry={loadAll} />
+            ) : reminders === null ? (
+              <SkeletonRows n={2} />
+            ) : upcomingRenewals.length === 0 ? (
               <p className="text-sm text-[var(--cream-foreground)]/60">No monthly renewals in the next 10 days.</p>
             ) : (
               <div className="space-y-2">
-                {upcomingRenewals.map((c) => (
-                  <div key={c.monthly_customer_id} className="flex items-center gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-[var(--cream-foreground)]">{c.company_name}</p>
-                      <p className="text-xs text-[var(--cream-foreground)]/60">
-                        {c.days_until_renewal < 0
-                          ? `${Math.abs(c.days_until_renewal)}d overdue`
-                          : c.days_until_renewal === 0
-                            ? "renews today"
-                            : `in ${c.days_until_renewal}d`}
-                        {" · "}
-                        {c.renewal_date}
-                      </p>
+                {upcomingRenewals.map((c) => {
+                  const arming = confirmingId === c.monthly_customer_id;
+                  const sending = sendingId === c.monthly_customer_id;
+                  return (
+                    <div key={c.monthly_customer_id} className={ROW}>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-[var(--cream-foreground)]">{c.company_name}</p>
+                        <p className="truncate text-xs text-[var(--cream-foreground)]/60">
+                          {c.days_until_renewal < 0
+                            ? `${Math.abs(c.days_until_renewal)}d overdue`
+                            : c.days_until_renewal === 0
+                              ? "renews today"
+                              : `in ${c.days_until_renewal}d`}
+                          {" · "}
+                          {c.renewal_date}
+                        </p>
+                      </div>
+                      <Button
+                        variant={arming ? "default" : "outline"}
+                        size="sm"
+                        className={`shrink-0 ${arming ? "btn-embossed bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]" : ""}`}
+                        disabled={sending || !c.phone}
+                        title={!c.phone ? "No phone on file" : undefined}
+                        aria-label={
+                          !c.phone
+                            ? `No phone on file for ${c.company_name}`
+                            : arming
+                              ? `Confirm sending a renewal text to ${c.company_name}`
+                              : `Text a renewal reminder to ${c.company_name}`
+                        }
+                        onClick={() =>
+                          arming
+                            ? sendReminder(c.monthly_customer_id, c.company_name)
+                            : armConfirm(c.monthly_customer_id)
+                        }
+                      >
+                        {sending ? (
+                          "Sending…"
+                        ) : arming ? (
+                          "Send text?"
+                        ) : (
+                          <>
+                            <Send className="h-3.5 w-3.5" />
+                            Remind
+                          </>
+                        )}
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={sendingId === c.monthly_customer_id || !c.phone}
-                      title={!c.phone ? "No phone on file" : "Send reminder"}
-                      onClick={() => sendReminder(c.monthly_customer_id, c.company_name)}
-                    >
-                      <Send className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
         </div>
       </div>
 
-      {/* Conversion opportunities — daily/weekly customers worth a monthly pitch */}
-      <ConversionOpportunities leads={leads} />
+      <ConversionOpportunities leads={leads} failed={leadsErr} onRetry={loadAll} />
 
       {renewingPass && (
         <RenewDialog
@@ -288,22 +362,53 @@ export default function DashboardPage() {
   );
 }
 
+/* One list-row vocabulary for every list on this screen. */
+const ROW = "flex items-center gap-3 rounded-xl border border-black/5 bg-black/[0.015] p-3";
+/* Secondary section heading — quieter than "Needs attention" on purpose, and
+   deliberately not the uppercase-tracked kicker that every section used to wear. */
+const SUBHEAD = "text-sm font-medium text-[var(--cream-foreground)]/70";
+
+function SkeletonRows({ n }: { n: number }) {
+  return (
+    <div className="space-y-2" aria-hidden>
+      {Array.from({ length: n }).map((_, i) => (
+        <div key={i} className="h-[58px] animate-pulse rounded-xl border border-black/5 bg-black/[0.03]" />
+      ))}
+    </div>
+  );
+}
+
+function LoadError({ what, onRetry }: { what: string; onRetry: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="flex items-center gap-3 rounded-xl border border-[var(--danger)]/20 bg-[var(--danger)]/[0.06] p-3"
+    >
+      <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--danger-ink)]" />
+      <p className="flex-1 text-sm text-[var(--danger-ink)]">Couldn&rsquo;t load {what}.</p>
+      <Button variant="outline" size="sm" className="shrink-0" onClick={onRetry}>
+        Retry
+      </Button>
+    </div>
+  );
+}
+
 function SnapshotRow({
   icon: Icon,
   label,
   value,
 }: {
-  icon: typeof Truck;
+  icon: typeof CalendarClock;
   label: string;
   value: number | string;
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/5 text-[var(--cream-foreground)]/70">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/5 text-[var(--cream-foreground)]/70">
         <Icon className="h-4 w-4" />
       </div>
-      <span className="flex-1 text-sm text-[var(--cream-foreground)]/70">{label}</span>
-      <span className="font-mono text-lg font-semibold text-[var(--cream-foreground)]">{value}</span>
+      <span className="min-w-0 flex-1 truncate text-sm text-[var(--cream-foreground)]/70">{label}</span>
+      <span className="font-mono text-lg font-semibold tabular-nums text-[var(--cream-foreground)]">{value}</span>
     </div>
   );
 }
@@ -314,23 +419,28 @@ const LEAD_TIER: Record<string, { label: string; className: string }> = {
   cold: { label: "Cold", className: "bg-black/5 text-[var(--cream-foreground)]/60" },
 };
 
-function ConversionOpportunities({ leads }: { leads: ConversionLeads | null }) {
+function ConversionOpportunities({
+  leads,
+  failed,
+  onRetry,
+}: {
+  leads: ConversionLeads | null;
+  failed: boolean;
+  onRetry: () => void;
+}) {
   const money = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   return (
     <section className="card-paper rounded-2xl p-5">
-      <div className="mb-1 flex items-center gap-2">
-        <TrendingUp className="h-4 w-4 text-[var(--forest-700)]" />
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/70">
-          Conversion Opportunities
-        </h2>
+      <div className="mb-4 flex items-center gap-2">
+        <TrendingUp className="h-4 w-4 shrink-0 text-[var(--forest-700)]" />
+        <h2 className={SUBHEAD}>Worth a monthly pitch</h2>
       </div>
-      <p className="mb-4 text-xs text-[var(--cream-foreground)]/50">
-        Daily &amp; weekly customers who come often enough to pitch a monthly plan.
-      </p>
-      {leads === null ? (
-        <p className="text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+      {failed ? (
+        <LoadError what="conversion leads" onRetry={onRetry} />
+      ) : leads === null ? (
+        <SkeletonRows n={3} />
       ) : leads.leads.length === 0 ? (
         <p className="text-sm text-[var(--cream-foreground)]/60">
           Nobody to pitch right now — frequent visitors show up here automatically.
@@ -340,11 +450,8 @@ function ConversionOpportunities({ leads }: { leads: ConversionLeads | null }) {
           {leads.leads.map((l) => {
             const tier = LEAD_TIER[l.tier] ?? LEAD_TIER.cold;
             return (
-              <div
-                key={l.company_id}
-                className="flex items-center gap-3 rounded-xl border border-black/5 bg-black/[0.015] p-3"
-              >
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tier.className}`}>
+              <div key={l.company_id} className={ROW}>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${tier.className}`}>
                   {tier.label}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -354,12 +461,12 @@ function ConversionOpportunities({ leads }: { leads: ConversionLeads | null }) {
                   >
                     {l.company_name}
                   </Link>
-                  <p className="text-xs text-[var(--cream-foreground)]/60">
+                  <p className="truncate text-xs text-[var(--cream-foreground)]/60">
                     {l.visits} visits · {money(l.total_spent)} in {leads.window_days}d
                     {l.phone ? ` · ${l.phone}` : ""}
                   </p>
                 </div>
-                <p className="whitespace-nowrap text-right font-mono text-sm font-semibold text-[var(--cream-foreground)]">
+                <p className="shrink-0 whitespace-nowrap text-right font-mono text-sm font-semibold text-[var(--cream-foreground)]">
                   {money(l.suggested_monthly)}/mo
                 </p>
               </div>
