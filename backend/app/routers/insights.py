@@ -18,10 +18,23 @@ WINDOW_DAYS = 90
 MIN_VISITS = 3
 
 
-def _tier(visits: int, total_spent: float, monthly: float) -> str:
-    # Hot: they already spend as much (or more) than a monthly plan, or they're
-    # here constantly. Warm: frequent enough to be worth a call. Cold: on the radar.
-    if total_spent >= monthly or visits >= 8:
+def _monthly_equivalent(total_spent: float, window_days: int) -> float:
+    """What this company effectively spends per month right now.
+
+    The window is 90 days, so a raw total can NOT be compared to a monthly price:
+    $280 over 90 days is ~$93/month, not $280/month. Comparing the two directly
+    would tag a light user as a hot lead and have the owner pitch a plan that
+    costs them three times what they pay today.
+    """
+    if window_days <= 0:
+        return 0.0
+    return total_spent / (window_days / 30)
+
+
+def _tier(visits: int, monthly_equivalent: float, monthly: float) -> str:
+    # Hot: they already spend a monthly plan's worth every month, or they're here
+    # constantly. Warm: frequent enough to be worth a call. Cold: on the radar.
+    if monthly_equivalent >= monthly or visits >= 8:
         return "hot"
     if visits >= 5:
         return "warm"
@@ -57,16 +70,19 @@ def conversion_leads(db: Session = Depends(get_db)) -> ConversionLeads:
         .limit(10)
     ).all()
 
-    leads = [
-        ConversionLead(
-            company_id=cid,
-            company_name=name,
-            phone=phone,
-            visits=visits,
-            total_spent=float(total),
-            suggested_monthly=monthly_default,
-            tier=_tier(visits, float(total), monthly_default),
+    leads = []
+    for cid, name, phone, visits, total in rows:
+        equivalent = _monthly_equivalent(float(total), WINDOW_DAYS)
+        leads.append(
+            ConversionLead(
+                company_id=cid,
+                company_name=name,
+                phone=phone,
+                visits=visits,
+                total_spent=float(total),
+                current_monthly_equivalent=round(equivalent, 2),
+                suggested_monthly=monthly_default,
+                tier=_tier(visits, equivalent, monthly_default),
+            )
         )
-        for cid, name, phone, visits, total in rows
-    ]
     return ConversionLeads(window_days=WINDOW_DAYS, leads=leads)

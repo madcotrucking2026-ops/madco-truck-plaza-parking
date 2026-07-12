@@ -517,8 +517,12 @@ function ConversionOpportunities({
                     {l.phone ? ` · ${l.phone}` : ""}
                   </p>
                 </div>
-                <p className="shrink-0 whitespace-nowrap text-right font-mono text-sm font-semibold text-[var(--cream-foreground)]">
-                  {money(l.suggested_monthly)}/mo
+                {/* Both numbers, side by side — so the owner can see at a glance
+                    whether a monthly plan would actually save this customer money. */}
+                <p className="shrink-0 whitespace-nowrap text-right font-mono text-sm text-[var(--cream-foreground)]">
+                  <span className="text-[var(--cream-foreground)]/55">{money(l.current_monthly_equivalent)}/mo now</span>
+                  <span className="mx-1.5 text-[var(--cream-foreground)]/35">→</span>
+                  <span className="font-semibold">{money(l.suggested_monthly)}/mo</span>
                 </p>
               </div>
             );

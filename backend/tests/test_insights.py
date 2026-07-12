@@ -73,6 +73,27 @@ def test_leads_tiering_and_exclusions(db):
     assert spends == sorted(spends, reverse=True)
 
 
+def test_high_total_but_few_visits_is_not_hot(db):
+    """The bug this guards: a 90-day TOTAL was compared against a MONTHLY price,
+    so a company that spent $280 across three months got tagged 'hot' — and the
+    owner would pitch a $250/mo plan to someone paying ~$93/mo today."""
+    _issue_daily(db, "Occasional Freight", 3)  # 3 visits
+    # Push their total over the monthly price without adding visits.
+    _issue_pass_and_payment(
+        db, company_name="Occasional Freight", phone="313-555-0100", vehicle_type=VehicleType.truck,
+        truck_number="BIG", trailer_number=None, license_plate=None, pass_type=PassType.weekly,
+        issue_date=date.today(), end_date=None, price_override=None,
+        payment_method=PaymentMethod.cash, check_number=None,
+    )
+    db.commit()
+
+    lead = next(l for l in conversion_leads(db).leads if l.company_name == "Occasional Freight")
+    assert lead.total_spent >= 150  # 3 daily ($60) + a weekly ($100)
+    # $160 over 90 days is ~$53/month — nowhere near a $250/mo plan.
+    assert lead.current_monthly_equivalent < 250
+    assert lead.tier == "cold"  # 4 visits, low run-rate
+
+
 def test_no_leads_when_everyone_is_monthly_or_rare(db):
     _make_monthly(db, "Monthly Co")
     _issue_daily(db, "Monthly Co", 9)

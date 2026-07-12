@@ -88,6 +88,7 @@ export type ConversionLead = {
   phone: string | null;
   visits: number;
   total_spent: number;
+  current_monthly_equivalent: number;
   suggested_monthly: number;
   tier: "hot" | "warm" | "cold";
 };
