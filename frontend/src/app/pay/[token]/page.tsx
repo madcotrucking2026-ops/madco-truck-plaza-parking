@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, Truck, ShieldCheck, Lock } from "lucide-react";
+import { CheckCircle2, Loader2, Truck, ShieldCheck, Lock } from "lucide-react";
 import {
   api,
   ApiError,
@@ -13,6 +13,7 @@ import {
 } from "@/lib/api";
 import { CardCheckout } from "@/components/checkout/card-checkout";
 import { currency } from "@/lib/pricing";
+import { SETTLE_RETRY_DELAYS_MS, sleep } from "@/lib/settle";
 
 export default function PayPage() {
   const params = useParams<{ token: string }>();
@@ -22,6 +23,7 @@ export default function PayPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paidReceipt, setPaidReceipt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [settling, setSettling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,16 +51,42 @@ export default function PayPage() {
   }, [token]);
 
   async function handleSuccess() {
+    // The card is ALREADY charged by the time we get here. So a failure below is
+    // OUR problem, not the driver's — and it is very likely temporary: Stripe's
+    // webhook finalizes this exact charge server-side within seconds. Watch for
+    // that before sending a paying customer inside to argue with the front desk.
+    setSettling(true);
+
     try {
       const pass = await api.post<PassRead>(`/api/payment-requests/${token}/finalize`, {});
       setPaidReceipt(pass.receipt_number);
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? `Your card was charged but we couldn't finish (${err.message}). Please see the front desk.`
-          : "Your card was charged but we couldn't finish. Please see the front desk.",
-      );
+      setSettling(false);
+      return;
+    } catch {
+      // fall through to the webhook watch
     }
+
+    for (const delay of SETTLE_RETRY_DELAYS_MS) {
+      await sleep(delay);
+      try {
+        const status = await api.get<PaymentRequestStatus>(`/api/payment-requests/${token}`);
+        if (status.status === "paid") {
+          setInfo(status);
+          setPaidReceipt(status.receipt_number);
+          setSettling(false);
+          return;
+        }
+      } catch {
+        // A failed poll (dropped signal, throttled) says nothing about the charge.
+        // Keep waiting — only the deadline below is allowed to give up.
+      }
+    }
+
+    setSettling(false);
+    toast.error(
+      "Your card was charged, but we couldn't confirm it on this page. Please see the front desk — do NOT pay again.",
+      { duration: 30000 },
+    );
   }
 
   return (
@@ -89,6 +117,15 @@ export default function PayPage() {
             <p className="text-sm text-muted-foreground">{info?.summary}</p>
             {paidReceipt && <p className="font-mono text-sm tabular-nums text-foreground">Receipt {paidReceipt}</p>}
             <p className="mt-2 text-xs text-muted-foreground">You&rsquo;re all set. You can close this page.</p>
+          </div>
+        ) : settling ? (
+          /* Card charged, pass not confirmed yet. Never show a payment form or an
+             error here — the driver has already paid, and re-paying is the one
+             mistake this screen must not invite. */
+          <div className="animate-rise card-paper flex flex-col items-center gap-3 rounded-2xl p-8 text-center">
+            <Loader2 className="h-9 w-9 animate-spin text-[var(--forest-700)]" strokeWidth={2} />
+            <p className="text-lg font-bold text-[var(--cream-foreground)]">Payment received</p>
+            <p className="text-sm text-muted-foreground">Confirming your pass — one moment. Please don&rsquo;t close this page.</p>
           </div>
         ) : error ? (
           <div className="animate-rise card-paper rounded-2xl p-8 text-center text-sm text-[var(--danger-ink)]">{error}</div>

@@ -2,7 +2,7 @@
 
 import { isValidElement, cloneElement, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Truck, CreditCard, Banknote, ShieldCheck, CheckCircle2, Lock } from "lucide-react";
+import { Truck, CreditCard, Banknote, ShieldCheck, CheckCircle2, Loader2, Lock } from "lucide-react";
 import {
   api,
   ApiError,
@@ -27,6 +27,7 @@ import { PassTicket } from "@/components/passes/pass-ticket";
 import { CardCheckout } from "@/components/checkout/card-checkout";
 import { stripeConfigured } from "@/lib/stripe";
 import { DAILY_RATE, WEEKLY_RATE, todayISO, currency, defaultEndDate, daysBetween, monthsBetween } from "@/lib/pricing";
+import { SETTLE_RETRY_DELAYS_MS, sleep } from "@/lib/settle";
 import { cn } from "@/lib/utils";
 
 const PASS_TYPES: { value: PassType; label: string; hint: string }[] = [
@@ -58,6 +59,9 @@ export default function BookPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [startingCheckout, setStartingCheckout] = useState(false);
+  // True between "card cleared" and "pass in hand" — the window where the customer
+  // has paid but has nothing to show for it yet.
+  const [settling, setSettling] = useState(false);
   // Stable per-attempt id forwarded to Stripe as an idempotency key, so a
   // double-click or network retry of the same attempt can never mint two
   // separate PaymentIntents. Regenerated only when a fresh attempt starts
@@ -167,24 +171,40 @@ export default function BookPage() {
   }
 
   async function handleCardSuccess(intentId: string) {
-    try {
-      const payload: FinalizeStripePaymentRequest = { payment_intent_id: intentId };
-      const pass = await api.post<PassRead>("/api/payments/stripe/finalize", payload);
-      // Silent success: the PassTicket that replaces the form already shows the
-      // receipt number, so a celebratory toast would just repeat what's on screen.
-      setIssued({ ...pass, company_name: form.company_name, truck_number: form.truck_number });
-      setCheckoutStep("form");
-      setClientSecret(null);
-      setPaymentIntentId(null);
-    } catch (err) {
-      // The charge already succeeded (that's what triggered this callback) —
-      // keep the payment screen exactly as-is rather than bouncing back to a
-      // blank form, so the customer isn't tempted to pay a second time.
-      toast.error(
-        err instanceof ApiError
-          ? `Your card was charged, but we couldn't finish your pass (${err.message}). Please see the front desk.`
-          : "Your card was charged, but we couldn't finish your pass. Please see the front desk.",
-      );
+    const payload: FinalizeStripePaymentRequest = { payment_intent_id: intentId };
+    setSettling(true);
+
+    // The charge already succeeded — that's what triggered this callback. One
+    // failed request here used to send a paying customer to the front desk; now we
+    // keep trying, because /finalize is idempotent and because Stripe's webhook is
+    // finalizing the same charge server-side in parallel. If the webhook wins, this
+    // call returns the very pass it created.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const pass = await api.post<PassRead>("/api/payments/stripe/finalize", payload);
+        // Silent success: the PassTicket that replaces the form already shows the
+        // receipt number, so a celebratory toast would just repeat what's on screen.
+        setIssued({ ...pass, company_name: form.company_name, truck_number: form.truck_number });
+        setCheckoutStep("form");
+        setClientSecret(null);
+        setPaymentIntentId(null);
+        setSettling(false);
+        return;
+      } catch (err) {
+        if (attempt >= SETTLE_RETRY_DELAYS_MS.length) {
+          // Out of patience. Keep the payment screen as-is rather than bouncing
+          // back to a blank form, so nobody is tempted to pay a second time.
+          setSettling(false);
+          toast.error(
+            err instanceof ApiError
+              ? `Your card was charged, but we couldn't finish your pass (${err.message}). Please see the front desk — do NOT pay again.`
+              : "Your card was charged, but we couldn't finish your pass. Please see the front desk — do NOT pay again.",
+            { duration: 30000 },
+          );
+          return;
+        }
+        await sleep(SETTLE_RETRY_DELAYS_MS[attempt]);
+      }
     }
   }
 
@@ -273,12 +293,25 @@ export default function BookPage() {
               </span>
             )}
           </div>
-          <CardCheckout
-            clientSecret={clientSecret}
-            amount={finalPrice ?? 0}
-            onSuccess={handleCardSuccess}
-            onCancel={cancelCardCheckout}
-          />
+          {settling ? (
+            /* Charged, but the pass isn't confirmed yet. Hide the card form —
+               the customer has already paid, and the one mistake this screen must
+               never invite is paying twice. */
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <Loader2 className="h-9 w-9 animate-spin text-[var(--forest-700)]" strokeWidth={2} />
+              <p className="text-lg font-bold text-[var(--cream-foreground)]">Payment received</p>
+              <p className="text-sm text-[var(--cream-foreground)]/60">
+                Issuing your pass — one moment. Please don&rsquo;t close this page.
+              </p>
+            </div>
+          ) : (
+            <CardCheckout
+              clientSecret={clientSecret}
+              amount={finalPrice ?? 0}
+              onSuccess={handleCardSuccess}
+              onCancel={cancelCardCheckout}
+            />
+          )}
         </div>
       ) : (
         <form

@@ -12,7 +12,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.logging_config import get_logger
-from app.core.rate_limit import checkout_limiter
+from app.core.rate_limit import checkout_limiter, lookup_limiter
 from app.core.stripe_client import is_configured
 from app.models import ParkingPass, Payment, PaymentRequest, User
 from app.models.enums import PassType, PaymentMethod, VehicleType
@@ -111,7 +111,10 @@ def _get_request(db: Session, token: str) -> PaymentRequest:
     return req
 
 
-@router.get("/{token}", response_model=PaymentRequestStatus, dependencies=[Depends(checkout_limiter)])
+# The checkout limiter (10/min) guards endpoints that MINT Stripe objects. This one
+# is a cheap read, and a customer whose finalize failed polls it while waiting for
+# the webhook to land — throttling that at 10/min would cut the recovery short.
+@router.get("/{token}", response_model=PaymentRequestStatus, dependencies=[Depends(lookup_limiter)])
 def get_payment_request(token: str, db: Session = Depends(get_db)) -> PaymentRequestStatus:
     req = _get_request(db, token)
     receipt = None
