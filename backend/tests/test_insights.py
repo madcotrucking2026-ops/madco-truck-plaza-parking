@@ -73,25 +73,34 @@ def test_leads_tiering_and_exclusions(db):
     assert spends == sorted(spends, reverse=True)
 
 
+def _issue_weekly(db, company, n):
+    for i in range(n):
+        _issue_pass_and_payment(
+            db, company_name=company, phone="313-555-0100", vehicle_type=VehicleType.truck,
+            truck_number=f"W{i}", trailer_number=None, license_plate=None, pass_type=PassType.weekly,
+            issue_date=date.today(), end_date=None, price_override=None,
+            payment_method=PaymentMethod.cash, check_number=None,
+        )
+
+
 def test_high_total_but_few_visits_is_not_hot(db):
     """The bug this guards: a 90-day TOTAL was compared against a MONTHLY price,
-    so a company that spent $280 across three months got tagged 'hot' — and the
-    owner would pitch a $250/mo plan to someone paying ~$93/mo today."""
-    _issue_daily(db, "Occasional Freight", 3)  # 3 visits
-    # Push their total over the monthly price without adding visits.
-    _issue_pass_and_payment(
-        db, company_name="Occasional Freight", phone="313-555-0100", vehicle_type=VehicleType.truck,
-        truck_number="BIG", trailer_number=None, license_plate=None, pass_type=PassType.weekly,
-        issue_date=date.today(), end_date=None, price_override=None,
-        payment_method=PaymentMethod.cash, check_number=None,
-    )
+    so a company that spent $300 across three months got tagged 'hot' — and the
+    owner would pitch a $250/mo plan to someone paying ~$100/mo today.
+
+    The fixture must actually CROSS the monthly price on the raw total, or the
+    old buggy comparison never fires and this test guards nothing. 3 weekly
+    passes = 3 visits and $300 — the same shape as the real 'Time dispatch' lead
+    that exposed this on live data.
+    """
+    _issue_weekly(db, "Occasional Freight", 3)  # 3 visits, $300 total
     db.commit()
 
     lead = next(l for l in conversion_leads(db).leads if l.company_name == "Occasional Freight")
-    assert lead.total_spent >= 150  # 3 daily ($60) + a weekly ($100)
-    # $160 over 90 days is ~$53/month — nowhere near a $250/mo plan.
+    assert lead.total_spent >= 250, "fixture must cross the monthly price or it proves nothing"
+    # $300 over 90 days is ~$100/month — nowhere near a $250/mo plan.
     assert lead.current_monthly_equivalent < 250
-    assert lead.tier == "cold"  # 4 visits, low run-rate
+    assert lead.tier == "cold"  # few visits, low run-rate
 
 
 def test_hot_leads_always_rank_above_cold_ones(db):
