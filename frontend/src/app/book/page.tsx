@@ -28,7 +28,6 @@ import { CardCheckout } from "@/components/checkout/card-checkout";
 import { stripeConfigured } from "@/lib/stripe";
 import { DAILY_RATE, WEEKLY_RATE, todayISO, currency, defaultEndDate, daysBetween, monthsBetween } from "@/lib/pricing";
 import { SETTLE_RETRY_DELAYS_MS, sleep } from "@/lib/settle";
-import { cn } from "@/lib/utils";
 
 const PASS_TYPES: { value: PassType; label: string; hint: string }[] = [
   { value: "daily", label: "Daily", hint: "$20" },
@@ -68,8 +67,15 @@ export default function BookPage() {
   // (after a cancel or a full reset), never on every render.
   const [checkoutRequestId, setCheckoutRequestId] = useState(() => crypto.randomUUID());
   const [issued, setIssued] = useState<(PassRead & { company_name: string; truck_number?: string }) | null>(null);
-  const [companyMatch, setCompanyMatch] = useState<CompanyLookupResult | null>(null);
-  const [companyLookupDone, setCompanyLookupDone] = useState(false);
+  // One record keyed by the query that produced it, rather than two loose flags.
+  // A result is only trusted while its `query` still matches what's in the form, so
+  // a slow lookup that lands after the driver has typed something else can never be
+  // rendered — and clearing the field needs no state reset, which is what used to
+  // force a setState in the effect body below.
+  const [lookup, setLookup] = useState<{ query: string; result: CompanyLookupResult | null }>({
+    query: "",
+    result: null,
+  });
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -84,29 +90,26 @@ export default function BookPage() {
 
   // Monthly is self-service only for companies the manager has already set
   // up with a custom rate — the truck picks from that established roster.
+  const companyQuery = form.pass_type === "monthly" ? form.company_name.trim() : "";
+
   useEffect(() => {
-    if (form.pass_type !== "monthly" || !form.company_name.trim()) {
-      setCompanyMatch(null);
-      setCompanyLookupDone(false);
-      return;
-    }
-    setCompanyLookupDone(false);
+    if (!companyQuery) return;
     const timeout = setTimeout(() => {
       api
-        .get<CompanyLookupResult>(`/api/companies/lookup?name=${encodeURIComponent(form.company_name.trim())}`)
-        .then((result) => {
-          setCompanyMatch(result.found && result.trucks.length > 0 ? result : null);
-          setCompanyLookupDone(true);
-        })
-        .catch(() => {
-          setCompanyMatch(null);
-          setCompanyLookupDone(true);
-        });
+        .get<CompanyLookupResult>(`/api/companies/lookup?name=${encodeURIComponent(companyQuery)}`)
+        .then((result) =>
+          setLookup({ query: companyQuery, result: result.found && result.trucks.length > 0 ? result : null }),
+        )
+        .catch(() => setLookup({ query: companyQuery, result: null }));
     }, 400);
     return () => clearTimeout(timeout);
-  }, [form.company_name, form.pass_type]);
+  }, [companyQuery]);
 
-  const monthlyNotSetUp = form.pass_type === "monthly" && companyLookupDone && !companyMatch;
+  // Derived, so an answer for a company the driver has since re-typed is simply
+  // not "done" any more — no reset needed, no stale roster on screen.
+  const companyLookupDone = companyQuery !== "" && lookup.query === companyQuery;
+  const companyMatch = companyLookupDone ? lookup.result : null;
+  const monthlyNotSetUp = companyLookupDone && !companyMatch;
   const days = daysBetween(form.start_date, form.end_date);
   const months = monthsBetween(form.start_date, form.end_date);
   const weeklyInvalid = form.pass_type === "weekly" && days !== 7;

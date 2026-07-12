@@ -1,6 +1,6 @@
 "use client";
 
-import { isValidElement, cloneElement, Suspense, useEffect, useId, useState } from "react";
+import { isValidElement, cloneElement, Suspense, useCallback, useEffect, useId, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { api, ApiError, type CompanyLookupResult, type IssuePassRequest, type PassRead, type PassType, type VehicleType, type PaymentMethod, type PaymentRequestCreated } from "@/lib/api";
@@ -77,8 +77,15 @@ function IssuePassForm() {
   const [submitting, setSubmitting] = useState(false);
   const [issued, setIssued] = useState<(PassRead & { company_name: string; truck_number?: string }) | null>(null);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequestCreated | null>(null);
-  const [companyMatch, setCompanyMatch] = useState<CompanyLookupResult | null>(null);
-  const [companyLookupDone, setCompanyLookupDone] = useState(false);
+  // Keyed by the company name that produced it: a lookup that lands after the
+  // manager has retyped the company is no longer "for" what's on screen, so it
+  // can't quote her a different company's monthly rate. (The backend recomputes
+  // the real rate regardless, so this was never a mis-charge — it was a wrong
+  // number to read out to the driver.)
+  const [lookup, setLookup] = useState<{ query: string; result: CompanyLookupResult | null }>({
+    query: "",
+    result: null,
+  });
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -95,31 +102,33 @@ function IssuePassForm() {
     setForm((f) => ({ ...f, start_date: startDate, end_date: defaultEndDate(f.pass_type, startDate) }));
   }
 
-  async function lookupCompany(name: string) {
+  // Always stamps the result with the query it answers, so a slow reply can never
+  // be mistaken for the company now on screen.
+  const fetchCompany = useCallback(async (query: string) => {
+    if (!query) return;
     try {
-      const result = await api.get<CompanyLookupResult>(`/api/companies/lookup?name=${encodeURIComponent(name)}`);
-      setCompanyMatch(result.found ? result : null);
+      const result = await api.get<CompanyLookupResult>(`/api/companies/lookup?name=${encodeURIComponent(query)}`);
+      setLookup({ query, result: result.found ? result : null });
     } catch {
-      setCompanyMatch(null);
-    } finally {
-      setCompanyLookupDone(true);
+      setLookup({ query, result: null });
     }
-  }
+  }, []);
 
   // Monthly rates are per-company (set once, then reused for every truck under
   // that company) — look the company up as soon as Monthly + a company name
   // are both present, so the rate never needs to be typed twice.
+  const companyQuery = form.pass_type === "monthly" ? form.company_name.trim() : "";
+
   useEffect(() => {
-    if (form.pass_type !== "monthly" || !form.company_name.trim()) {
-      setCompanyMatch(null);
-      setCompanyLookupDone(false);
-      return;
-    }
-    setCompanyLookupDone(false);
-    const timeout = setTimeout(() => lookupCompany(form.company_name.trim()), 400);
+    if (!companyQuery) return;
+    const timeout = setTimeout(() => fetchCompany(companyQuery), 400);
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.company_name, form.pass_type]);
+  }, [companyQuery, fetchCompany]);
+
+  // Derived — while the manager is still typing, the previous company's answer is
+  // simply not "done" yet, so nothing stale is ever on screen.
+  const companyLookupDone = companyQuery !== "" && lookup.query === companyQuery;
+  const companyMatch = companyLookupDone ? lookup.result : null;
 
   const heading = form.pass_type === "monthly" ? "Add Monthly Customer" : "Issue New Pass";
   const subheading =
@@ -222,7 +231,7 @@ function IssuePassForm() {
       if (form.pass_type === "monthly") {
         // Refresh the roster so the next truck added for this company sees
         // the one we just issued (and its now-established rate).
-        lookupCompany(form.company_name.trim());
+        fetchCompany(form.company_name.trim());
       }
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to issue pass.");
@@ -234,7 +243,7 @@ function IssuePassForm() {
   function afterCardPaid() {
     toast.success("Payment received — pass issued.");
     setPaymentRequest(null);
-    if (form.pass_type === "monthly") lookupCompany(form.company_name.trim());
+    if (form.pass_type === "monthly") fetchCompany(form.company_name.trim());
     setForm((f) => ({ ...f, truck_number: "", trailer_number: "", license_plate: "", new_company_monthly_rate: "" }));
   }
 
