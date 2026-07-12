@@ -18,11 +18,14 @@ import {
 } from "lucide-react";
 import {
   api,
+  ApiError,
   type ConversionLeads,
   type DashboardStats,
   type PassListItem,
+  type PassRead,
   type RemindersOverview,
   type SendReminderResult,
+  type StrandedCharge,
 } from "@/lib/api";
 import { toast } from "sonner";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -64,6 +67,9 @@ export default function DashboardPage() {
   const [remindersErr, setRemindersErr] = useState(false);
   const [leadsErr, setLeadsErr] = useState(false);
 
+  const [stranded, setStranded] = useState<StrandedCharge[]>([]);
+  const [repairing, setRepairing] = useState<string | null>(null);
+
   const [renewingPass, setRenewingPass] = useState<PassListItem | null>(null);
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
@@ -95,6 +101,9 @@ export default function DashboardPage() {
     api.get<PassListItem[]>("/api/passes").then(setPasses).catch(() => setPassesErr(true));
     api.get<RemindersOverview>("/api/reminders").then(setReminders).catch(() => setRemindersErr(true));
     api.get<ConversionLeads>("/api/insights/conversion-leads").then(setLeads).catch(() => setLeadsErr(true));
+    // Cards Stripe charged that produced no pass. Always expected to be empty, so
+    // it stays silent — no card, no zero-state, nothing — unless it isn't.
+    api.get<StrandedCharge[]>("/api/payments/stripe/stranded").then(setStranded).catch(() => setStranded([]));
   }
   useEffect(loadAll, []);
   useEffect(() => () => clearTimeout(confirmTimer.current ?? undefined), []);
@@ -133,6 +142,23 @@ export default function DashboardPage() {
     }
   }
 
+  async function issueStrandedPass(charge: StrandedCharge) {
+    setRepairing(charge.payment_intent_id);
+    try {
+      const pass = await api.post<PassRead>(
+        `/api/payments/stripe/stranded/${charge.payment_intent_id}/issue`,
+        {},
+      );
+      toast.success(`Pass issued — receipt ${pass.receipt_number}`);
+      setStranded((list) => list.filter((c) => c.payment_intent_id !== charge.payment_intent_id));
+      loadAll();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Couldn't issue the pass. Try again.");
+    } finally {
+      setRepairing(null);
+    }
+  }
+
   // Never render a number we don't have — a placeholder $0 reads as "no revenue".
   const money = (v: number | undefined) => (stats ? currency(v ?? 0) : "—");
 
@@ -142,6 +168,58 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dispatch Dashboard</h1>
         <p className="text-sm text-muted-foreground">Madco Truck Plaza &middot; 27416 Ecorse Rd, Romulus, MI</p>
       </div>
+
+      {/* Above everything else on the screen: a customer who paid and got nothing
+          outranks revenue, renewals and leads. Renders only when it has to. */}
+      {stranded.length > 0 && (
+        <section className="space-y-3 rounded-xl border border-[var(--danger)]/40 bg-[var(--danger)]/10 p-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--danger-ink)]" />
+            <h2 className="text-sm font-semibold text-[var(--danger-ink)]">
+              {stranded.length === 1 ? "A card was charged" : `${stranded.length} cards were charged`} with no pass
+              issued
+            </h2>
+          </div>
+          <p className="text-sm text-[var(--danger-ink)]/90">
+            Stripe took the money but the pass never got created. Issue it now — the customer already paid.
+          </p>
+          <ul className="space-y-2">
+            {stranded.map((charge) => {
+              const needsHuman = charge.reason.includes("needs a human");
+              return (
+                <li
+                  key={charge.payment_intent_id}
+                  className="flex flex-wrap items-center gap-3 rounded-lg bg-[var(--cream)] p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-[var(--cream-foreground)]">
+                      {charge.company_name ?? "Unknown company"}
+                      {charge.vehicle ? ` · ${charge.vehicle}` : ""}
+                    </p>
+                    <p className="text-xs text-[var(--cream-foreground)]/60">{charge.reason}</p>
+                  </div>
+                  <span className="font-mono text-sm font-bold tabular-nums text-[var(--cream-foreground)]">
+                    {currency(charge.amount)}
+                  </span>
+                  {/* A mismatched amount is the one case a click must not paper over. */}
+                  {needsHuman ? (
+                    <span className="text-xs font-medium text-[var(--danger-ink)]">Check with Stripe</span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="min-h-11 shrink-0"
+                      disabled={repairing !== null}
+                      onClick={() => issueStrandedPass(charge)}
+                    >
+                      {repairing === charge.payment_intent_id ? "Issuing…" : "Issue the pass"}
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {statsErr && (
         <div className="flex items-center gap-3 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3">

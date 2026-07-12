@@ -1,17 +1,18 @@
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 
 import stripe
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.core.logging_config import get_logger
 from app.core.rate_limit import checkout_limiter
 from app.core.stripe_client import is_configured
-from app.models import ParkingPass, Payment
+from app.models import ParkingPass, Payment, PaymentRequest, User
 from app.models.enums import PassType, PaymentMethod, VehicleType
 from app.routers.passes import (
     _expiration_for,
@@ -26,6 +27,7 @@ from app.schemas.stripe_payment import (
     CreateIntentRequest,
     CreateIntentResponse,
     FinalizeStripePaymentRequest,
+    StrandedCharge,
 )
 
 router = APIRouter(prefix="/api/payments/stripe", tags=["stripe"])
@@ -207,7 +209,6 @@ async def webhook(request: Request, db: Session = Depends(get_db)) -> dict:
 def _finalize_payment_request(db: Session, token: str, intent) -> None:
     """Webhook safety net for pay-link payments. Imported lazily to keep the
     router import graph acyclic."""
-    from app.models import PaymentRequest
     from app.routers.payment_requests import finalize_request
 
     req = db.scalar(select(PaymentRequest).where(PaymentRequest.token == token))
@@ -228,6 +229,121 @@ def _finalize_payment_request(db: Session, token: str, intent) -> None:
             "token=%s intent=%s reason=%s",
             token, intent.id, exc.detail,
         )
+
+
+def _refunded(intent) -> bool:
+    """Was this charge given back? A refunded card is not stranded money — the
+    customer is square with us, so it must not sit on the dashboard forever
+    demanding a pass that nobody is owed."""
+    charge = getattr(intent, "latest_charge", None)
+    if charge is None or isinstance(charge, str):  # not expanded — assume not refunded
+        return False
+    if getattr(charge, "refunded", False):
+        return True
+    refunded = getattr(charge, "amount_refunded", 0) or 0
+    return refunded >= (intent.amount_received or 0)
+
+
+def _ours(md: dict) -> bool:
+    """Was this charge created by this app? (A charge made by hand in the Stripe
+    Dashboard is not ours to reconcile, and must never be reported as stranded.)"""
+    return "company_name" in md or "payment_request_token" in md
+
+
+@router.get("/stranded", response_model=list[StrandedCharge])
+def stranded_charges(
+    days: int = Query(default=7, ge=1, le=90),
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+) -> list[StrandedCharge]:
+    """Cards Stripe accepted that produced no pass here — money taken, nothing given.
+
+    The webhook and the browser retries mean this list should always be empty. It
+    exists because "should" isn't good enough where money is concerned: if the
+    webhook secret is missing in production, or a charge lands while the app is
+    down for longer than Stripe retries, the ONLY trace today is a log line nobody
+    reads. This turns that into something the manager actually sees.
+    """
+    if not is_configured():
+        return []
+
+    since = int((datetime.now(tz=UTC) - timedelta(days=days)).timestamp())
+    stranded: list[StrandedCharge] = []
+
+    listing = stripe.PaymentIntent.list(created={"gte": since}, limit=100, expand=["data.latest_charge"])
+    for intent in listing.auto_paging_iter():
+        if intent.status != "succeeded":
+            continue
+        md = intent.metadata.to_dict() if intent.metadata else {}
+        if not _ours(md):
+            continue
+        if db.scalar(select(Payment).where(Payment.stripe_payment_intent_id == intent.id)) is not None:
+            continue  # reconciled — this charge has its pass
+        if _refunded(intent):
+            continue  # the customer got their money back; nothing is owed to them
+
+        company = md.get("company_name")
+        vehicle = md.get("truck_number") or md.get("trailer_number") or md.get("license_plate") or None
+        reason = "No pass was issued for this charge."
+        if token := md.get("payment_request_token"):
+            req = db.scalar(select(PaymentRequest).where(PaymentRequest.token == token))
+            if req is not None:
+                company = req.summary
+                if abs(intent.amount_received / 100 - float(req.amount)) > 0.01:
+                    reason = (
+                        f"Charged ${intent.amount_received / 100:.2f} but the request was "
+                        f"for ${float(req.amount):.2f} — needs a human before a pass is issued."
+                    )
+
+        stranded.append(
+            StrandedCharge(
+                payment_intent_id=intent.id,
+                amount=intent.amount_received / 100,
+                charged_at=datetime.fromtimestamp(intent.created, tz=UTC),
+                company_name=company,
+                vehicle=vehicle,
+                reason=reason,
+            )
+        )
+
+    if stranded:
+        log.error("%d charge(s) have no pass — customers paid and got nothing.", len(stranded))
+    return stranded
+
+
+@router.post("/stranded/{payment_intent_id}/issue", response_model=PassRead)
+def issue_stranded_pass(
+    payment_intent_id: str,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    """One-click repair for a stranded charge: issue the pass the customer paid for.
+
+    Runs the same finalize path the webhook would have — so it re-reads the pass
+    details from Stripe's own record of what was bought, never from the caller.
+    """
+    _require_configured()
+    try:
+        intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+    except stripe.error.StripeError as exc:
+        raise HTTPException(status_code=502, detail="Could not reach Stripe — please try again.") from exc
+
+    md = intent.metadata.to_dict() if intent.metadata else {}
+    if not _ours(md):
+        raise HTTPException(status_code=400, detail="That charge wasn't created by this system.")
+
+    if token := md.get("payment_request_token"):
+        from app.routers.payment_requests import finalize_request  # lazy: keeps the router graph acyclic
+
+        req = db.scalar(select(PaymentRequest).where(PaymentRequest.token == token))
+        if req is None:
+            raise HTTPException(status_code=404, detail="The payment request for this charge is gone.")
+        parking_pass = finalize_request(db, req, intent)
+    else:
+        parking_pass = _finalize_intent(db, intent)
+
+    log.info("Stranded charge repaired by hand: intent=%s pass_id=%s", intent.id, parking_pass.id)
+    return parking_pass
 
 
 @router.post("/cancel-intent", dependencies=[Depends(checkout_limiter)])

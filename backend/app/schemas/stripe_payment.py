@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -57,3 +57,19 @@ class FinalizeStripePaymentRequest(BaseModel):
 
 class CancelIntentRequest(BaseModel):
     payment_intent_id: str = Field(min_length=1, max_length=IDENT_MAX)
+
+
+class StrandedCharge(BaseModel):
+    """A card Stripe says we charged, for which no pass exists in our system.
+
+    This should always be an empty list. If it isn't, a real customer paid real
+    money and got nothing — so it is stated in exactly those terms, with enough
+    detail to find the truck and fix it in one click.
+    """
+
+    payment_intent_id: str
+    amount: float
+    charged_at: datetime
+    company_name: str | None
+    vehicle: str | None
+    reason: str
