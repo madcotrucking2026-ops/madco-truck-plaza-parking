@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from datetime import date
@@ -113,15 +113,22 @@ def company_profile(
             .order_by(ParkingPass.issue_date.desc(), ParkingPass.id.desc())
         )
     )
+    monthly_customer = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == company_id))
+
+    # A Payment can hang off a pass OR directly off the monthly customer. Joining
+    # only through passes would silently drop the latter from total_spent — an
+    # under-reported figure on a money screen. Outer-join so both are counted.
+    payment_filters = [ParkingPass.company_id == company_id]
+    if monthly_customer is not None:
+        payment_filters.append(Payment.monthly_customer_id == monthly_customer.id)
     payments = list(
         db.scalars(
             select(Payment)
-            .join(ParkingPass, Payment.parking_pass_id == ParkingPass.id)
-            .where(ParkingPass.company_id == company_id)
+            .outerjoin(ParkingPass, Payment.parking_pass_id == ParkingPass.id)
+            .where(or_(*payment_filters))
             .order_by(Payment.paid_at.desc())
         )
     )
-    monthly_customer = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == company_id))
 
     total_spent = float(sum(p.amount for p in payments))
     active_passes = sum(

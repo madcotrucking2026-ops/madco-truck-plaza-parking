@@ -94,6 +94,30 @@ def test_high_total_but_few_visits_is_not_hot(db):
     assert lead.tier == "cold"  # 4 visits, low run-rate
 
 
+def test_hot_leads_always_rank_above_cold_ones(db):
+    """Ranking used to be by raw 90-day spend while tiering was by run-rate, so a
+    COLD lead could sort above a HOT one and the owner would call it first."""
+    _issue_daily(db, "Regular Runner", 9)  # 9 visits -> hot, but only $180 spent
+    # Big total, few visits -> cold. Under the old sort this outranked the hot one.
+    _issue_daily(db, "Rare Big Spender", 3)
+    for _ in range(3):
+        _issue_pass_and_payment(
+            db, company_name="Rare Big Spender", phone="313-555-0100", vehicle_type=VehicleType.truck,
+            truck_number="BIG", trailer_number=None, license_plate=None, pass_type=PassType.weekly,
+            issue_date=date.today(), end_date=None, price_override=None,
+            payment_method=PaymentMethod.cash, check_number=None,
+        )
+    db.commit()
+
+    leads = conversion_leads(db).leads
+    by_name = {l.company_name: l for l in leads}
+    assert by_name["Regular Runner"].tier == "hot"
+    assert by_name["Rare Big Spender"].total_spent > by_name["Regular Runner"].total_spent  # bigger total…
+    assert by_name["Rare Big Spender"].tier != "hot"  # …but not a hot lead
+    # Hot must come first regardless of the raw total.
+    assert leads[0].company_name == "Regular Runner"
+
+
 def test_no_leads_when_everyone_is_monthly_or_rare(db):
     _make_monthly(db, "Monthly Co")
     _issue_daily(db, "Monthly Co", 9)

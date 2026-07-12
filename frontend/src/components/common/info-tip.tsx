@@ -42,9 +42,10 @@ export function InfoTip({ label, children }: { label: string; children: React.Re
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {open && (
+        // Not role="tooltip": a tooltip is described-by and hover-driven. This is a
+        // disclosure the button owns via aria-expanded + aria-controls.
         <span
           id={id}
-          role="tooltip"
           className="absolute left-1/2 top-full z-30 mt-1.5 w-60 -translate-x-1/2 rounded-lg border border-black/10 bg-[#fffdf8] p-2.5 text-xs font-normal leading-relaxed text-[var(--cream-foreground)]/80 shadow-lg"
         >
           {children}

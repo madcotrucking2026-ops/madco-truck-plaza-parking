@@ -66,8 +66,6 @@ def conversion_leads(db: Session = Depends(get_db)) -> ConversionLeads:
         )
         .group_by(Company.id)
         .having(func.count(ParkingPass.id) >= MIN_VISITS)
-        .order_by(func.sum(ParkingPass.price).desc())
-        .limit(10)
     ).all()
 
     leads = []
@@ -85,4 +83,11 @@ def conversion_leads(db: Session = Depends(get_db)) -> ConversionLeads:
                 tier=_tier(visits, equivalent, monthly_default),
             )
         )
-    return ConversionLeads(window_days=WINDOW_DAYS, leads=leads)
+
+    # Rank by how worth calling they are — hottest first, then by what they
+    # already spend each month. Ordering by the raw 90-day total (as this used
+    # to) put COLD leads above HOT ones, so the owner would call the wrong
+    # company first. Tiering and ranking now agree.
+    tier_rank = {"hot": 0, "warm": 1, "cold": 2}
+    leads.sort(key=lambda l: (tier_rank[l.tier], -l.current_monthly_equivalent, -l.visits))
+    return ConversionLeads(window_days=WINDOW_DAYS, leads=leads[:10])
