@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { BellRing, Send, Info, Zap, CheckCircle2 } from "lucide-react";
 import { api, ApiError, type RemindersOverview, type SendReminderResult, type SweepResult } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 
 const currency = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -18,14 +20,16 @@ function daysBadge(days: number) {
 
 export default function RemindersPage() {
   const [data, setData] = useState<RemindersOverview | null>(null);
+  const [err, setErr] = useState(false);
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
 
+  // Was: fabricating {sms_configured:false, customers:[]} on failure — which told
+  // the manager SMS was off and nobody was due, when in truth we just couldn't ask.
   function load() {
-    api
-      .get<RemindersOverview>("/api/reminders")
-      .then(setData)
-      .catch(() => setData({ sms_configured: false, auto_enabled: false, customers: [] }));
+    setErr(false);
+    setData(null);
+    api.get<RemindersOverview>("/api/reminders").then(setData).catch(() => setErr(true));
   }
   useEffect(load, []);
 
@@ -92,8 +96,14 @@ export default function RemindersPage() {
       )}
 
       <div className="card-paper overflow-hidden rounded-2xl">
-        {data === null ? (
-          <p className="p-6 text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+        {err ? (
+          <div className="p-4">
+            <LoadError what="reminders" onRetry={load} />
+          </div>
+        ) : data === null ? (
+          <div className="p-4">
+            <SkeletonRows n={4} />
+          </div>
         ) : data.customers.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-10 text-center">
             <BellRing className="h-8 w-8 text-[var(--cream-foreground)]/40" />

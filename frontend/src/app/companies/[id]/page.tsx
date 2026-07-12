@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, Star, Truck } from "lucide-react";
-import { api, type CompanyProfile } from "@/lib/api";
+import { api, ApiError, type CompanyProfile } from "@/lib/api";
 import { StatusBadge } from "@/components/passes/status-badge";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -17,19 +19,41 @@ const fmtDateTime = (iso: string) =>
 
 export default function CompanyProfilePage() {
   const params = useParams<{ id: string }>();
+  const id = params?.id;
   const [p, setP] = useState<CompanyProfile | null>(null);
   const [err, setErr] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
-    if (!params?.id) return;
+  // A network failure is NOT "company not found" — that would tell the manager a
+  // real customer doesn't exist just because the API is down.
+  const load = useCallback(() => {
+    if (!id) return;
+    setErr(false);
+    setNotFound(false);
+    setP(null);
     api
-      .get<CompanyProfile>(`/api/companies/${params.id}/profile`)
+      .get<CompanyProfile>(`/api/companies/${id}/profile`)
       .then(setP)
-      .catch(() => setErr(true));
-  }, [params?.id]);
+      .catch((e) => {
+        if (e instanceof ApiError && e.status === 404) setNotFound(true);
+        else setErr(true);
+      });
+  }, [id]);
+  useEffect(load, [load]);
 
-  if (err) return <p className="text-sm text-[var(--danger-ink)]">Company not found.</p>;
-  if (!p) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (notFound) return <p className="text-sm text-[var(--danger-ink)]">Company not found.</p>;
+  if (err)
+    return (
+      <div className="max-w-3xl">
+        <LoadError what="this company" onRetry={load} />
+      </div>
+    );
+  if (!p)
+    return (
+      <div className="max-w-3xl">
+        <SkeletonRows n={4} />
+      </div>
+    );
 
   return (
     <div className="max-w-3xl space-y-6">

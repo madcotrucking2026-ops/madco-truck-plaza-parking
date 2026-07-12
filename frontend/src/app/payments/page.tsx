@@ -6,6 +6,8 @@ import { Search, X, Banknote, CreditCard, FileCheck2, Wallet } from "lucide-reac
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { cn } from "@/lib/utils";
 
 type Payment = {
@@ -74,12 +76,16 @@ function inPeriod(dateStr: string, period: Period): boolean {
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[] | null>(null);
+  const [err, setErr] = useState(false);
   const [query, setQuery] = useState("");
   const [period, setPeriod] = useState<Period>("today");
 
-  useEffect(() => {
-    api.get<Payment[]>("/api/payments").then(setPayments).catch(() => setPayments([]));
-  }, []);
+  function load() {
+    setErr(false);
+    setPayments(null);
+    api.get<Payment[]>("/api/payments").then(setPayments).catch(() => setErr(true));
+  }
+  useEffect(load, []);
 
   const filtered = useMemo(() => {
     if (!payments) return null;
@@ -175,8 +181,14 @@ export default function PaymentsPage() {
           </div>
         </div>
 
-        {payments === null ? (
-          <p className="p-6 pt-0 text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+        {err ? (
+          <div className="p-6 pt-0">
+            <LoadError what="payments" onRetry={load} />
+          </div>
+        ) : payments === null ? (
+          <div className="p-6 pt-0">
+            <SkeletonRows n={5} />
+          </div>
         ) : (filtered ?? []).length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-12 pt-4 text-center">
             <Wallet className="h-8 w-8 text-[var(--cream-foreground)]/30" />

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { History } from "lucide-react";
 import { api, type AuditLogEntry } from "@/lib/api";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 
 const ACTION_STYLE: Record<string, { label: string; className: string }> = {
   created: { label: "Created", className: "bg-[var(--success)]/15 text-[var(--success)]" },
@@ -31,13 +33,14 @@ const fmt = (iso: string) =>
 
 export default function AuditLogPage() {
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null);
+  const [err, setErr] = useState(false);
 
-  useEffect(() => {
-    api
-      .get<AuditLogEntry[]>("/api/audit-log?limit=200")
-      .then(setEntries)
-      .catch(() => setEntries([]));
-  }, []);
+  function load() {
+    setErr(false);
+    setEntries(null);
+    api.get<AuditLogEntry[]>("/api/audit-log?limit=200").then(setEntries).catch(() => setErr(true));
+  }
+  useEffect(load, []);
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -49,8 +52,14 @@ export default function AuditLogPage() {
       </div>
 
       <div className="card-paper rounded-2xl p-2">
-        {entries === null ? (
-          <p className="p-4 text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+        {err ? (
+          <div className="p-2">
+            <LoadError what="the activity log" onRetry={load} />
+          </div>
+        ) : entries === null ? (
+          <div className="p-2">
+            <SkeletonRows n={5} />
+          </div>
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-10 text-center">
             <History className="h-8 w-8 text-[var(--cream-foreground)]/40" />

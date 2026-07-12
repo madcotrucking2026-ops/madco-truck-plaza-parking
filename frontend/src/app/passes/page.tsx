@@ -8,6 +8,8 @@ import { api, ApiError, type PassListItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/passes/status-badge";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { RenewDialog } from "@/components/passes/renew-dialog";
 import { PassTicket } from "@/components/passes/pass-ticket";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,6 +19,7 @@ const currency = (n: number) =>
 
 export default function PassesPage() {
   const [passes, setPasses] = useState<PassListItem[] | null>(null);
+  const [err, setErr] = useState(false);
   const [query, setQuery] = useState("");
   const [renewingPass, setRenewingPass] = useState<PassListItem | null>(null);
   const [viewingPass, setViewingPass] = useState<PassListItem | null>(null);
@@ -34,8 +37,13 @@ export default function PassesPage() {
             .some((v) => v?.toLowerCase().includes(q)),
         );
 
+  // Deliberately does NOT null out `passes` — this also runs on window focus, and
+  // blanking the list into skeletons every time the manager tabs back is worse
+  // than a silent refresh. A failed refresh keeps the last good list on screen;
+  // only a failed FIRST load (passes still null) surfaces the error.
   function load() {
-    api.get<PassListItem[]>("/api/passes").then(setPasses).catch(() => setPasses([]));
+    setErr(false);
+    api.get<PassListItem[]>("/api/passes").then(setPasses).catch(() => setErr(true));
   }
 
   // Re-fetch on mount AND whenever the manager returns to this tab/window.
@@ -110,8 +118,14 @@ export default function PassesPage() {
       </div>
 
       <div className="card-paper overflow-hidden rounded-2xl">
-        {passes === null ? (
-          <p className="p-6 text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+        {err && passes === null ? (
+          <div className="p-4">
+            <LoadError what="passes" onRetry={load} />
+          </div>
+        ) : passes === null ? (
+          <div className="p-4">
+            <SkeletonRows n={5} />
+          </div>
         ) : passes.length === 0 ? (
           <p className="p-6 text-sm text-[var(--cream-foreground)]/60">
             No passes issued yet. <Link href="/passes/issue" className="underline">Issue the first one.</Link>

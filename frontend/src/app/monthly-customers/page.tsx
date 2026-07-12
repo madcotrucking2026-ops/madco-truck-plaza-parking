@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 import {
   Select,
   SelectContent,
@@ -38,13 +40,14 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function MonthlyCustomersPage() {
   const [customers, setCustomers] = useState<MonthlyCustomer[] | null>(null);
+  const [err, setErr] = useState(false);
 
-  useEffect(() => {
-    api
-      .get<MonthlyCustomer[]>("/api/monthly-customers")
-      .then(setCustomers)
-      .catch(() => setCustomers([]));
-  }, []);
+  function load() {
+    setErr(false);
+    setCustomers(null);
+    api.get<MonthlyCustomer[]>("/api/monthly-customers").then(setCustomers).catch(() => setErr(true));
+  }
+  useEffect(load, []);
 
   // Attendant flips a spot's occupancy as trucks come and go (a car "holding
   // spot" gives way to "truck parked", etc). Optimistic; reverts on failure.
@@ -77,8 +80,14 @@ export default function MonthlyCustomersPage() {
       </div>
 
       <div className="card-paper overflow-hidden rounded-2xl">
-        {customers === null ? (
-          <p className="p-6 text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+        {err ? (
+          <div className="p-4">
+            <LoadError what="monthly customers" onRetry={load} />
+          </div>
+        ) : customers === null ? (
+          <div className="p-4">
+            <SkeletonRows n={4} />
+          </div>
         ) : customers.length === 0 ? (
           <p className="p-6 text-sm text-[var(--cream-foreground)]/60">
             No monthly customers yet. Click <span className="font-semibold">New Monthly Customer</span> above to add one.

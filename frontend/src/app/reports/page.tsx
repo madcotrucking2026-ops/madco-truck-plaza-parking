@@ -6,6 +6,8 @@ import { DollarSign, Ticket, Wallet, Building2 } from "lucide-react";
 import { api, type ReportsSummary } from "@/lib/api";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { RevenueChart } from "@/components/reports/revenue-chart";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 
 const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -20,13 +22,30 @@ const METHOD_LABEL: Record<string, string> = {
 
 export default function ReportsPage() {
   const [data, setData] = useState<ReportsSummary | null>(null);
+  const [err, setErr] = useState(false);
 
-  useEffect(() => {
-    api.get<ReportsSummary>("/api/reports/summary").then(setData).catch(() => setData(null));
-  }, []);
+  // Was: .catch(() => setData(null)) — which left the page stuck on "Loading…"
+  // forever, because null is also the loading state.
+  function load() {
+    setErr(false);
+    setData(null);
+    api.get<ReportsSummary>("/api/reports/summary").then(setData).catch(() => setErr(true));
+  }
+  useEffect(load, []);
 
+  if (err) {
+    return (
+      <div className="max-w-2xl">
+        <LoadError what="reports" onRetry={load} />
+      </div>
+    );
+  }
   if (!data) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+    return (
+      <div className="max-w-2xl">
+        <SkeletonRows n={4} />
+      </div>
+    );
   }
 
   const maxMethodTotal = Math.max(...data.payment_methods.map((m) => m.total), 1);

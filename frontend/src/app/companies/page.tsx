@@ -5,17 +5,20 @@ import Link from "next/link";
 import { Building2, ChevronRight, Search } from "lucide-react";
 import { api, type CompanySummary } from "@/lib/api";
 import { Input } from "@/components/ui/input";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<CompanySummary[] | null>(null);
+  const [err, setErr] = useState(false);
   const [q, setQ] = useState("");
 
-  useEffect(() => {
-    api
-      .get<CompanySummary[]>("/api/companies")
-      .then(setCompanies)
-      .catch(() => setCompanies([]));
-  }, []);
+  function load() {
+    setErr(false);
+    setCompanies(null);
+    api.get<CompanySummary[]>("/api/companies").then(setCompanies).catch(() => setErr(true));
+  }
+  useEffect(load, []);
 
   const needle = q.trim().toLowerCase();
   const filtered = (companies ?? []).filter(
@@ -42,8 +45,14 @@ export default function CompaniesPage() {
       </div>
 
       <div className="card-paper rounded-2xl p-2">
-        {companies === null ? (
-          <p className="p-4 text-sm text-[var(--cream-foreground)]/60">Loading…</p>
+        {err ? (
+          <div className="p-2">
+            <LoadError what="companies" onRetry={load} />
+          </div>
+        ) : companies === null ? (
+          <div className="p-2">
+            <SkeletonRows n={4} />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-10 text-center">
             <Building2 className="h-8 w-8 text-[var(--cream-foreground)]/40" />
