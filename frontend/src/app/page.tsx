@@ -29,6 +29,8 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { StatusBadge } from "@/components/passes/status-badge";
 import { RenewDialog } from "@/components/passes/renew-dialog";
 import { Button } from "@/components/ui/button";
+import { LoadError } from "@/components/common/load-error";
+import { SkeletonRows } from "@/components/common/skeleton-rows";
 
 const QUICK_ACTIONS = [
   { label: "Issue Pass", href: "/passes/issue", icon: FilePlus2 },
@@ -132,7 +134,7 @@ export default function DashboardPage() {
           <p className="flex-1 text-sm text-[var(--danger-ink)]">
             Can&rsquo;t reach the system, so today&rsquo;s numbers aren&rsquo;t loading.
           </p>
-          <Button variant="outline" size="sm" onClick={loadAll}>
+          <Button variant="outline" size="sm" className="min-h-11 shrink-0" onClick={loadAll}>
             Retry
           </Button>
         </div>
@@ -196,7 +198,7 @@ export default function DashboardPage() {
                     {p.company_id ? (
                       <Link
                         href={`/companies/${p.company_id}`}
-                        className="block truncate font-medium text-[var(--cream-foreground)] hover:underline"
+                        className={`block truncate font-medium text-[var(--cream-foreground)] ${LINK}`}
                       >
                         {p.company_name ?? "—"}
                       </Link>
@@ -213,7 +215,12 @@ export default function DashboardPage() {
                       {p.expiration_date === today ? "expires today" : "expires tomorrow"}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setRenewingPass(p)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11 shrink-0"
+                    onClick={() => setRenewingPass(p)}
+                  >
                     <RefreshCcw className="h-3.5 w-3.5" />
                     Renew
                   </Button>
@@ -281,7 +288,7 @@ export default function DashboardPage() {
           <section className="card-paper rounded-2xl p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className={SUBHEAD}>Renewals due soon</h2>
-              <Link href="/reminders" className="text-xs text-[var(--amber-600)] hover:underline">
+              <Link href="/reminders" className={`text-xs text-[var(--amber-600)] ${LINK}`}>
                 View all
               </Link>
             </div>
@@ -313,7 +320,7 @@ export default function DashboardPage() {
                       <Button
                         variant={arming ? "default" : "outline"}
                         size="sm"
-                        className={`shrink-0 ${arming ? "btn-embossed bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]" : ""}`}
+                        className={`min-h-11 shrink-0 ${arming ? "btn-embossed bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]" : ""}`}
                         disabled={sending || !c.phone}
                         title={!c.phone ? "No phone on file" : undefined}
                         aria-label={
@@ -367,31 +374,9 @@ const ROW = "flex items-center gap-3 rounded-xl border border-black/5 bg-black/[
 /* Secondary section heading — quieter than "Needs attention" on purpose, and
    deliberately not the uppercase-tracked kicker that every section used to wear. */
 const SUBHEAD = "text-sm font-medium text-[var(--cream-foreground)]/70";
-
-function SkeletonRows({ n }: { n: number }) {
-  return (
-    <div className="space-y-2" aria-hidden>
-      {Array.from({ length: n }).map((_, i) => (
-        <div key={i} className="h-[58px] animate-pulse rounded-xl border border-black/5 bg-black/[0.03]" />
-      ))}
-    </div>
-  );
-}
-
-function LoadError({ what, onRetry }: { what: string; onRetry: () => void }) {
-  return (
-    <div
-      role="alert"
-      className="flex items-center gap-3 rounded-xl border border-[var(--danger)]/20 bg-[var(--danger)]/[0.06] p-3"
-    >
-      <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--danger-ink)]" />
-      <p className="flex-1 text-sm text-[var(--danger-ink)]">Couldn&rsquo;t load {what}.</p>
-      <Button variant="outline" size="sm" className="shrink-0" onClick={onRetry}>
-        Retry
-      </Button>
-    </div>
-  );
-}
+/* Links need a visible keyboard focus ring, not just a hover underline. */
+const LINK =
+  "rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--amber-500)]";
 
 function SnapshotRow({
   icon: Icon,
@@ -457,7 +442,7 @@ function ConversionOpportunities({
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/companies/${l.company_id}`}
-                    className="block truncate font-medium text-[var(--cream-foreground)] hover:underline"
+                    className={`block truncate font-medium text-[var(--cream-foreground)] ${LINK}`}
                   >
                     {l.company_name}
                   </Link>
