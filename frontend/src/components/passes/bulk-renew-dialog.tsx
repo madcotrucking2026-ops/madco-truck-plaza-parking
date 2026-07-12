@@ -231,14 +231,17 @@ export function BulkRenewDialog({
 
               {anyUnknown && (
                 <p className="rounded-lg bg-[var(--danger)]/10 p-2 text-xs text-[var(--danger-ink)]">
-                  One or more monthly companies has no rate on file — those will be priced by the system when renewed.
+                  A monthly company here has no rate on file, so part of this total is unknown — the system will
+                  price it at the standard monthly rate. Renew that one on its own so you collect the right amount.
                 </p>
               )}
 
               <div className="flex items-baseline justify-between border-t border-black/5 pt-3">
                 <span className="text-sm text-muted-foreground">Total to collect</span>
+                {/* Never show a precise figure we know is short — the manager would
+                    collect this number while the system records a bigger one. */}
                 <span className="font-mono text-2xl font-bold tabular-nums">
-                  {stillLoading ? "…" : currency(total)}
+                  {stillLoading ? "…" : anyUnknown ? `${currency(total)}+` : currency(total)}
                 </span>
               </div>
             </div>
@@ -249,10 +252,14 @@ export function BulkRenewDialog({
               </Button>
               <Button
                 className="btn-embossed bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]"
-                disabled={busy || stillLoading}
+                disabled={busy || stillLoading || anyUnknown}
                 onClick={run}
               >
-                {busy ? "Renewing…" : `Confirm & Take Payment — ${currency(total)}`}
+                {busy
+                  ? "Renewing…"
+                  : anyUnknown
+                    ? "Rate missing — renew that one separately"
+                    : `Confirm & Take Payment — ${currency(total)}`}
               </Button>
             </DialogFooter>
           </>
