@@ -321,7 +321,7 @@ export default function DashboardPage() {
                   />
                   <SnapshotRow
                     icon={UserPlus}
-                    label="Companies to follow up"
+                    label="Companies to call"
                     value={stats?.companies_needing_follow_up ?? "—"}
                     hint="Companies you've flagged on their profile as needing a call — unpaid balance, a dispute, anything worth chasing."
                   />
@@ -452,7 +452,9 @@ function SnapshotRow({
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/5 text-[var(--cream-foreground)]/70">
         <Icon className="h-4 w-4" />
       </div>
-      <span className="min-w-0 flex-1 truncate text-sm text-[var(--cream-foreground)]/70">{label}</span>
+      {/* Deliberately NOT truncated: a label clipped to "Companies to foll…"
+          has stopped labelling anything. Let it wrap in the narrow column. */}
+      <span className="min-w-0 flex-1 text-sm leading-snug text-[var(--cream-foreground)]/70">{label}</span>
       {hint && <InfoTip label={`What "${label}" means`}>{hint}</InfoTip>}
       <span className="font-mono text-lg font-semibold tabular-nums text-[var(--cream-foreground)]">{value}</span>
     </div>

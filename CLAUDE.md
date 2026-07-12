@@ -148,11 +148,19 @@ Inter
 
 Body
 
-SF Pro
+Inter
+
+(Originally SF Pro. But SF Pro only exists on Apple devices — on Windows and
+Android the stack fell through to Segoe UI / Inter, so Inter headings sat next
+to a different body face chosen by the operating system, and the UI rendered
+differently on every machine. One family, differentiated by weight.)
 
 Numbers
 
 JetBrains Mono
+
+The deliberate type contrast is Inter vs JetBrains Mono. Mono is reserved for
+what a truck stop reads as data — truck numbers, plates, receipt numbers, money.
 
 ---
 
