@@ -8,6 +8,7 @@ import { api, ApiError, type CompanyProfile } from "@/lib/api";
 import { StatusBadge } from "@/components/passes/status-badge";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
+import { InfoTip } from "@/components/common/info-tip";
 
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -86,6 +87,11 @@ export default function CompanyProfilePage() {
             <div className="inline-flex items-center gap-1 text-[var(--amber-600)]">
               <Star className="h-4 w-4" />
               <span className="font-mono text-lg font-bold tabular-nums">{p.loyalty_score}</span>
+              <InfoTip label="How the loyalty score is calculated">
+                A rough 0–100 score from how often they park (each visit counts 4) and how many passes they have
+                active right now (each counts 10). Higher means a more regular customer — it&rsquo;s a nudge, not a
+                credit rating.
+              </InfoTip>
             </div>
             <p className="text-xs text-[var(--cream-foreground)]/55">loyalty</p>
           </div>

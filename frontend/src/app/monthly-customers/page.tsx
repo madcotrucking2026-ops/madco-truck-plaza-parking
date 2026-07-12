@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
+import { InfoTip } from "@/components/common/info-tip";
 import {
   Select,
   SelectContent,
@@ -101,7 +102,18 @@ export default function MonthlyCustomersPage() {
                   <th className="px-4 py-3 font-medium">Trucks</th>
                   <th className="px-4 py-3 font-medium">Monthly Price</th>
                   <th className="px-4 py-3 font-medium">Renewal Date</th>
-                  <th className="px-4 py-3 font-medium">Spot Status</th>
+                  <th className="px-4 py-3 font-medium">
+                    <span className="inline-flex items-center gap-1">
+                      Spot Status
+                      <InfoTip label="What the spot statuses mean">
+                        Who is physically in the spot right now. <strong className="mt-1 block">Holding spot</strong>{" "}
+                        — a car or personal vehicle is parked there to save the spot while the truck is out.
+                        <strong className="mt-1 block">Truck / Trailer parked</strong> — the rig is in it.
+                        <strong className="mt-1 block">Away</strong> — the spot is empty. Change it as trucks come
+                        and go.
+                      </InfoTip>
+                    </span>
+                  </th>
                   <th className="px-4 py-3 font-medium">Balance</th>
                 </tr>
               </thead>

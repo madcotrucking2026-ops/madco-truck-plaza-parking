@@ -28,9 +28,11 @@ import { toast } from "sonner";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { StatusBadge } from "@/components/passes/status-badge";
 import { RenewDialog } from "@/components/passes/renew-dialog";
+import { BulkRenewDialog } from "@/components/passes/bulk-renew-dialog";
 import { Button } from "@/components/ui/button";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
+import { InfoTip } from "@/components/common/info-tip";
 
 const QUICK_ACTIONS = [
   { label: "Issue Pass", href: "/passes/issue", icon: FilePlus2 },
@@ -66,6 +68,19 @@ export default function DashboardPage() {
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Clearing the expiring-passes list is this screen's whole job, so it can be
+  // done in one pass instead of one dialog per truck.
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  function toggleSelected(id: number, on: boolean) {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
 
   function loadAll() {
     setStatsErr(false);
@@ -172,10 +187,26 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold leading-tight text-[var(--cream-foreground)]">Needs attention</h2>
               <p className="text-xs text-[var(--cream-foreground)]/55">Passes expiring today &amp; tomorrow</p>
             </div>
-            {needsAttention.length > 0 && (
-              <span className="rounded-full bg-[var(--danger)] px-2.5 py-1 text-sm font-bold tabular-nums text-white">
-                {needsAttention.length}
-              </span>
+            {selected.size > 0 ? (
+              <div className="flex shrink-0 items-center gap-2">
+                <Button variant="ghost" size="sm" className="min-h-11" onClick={() => setSelected(new Set())}>
+                  Clear
+                </Button>
+                <Button
+                  size="sm"
+                  className="btn-embossed min-h-11 bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]"
+                  onClick={() => setBulkOpen(true)}
+                >
+                  <RefreshCcw className="h-3.5 w-3.5" />
+                  Renew {selected.size}
+                </Button>
+              </div>
+            ) : (
+              needsAttention.length > 0 && (
+                <span className="rounded-full bg-[var(--danger)] px-2.5 py-1 text-sm font-bold tabular-nums text-white">
+                  {needsAttention.length}
+                </span>
+              )
             )}
           </div>
 
@@ -194,6 +225,13 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {needsAttention.map((p) => (
                 <div key={p.id} className={ROW}>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(p.id)}
+                    onChange={(e) => toggleSelected(p.id, e.target.checked)}
+                    aria-label={`Select ${p.company_name ?? "this pass"} for bulk renewal`}
+                    className="h-5 w-5 shrink-0 cursor-pointer accent-[var(--forest-700)]"
+                  />
                   <div className="min-w-0 flex-1">
                     {p.company_id ? (
                       <Link
@@ -232,7 +270,13 @@ export default function DashboardPage() {
 
         <div className="space-y-6">
           <section className="card-paper rounded-2xl p-5">
-            <h2 className={SUBHEAD}>Lot snapshot</h2>
+            <div className="mb-3 flex items-center gap-1">
+              <h2 className={SUBHEAD}>Lot snapshot</h2>
+              <InfoTip label="How occupancy is measured">
+                Counts every pass that hasn&rsquo;t expired yet. The bar runs green, turns amber past 85% full,
+                and red once the lot is at or over capacity. Capacity is set with <code>PARKING_CAPACITY</code>.
+              </InfoTip>
+            </div>
 
             {statsErr ? (
               <LoadError what="lot status" onRetry={loadAll} />
@@ -279,6 +323,7 @@ export default function DashboardPage() {
                     icon={UserPlus}
                     label="Companies to follow up"
                     value={stats?.companies_needing_follow_up ?? "—"}
+                    hint="Companies you've flagged on their profile as needing a call — unpaid balance, a dispute, anything worth chasing."
                   />
                 </div>
               </>
@@ -365,6 +410,19 @@ export default function DashboardPage() {
           onRenewed={loadAll}
         />
       )}
+
+      {bulkOpen && selected.size > 0 && (
+        <BulkRenewDialog
+          passes={needsAttention.filter((p) => selected.has(p.id))}
+          onOpenChange={(open) => {
+            if (!open) {
+              setBulkOpen(false);
+              setSelected(new Set());
+            }
+          }}
+          onRenewed={loadAll}
+        />
+      )}
     </div>
   );
 }
@@ -382,10 +440,12 @@ function SnapshotRow({
   icon: Icon,
   label,
   value,
+  hint,
 }: {
   icon: typeof CalendarClock;
   label: string;
   value: number | string;
+  hint?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -393,6 +453,7 @@ function SnapshotRow({
         <Icon className="h-4 w-4" />
       </div>
       <span className="min-w-0 flex-1 truncate text-sm text-[var(--cream-foreground)]/70">{label}</span>
+      {hint && <InfoTip label={`What "${label}" means`}>{hint}</InfoTip>}
       <span className="font-mono text-lg font-semibold tabular-nums text-[var(--cream-foreground)]">{value}</span>
     </div>
   );
@@ -421,6 +482,11 @@ function ConversionOpportunities({
       <div className="mb-4 flex items-center gap-2">
         <TrendingUp className="h-4 w-4 shrink-0 text-[var(--forest-700)]" />
         <h2 className={SUBHEAD}>Worth a monthly pitch</h2>
+        <InfoTip label="How these leads are ranked">
+          Daily &amp; weekly companies with 3+ visits in the last 90 days that aren&rsquo;t already on a monthly plan.
+          <strong className="mt-1 block">Hot</strong> — already spends as much as a monthly plan, or 8+ visits.
+          <strong className="mt-1 block">Warm</strong> — 5+ visits. <strong className="mt-1 block">Cold</strong> — 3+ visits, on the radar.
+        </InfoTip>
       </div>
       {failed ? (
         <LoadError what="conversion leads" onRetry={onRetry} />
