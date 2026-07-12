@@ -153,18 +153,22 @@ def create_intent(token: str, db: Session = Depends(get_db)) -> CreateIntentResp
     return CreateIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, amount=float(req.amount))
 
 
-@router.post("/{token}/finalize", response_model=PassRead, dependencies=[Depends(checkout_limiter)])
-def finalize(token: str, db: Session = Depends(get_db)):
-    _require_configured()
-    req = _get_request(db, token)
+def finalize_request(db: Session, req: PaymentRequest, intent) -> ParkingPass:
+    """Turn a confirmed charge into the pass this request was for.
 
-    # Idempotent: if already paid, hand back the pass it produced.
+    Shared by TWO callers, on purpose:
+      * the customer's own /finalize call — the fast path, for instant feedback;
+      * the Stripe webhook — the safety net, for when their phone dies or drops
+        signal after the card is charged but before that call ever lands.
+
+    Without the second caller a customer pays, loses connection, and we are left
+    holding their money with no pass issued and the request stuck on "pending".
+    Idempotent: whichever path gets here first creates the pass, the other one
+    returns the same pass.
+    """
     if req.status == "paid" and req.parking_pass_id is not None:
         return db.get(ParkingPass, req.parking_pass_id)
 
-    if not req.stripe_payment_intent_id:
-        raise HTTPException(status_code=400, detail="Payment hasn't started yet.")
-    intent = stripe.PaymentIntent.retrieve(req.stripe_payment_intent_id)
     if intent.status != "succeeded":
         raise HTTPException(status_code=400, detail="Payment has not completed yet.")
 
@@ -222,6 +226,23 @@ def finalize(token: str, db: Session = Depends(get_db)):
     db.commit()
     log.info(
         "Card payment finalized: token=%s kind=%s $%.2f pass_id=%s intent=%s",
-        token, req.kind, charged, parking_pass.id, intent.id,
+        req.token, req.kind, charged, parking_pass.id, intent.id,
     )
     return parking_pass
+
+
+@router.post("/{token}/finalize", response_model=PassRead, dependencies=[Depends(checkout_limiter)])
+def finalize(token: str, db: Session = Depends(get_db)):
+    """The customer's own call, right after their card clears. The Stripe webhook
+    calls finalize_request() too, as the safety net if this one never arrives."""
+    _require_configured()
+    req = _get_request(db, token)
+
+    if req.status == "paid" and req.parking_pass_id is not None:
+        return db.get(ParkingPass, req.parking_pass_id)
+
+    if not req.stripe_payment_intent_id:
+        raise HTTPException(status_code=400, detail="Payment hasn't started yet.")
+
+    intent = stripe.PaymentIntent.retrieve(req.stripe_payment_intent_id)
+    return finalize_request(db, req, intent)

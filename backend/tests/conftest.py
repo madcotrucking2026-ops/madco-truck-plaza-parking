@@ -48,27 +48,37 @@ def _fresh_engine():
 
 
 @pytest.fixture
-def db() -> Session:
-    engine = _fresh_engine()
+def engine():
+    """One in-memory database per test, shared by BOTH the `db` session and the
+    `client`'s request sessions. They used to build an engine each, so a test that
+    seeded through `db` and then called the API through `client` was quietly
+    talking to two different databases and the API saw an empty one."""
+    eng = _fresh_engine()
+    try:
+        yield eng
+    finally:
+        eng.dispose()
+
+
+@pytest.fixture
+def db(engine) -> Session:
     TestSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = TestSession()
     try:
         yield session
     finally:
         session.close()
-        engine.dispose()
 
 
 @pytest.fixture
-def client():
-    """FastAPI TestClient wired to an isolated in-memory DB via get_db override.
+def client(engine):
+    """FastAPI TestClient wired to the same in-memory DB via a get_db override.
     Built without the lifespan context, so the reminder scheduler never starts."""
     from fastapi.testclient import TestClient
 
     from app.core.database import get_db
     from app.main import app
 
-    engine = _fresh_engine()
     TestSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
     def override_get_db():
@@ -83,4 +93,3 @@ def client():
         yield TestClient(app)
     finally:
         app.dependency_overrides.pop(get_db, None)
-        engine.dispose()

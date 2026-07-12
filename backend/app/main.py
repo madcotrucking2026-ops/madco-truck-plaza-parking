@@ -51,6 +51,19 @@ Base.metadata.create_all(bind=engine)
 run_startup_migrations()
 log.info("Application starting — DB ready, migrations applied.")
 
+# Taking cards with no webhook secret means the safety net is OFF: if a customer's
+# phone dies between the charge clearing and the browser telling us about it, we
+# keep their money and no pass is ever issued, with nothing to reconcile it. Never
+# let that state be silent.
+if settings.stripe_secret_key and not settings.stripe_webhook_secret:
+    log.warning(
+        "STRIPE_WEBHOOK_SECRET is not set — card payments will work, but a charge "
+        "whose browser dies before finalize will NOT self-heal. Set it from the "
+        "Stripe Dashboard webhook endpoint before taking real money."
+    )
+if settings.stripe_secret_key.startswith("sk_live_") and not settings.public_base_url.startswith("https://"):
+    log.warning("LIVE Stripe key with a non-HTTPS PUBLIC_BASE_URL (%s).", settings.public_base_url)
+
 
 @app.exception_handler(Exception)
 async def _log_unhandled(request: Request, exc: Exception) -> JSONResponse:

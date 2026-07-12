@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.logging_config import get_logger
 from app.core.rate_limit import checkout_limiter
 from app.core.stripe_client import is_configured
 from app.models import ParkingPass, Payment
@@ -28,6 +29,7 @@ from app.schemas.stripe_payment import (
 )
 
 router = APIRouter(prefix="/api/payments/stripe", tags=["stripe"])
+log = get_logger(__name__)
 
 
 def _require_configured() -> None:
@@ -184,15 +186,48 @@ async def webhook(request: Request, db: Session = Depends(get_db)) -> dict:
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
         md = intent.metadata.to_dict() if intent.metadata else {}
-        # This safety-net only owns the kiosk direct-pay intents, which carry the
-        # full pass metadata (company_name etc). Payment-request intents finalize
-        # via their own client-driven route, and unrelated charges (e.g. a manual
-        # Dashboard charge) aren't ours at all — ack and ignore both so Stripe
-        # doesn't retry a payment we can't turn into a pass for ~3 days.
+
         if "company_name" in md:
+            # Kiosk direct-pay: the intent carries the full pass metadata.
             _finalize_intent(db, intent)
 
+        elif "payment_request_token" in md:
+            # A manager-created pay link. This branch used to be missing: the
+            # event was acked and dropped, so a customer whose phone died after
+            # paying left us holding their money with no pass issued and the
+            # request stuck on "pending", with nothing to reconcile it.
+            _finalize_payment_request(db, md["payment_request_token"], intent)
+
+        # Anything else (e.g. a charge created by hand in the Stripe Dashboard)
+        # isn't ours — ack it so Stripe stops retrying for ~3 days.
+
     return {"received": True}
+
+
+def _finalize_payment_request(db: Session, token: str, intent) -> None:
+    """Webhook safety net for pay-link payments. Imported lazily to keep the
+    router import graph acyclic."""
+    from app.models import PaymentRequest
+    from app.routers.payment_requests import finalize_request
+
+    req = db.scalar(select(PaymentRequest).where(PaymentRequest.token == token))
+    if req is None:
+        log.warning("Webhook: no payment request for token=%s intent=%s", token, intent.id)
+        return  # nothing to reconcile; ack so Stripe stops retrying
+
+    try:
+        finalize_request(db, req, intent)
+    except HTTPException as exc:
+        # A permanent problem (e.g. the charged amount doesn't match the quote).
+        # Retrying will never fix it, so log loudly and ack rather than let Stripe
+        # hammer us for three days — but this is money taken with no pass, and it
+        # needs a human.
+        db.rollback()
+        log.error(
+            "Webhook could NOT finalize a paid request — money taken, no pass. "
+            "token=%s intent=%s reason=%s",
+            token, intent.id, exc.detail,
+        )
 
 
 @router.post("/cancel-intent", dependencies=[Depends(checkout_limiter)])
