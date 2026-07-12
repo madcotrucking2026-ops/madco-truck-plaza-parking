@@ -64,6 +64,10 @@ export function BulkRenewDialog({
   const [checkNumber, setCheckNumber] = useState("");
   const [rates, setRates] = useState<Record<string, number | null> | null>(null);
   const [busy, setBusy] = useState(false);
+  // Renewals run one at a time, so a stack of eight is eight round-trips. Without
+  // this the manager stares at "Renewing…" with no idea whether it's working or
+  // wedged — and he's holding the customer's cash while he waits.
+  const [progress, setProgress] = useState(0);
   const [done, setDone] = useState<{ ok: number; failed: string[] } | null>(null);
 
   // Each pass renews by its own natural span: a lapsed pass restarts from today,
@@ -115,6 +119,7 @@ export function BulkRenewDialog({
 
   async function run() {
     setBusy(true);
+    setProgress(0);
     let ok = 0;
     const failed: string[] = [];
     // Sequential on purpose: each renewal writes a payment, and a partial
@@ -133,6 +138,7 @@ export function BulkRenewDialog({
           `${x.pass.company_name ?? "—"} · ${vehicleOf(x.pass)}${e instanceof ApiError ? ` — ${e.message}` : ""}`,
         );
       }
+      setProgress((n) => n + 1);
     }
     setBusy(false);
     setDone({ ok, failed });
@@ -244,6 +250,21 @@ export function BulkRenewDialog({
                   {stillLoading ? "…" : anyUnknown ? `${currency(total)}+` : currency(total)}
                 </span>
               </div>
+
+              {busy && (
+                <div role="status" aria-live="polite">
+                  <p className="mb-1.5 text-xs text-muted-foreground">
+                    Renewing {Math.min(progress + 1, plan.length)} of {plan.length}…
+                  </p>
+                  {/* The bar's width IS the state — not decoration. */}
+                  <div className="h-1.5 overflow-hidden rounded-full bg-black/5">
+                    <div
+                      className="h-full rounded-full bg-[var(--forest-700)] transition-[width] duration-200 ease-out motion-reduce:transition-none"
+                      style={{ width: `${(progress / plan.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <DialogFooter>
@@ -256,7 +277,7 @@ export function BulkRenewDialog({
                 onClick={run}
               >
                 {busy
-                  ? "Renewing…"
+                  ? `Renewing ${Math.min(progress + 1, plan.length)} of ${plan.length}…`
                   : anyUnknown
                     ? "Rate missing — renew that one separately"
                     : `Confirm & Take Payment — ${currency(total)}`}
