@@ -47,7 +47,7 @@ export function Field({
     <div className={className}>
       <Label htmlFor={id} className={cn("mb-1.5 block text-[var(--cream-foreground)]/80", labelClassName)}>
         {label}
-        {required && <span className="text-[var(--amber-600)]"> *</span>}
+        {required && <span className="text-[var(--amber-ink)]"> *</span>}
       </Label>
       {control}
     </div>

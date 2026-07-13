@@ -11,8 +11,8 @@ import { SkeletonRows } from "@/components/common/skeleton-rows";
 const currency = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 function daysBadge(days: number) {
-  if (days < 0) return { label: `${Math.abs(days)}d overdue`, bg: "var(--danger)", fg: "#fff" };
-  if (days === 0) return { label: "Expires today", bg: "var(--danger)", fg: "#fff" };
+  if (days < 0) return { label: `${Math.abs(days)}d overdue`, bg: "var(--danger-strong)", fg: "#fff" };
+  if (days === 0) return { label: "Expires today", bg: "var(--danger-strong)", fg: "#fff" };
   if (days <= 3) return { label: `${days}d left`, bg: "var(--warning)", fg: "var(--forest-950)" };
   if (days <= 7) return { label: `${days}d left`, bg: "var(--amber-500)", fg: "var(--forest-950)" };
   return { label: `${days}d left`, bg: "rgba(0,0,0,0.06)", fg: "var(--cream-foreground)" };
@@ -74,8 +74,10 @@ export default function RemindersPage() {
         </Button>
       </div>
 
+      {/* This banner sits on the PAGE background (dark in dark mode), not on a cream
+          card — so it takes the mode-aware ink. Pinned cream ink was invisible in dark. */}
       {data?.auto_enabled && (
-        <div className="flex items-start gap-2 rounded-xl bg-[var(--success)]/10 p-3 text-sm text-[var(--cream-foreground)]">
+        <div className="flex items-start gap-2 rounded-xl bg-[var(--success)]/10 p-3 text-sm text-foreground">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" />
           <span>
             <b>Automatic reminders are on.</b> Every day the system texts each monthly customer a heads-up 7, 3, and 1

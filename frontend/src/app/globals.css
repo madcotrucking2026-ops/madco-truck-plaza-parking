@@ -72,9 +72,18 @@
   --amber-600: #bf7420;
   --success: #1faf67;
   --danger: #d74a4a;
-  /* Darker red for danger TEXT so it clears WCAG AA on cream/ivory (the bright
-     --danger is only 3.4:1 as text). --danger stays for fills, borders, icons. */
+  /* A brand hue bright enough to fill a button is never dark enough to BE text on
+     cream: --danger is 3.4:1, --success 2.3:1, --amber-600 3.3:1 as text. So each
+     one gets an "ink" twin that clears 4.5:1, while the bright original keeps doing
+     fills, borders and icons. Use the -ink token any time the colour IS the words. */
   --danger-ink: #b23c3c;
+  --success-ink: #10704a;
+  --amber-ink: #8c5310;
+  /* A solid fill that carries WHITE text (status badges). Deliberately does NOT
+     flip in dark mode — the badge paints both its own background and its own text,
+     so it must stay the same contrast pair everywhere. The bright --danger is only
+     4.2:1 behind white at badge sizes. */
+  --danger-strong: #b23c3c;
   --warning: #e7b416;
   /* One family carries headings, labels, body and buttons. This used to lead with
      -apple-system/SF Pro, which meant the body face was chosen by the OS: Inter
@@ -124,9 +133,11 @@
 .dark {
   --background: var(--forest-950);
   --foreground: var(--ivory-100);
-  /* On dark page surfaces danger text must be LIGHT, not the dark ink red.
-     (Inside .card-paper, which is always cream, --danger-ink is re-pinned dark.) */
+  /* On dark page surfaces the ink twins must be LIGHT, not the dark versions.
+     (Inside .card-paper, which is always cream, they are re-pinned dark again.) */
   --danger-ink: #ef9b9b;
+  --success-ink: #5fd39b;
+  --amber-ink: #e7a659;
   --card: var(--forest-900);
   --card-foreground: var(--ivory-100);
   --popover: var(--forest-900);
@@ -200,7 +211,10 @@
     --card-foreground: var(--cream-foreground);
     --popover-foreground: var(--cream-foreground);
     --muted-foreground: #6a6252; /* darkened from #746c5c -> clears 4.5:1 on cream */
-    --danger-ink: #b23c3c;       /* card is always cream, so pin danger text dark in both modes */
+    /* The card is always cream, in BOTH modes — so its coloured text stays dark. */
+    --danger-ink: #b23c3c;
+    --success-ink: #10704a;
+    --amber-ink: #8c5310;
     --card: transparent;
     --border: oklch(0.3 0.05 152 / 16%);
     --input: oklch(0.3 0.05 152 / 18%);

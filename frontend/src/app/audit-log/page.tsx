@@ -7,10 +7,10 @@ import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 
 const ACTION_STYLE: Record<string, { label: string; className: string }> = {
-  created: { label: "Created", className: "bg-[var(--success)]/15 text-[var(--success)]" },
+  created: { label: "Created", className: "bg-[var(--success)]/15 text-[var(--success-ink)]" },
   renewed: { label: "Renewed", className: "bg-[var(--forest-700)]/12 text-[var(--forest-700)]" },
   cancelled: { label: "Cancelled", className: "bg-[var(--danger)]/15 text-[var(--danger-ink)]" },
-  reminder_sent: { label: "Reminder", className: "bg-[var(--amber-500)]/15 text-[var(--amber-600)]" },
+  reminder_sent: { label: "Reminder", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]" },
   edited: { label: "Edited", className: "bg-black/5 text-[var(--cream-foreground)]/70" },
 };
 

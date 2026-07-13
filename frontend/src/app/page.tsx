@@ -409,7 +409,7 @@ export default function DashboardPage() {
           <section className="card-paper rounded-2xl p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className={SUBHEAD}>Renewals due soon</h2>
-              <Link href="/reminders" className={`text-xs text-[var(--amber-600)] ${LINK}`}>
+              <Link href="/reminders" className={`text-xs text-[var(--amber-ink)] ${LINK}`}>
                 View all
               </Link>
             </div>
