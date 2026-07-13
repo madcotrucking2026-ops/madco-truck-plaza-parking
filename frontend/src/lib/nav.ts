@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
+  Sun,
   Ticket,
   FilePlus2,
   Users,
@@ -21,6 +22,9 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  // Sits right under the dashboard on purpose: it's the first thing read in the
+  // morning, and the only screen that says what to DO rather than what happened.
+  { label: "Morning Report", href: "/morning-report", icon: Sun },
   { label: "Parking Passes", href: "/passes", icon: Ticket },
   { label: "Issue New Pass", href: "/passes/issue", icon: FilePlus2 },
   { label: "Monthly Customers", href: "/monthly-customers", icon: Users },

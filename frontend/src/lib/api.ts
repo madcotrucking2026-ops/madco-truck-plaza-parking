@@ -229,6 +229,30 @@ export type PaymentRequestStatus = {
   receipt_number: string | null;
 };
 
+export type CallItem = {
+  priority: "now" | "today" | "worth_a_call";
+  kind: "renewal_overdue" | "renewal_due" | "pass_expiring" | "lead";
+  company_id: number | null;
+  company_name: string;
+  phone: string | null;
+  reason: string;
+  amount: number | null;
+  monthly_customer_id: number | null;
+  pass_id: number | null;
+};
+
+export type MorningReport = {
+  generated_for: string;
+  yesterday_revenue: number;
+  todays_revenue: number;
+  month_to_date_revenue: number;
+  occupied_spaces: number;
+  available_spaces: number;
+  capacity: number;
+  calls: CallItem[];
+  all_clear: boolean;
+};
+
 /** A card Stripe charged that produced no pass here. Should always be empty. */
 export type StrandedCharge = {
   payment_intent_id: string;

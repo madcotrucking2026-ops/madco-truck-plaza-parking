@@ -116,8 +116,13 @@ def run_scheduled_reminders(db: Session, *, triggered_by: str = "scheduler") -> 
     return SweepResult(enabled=True, checked=checked, sent=sent, skipped=skipped)
 
 
-@router.get("", response_model=RemindersOverview)
-def list_reminders(db: Session = Depends(get_db), _user: User = Depends(get_current_user)) -> RemindersOverview:
+def monthly_renewal_list(db: Session) -> list[ReminderCustomer]:
+    """Every monthly customer with how their renewal stands, soonest first.
+
+    Shared with the morning report — the same question ("who renews when, and have
+    we told them?") must never be answered by two different pieces of code that can
+    drift apart.
+    """
     today = business_today()
     customers: list[ReminderCustomer] = []
     stmt = select(MonthlyCustomer).order_by(MonthlyCustomer.renewal_date)
@@ -139,6 +144,12 @@ def list_reminders(db: Session = Depends(get_db), _user: User = Depends(get_curr
                 last_reminder_at=last.sent_at if last else None,
             )
         )
+    return customers
+
+
+@router.get("", response_model=RemindersOverview)
+def list_reminders(db: Session = Depends(get_db), _user: User = Depends(get_current_user)) -> RemindersOverview:
+    customers = monthly_renewal_list(db)
     return RemindersOverview(
         sms_configured=sms_configured(),
         auto_enabled=settings.auto_reminders_enabled,
