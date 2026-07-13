@@ -104,7 +104,7 @@ export default function PassesPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search truck number, company, or receipt…"
-          className="h-10 pl-9"
+          className="h-11 pl-9 sm:h-10"
         />
         {query && (
           <button
@@ -153,7 +153,7 @@ export default function PassesPage() {
                   <tr key={p.id} className="border-b border-black/5 text-[var(--cream-foreground)] last:border-none">
                     <td className="px-4 py-3">
                       {p.company_id ? (
-                        <Link href={`/companies/${p.company_id}`} className="hover:underline">
+                        <Link href={`/companies/${p.company_id}`} className="inline-block py-1.5 -my-1.5 hover:underline">
                           {p.company_name ?? "—"}
                         </Link>
                       ) : (

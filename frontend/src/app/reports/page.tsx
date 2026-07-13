@@ -143,7 +143,7 @@ export default function ReportsPage() {
                   <tr key={c.company_name} className="border-b border-black/5 text-[var(--cream-foreground)] last:border-none">
                     <td className="py-2">
                       {c.company_id ? (
-                        <Link href={`/companies/${c.company_id}`} className="hover:underline">
+                        <Link href={`/companies/${c.company_id}`} className="inline-block py-1.5 -my-1.5 hover:underline">
                           {c.company_name}
                         </Link>
                       ) : (

@@ -37,7 +37,9 @@ export function InfoTip({ label, children }: { label: string; children: React.Re
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[var(--cream-foreground)]/45 transition-colors hover:bg-black/5 hover:text-[var(--cream-foreground)]/70 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--amber-500)]"
+        // A 24px dot is the right amount of ink, but a thumb needs 44px. The
+        // before: pseudo-element grows the tap target without growing the icon.
+        className="relative inline-flex h-6 w-6 items-center justify-center rounded-full text-[var(--cream-foreground)]/45 transition-colors before:absolute before:-inset-2.5 before:content-[''] hover:bg-black/5 hover:text-[var(--cream-foreground)]/70 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--amber-500)] sm:before:hidden"
       >
         <HelpCircle className="h-3.5 w-3.5" />
       </button>

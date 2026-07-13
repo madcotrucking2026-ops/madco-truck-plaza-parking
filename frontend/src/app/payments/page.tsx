@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Search, X, Banknote, CreditCard, FileCheck2, Wallet } from "lucide-react";
 import { api } from "@/lib/api";
+import { addDaysISO, todayISO } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { LoadError } from "@/components/common/load-error";
@@ -62,16 +63,21 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: "all", label: "All Time" },
 ];
 
+/** `dateStr` is a plain YYYY-MM-DD. "Today" is the PLAZA's today — this used to be
+ *  the device's, so a tablet left on UTC would show an empty "Today" all evening
+ *  while the desk was taking money. ISO dates compare correctly as strings, so none
+ *  of this needs to touch a timezone at all. */
 function inPeriod(dateStr: string, period: Period): boolean {
   if (period === "all") return true;
-  const d = new Date(`${dateStr}T00:00:00`);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (period === "today") return d.getTime() === today.getTime();
-  if (period === "month") return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-  return d >= monday && d <= today;
+
+  const today = todayISO();
+  if (period === "today") return dateStr === today;
+  if (period === "month") return dateStr.slice(0, 7) === today.slice(0, 7);
+
+  // This week = Monday through today.
+  const mondayOffset = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const monday = addDaysISO(today, -mondayOffset);
+  return dateStr >= monday && dateStr <= today;
 }
 
 export default function PaymentsPage() {
@@ -167,7 +173,7 @@ export default function PaymentsPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search company, truck, receipt, check #…"
-              className="h-9 pl-9"
+              className="h-11 pl-9 sm:h-9"
             />
             {query && (
               <button

@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { api, type LotCheckResult } from "@/lib/api";
-import { currency } from "@/lib/pricing";
+import { currency, daysBetween, todayISO } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -130,21 +130,15 @@ const PAYMENT_LABEL: Record<string, string> = {
   phone_payment: "Card by phone",
 };
 
-/** "expires tomorrow" beats "2026-07-14" when you're standing in a lot in the dark. */
+/** "expires tomorrow" beats "2026-07-14" when you're standing in a lot in the dark.
+ *  Counted from the PLAZA's day — a tablet left on UTC would otherwise call a pass
+ *  expired the evening before it actually is. */
 function expiryPhrase(expiration: string): string {
-  const days = daysFromToday(expiration);
+  const days = daysBetween(todayISO(), expiration);
   if (days === 0) return "Expires TODAY";
   if (days === 1) return "Expires tomorrow";
   if (days < 0) return `Expired ${-days} day${days === -1 ? "" : "s"} ago`;
   return `Expires in ${days} days · ${shortDate(expiration)}`;
-}
-
-function daysFromToday(iso: string): number {
-  const [y, m, d] = iso.split("-").map(Number);
-  const target = new Date(y, m - 1, d);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
 }
 
 function shortDate(iso: string): string {
