@@ -1,12 +1,12 @@
 "use client";
 
-import { isValidElement, cloneElement, useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { api, ApiError, type UserRead } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/common/field";
 import {
   Select,
   SelectContent,
@@ -109,25 +109,3 @@ export function AddStaffCard() {
   );
 }
 
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  const id = useId();
-  const control = isValidElement<{ id?: string }>(children) ? cloneElement(children, { id }) : children;
-
-  return (
-    <div>
-      <Label htmlFor={id} className="mb-1.5 block text-[var(--cream-foreground)]/80">
-        {label}
-        {required && <span className="text-[var(--amber-600)]"> *</span>}
-      </Label>
-      {control}
-    </div>
-  );
-}

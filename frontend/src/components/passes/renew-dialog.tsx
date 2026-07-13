@@ -1,6 +1,6 @@
 "use client";
 
-import { isValidElement, cloneElement, useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 import {
@@ -18,7 +18,7 @@ import { PassTicket } from "@/components/passes/pass-ticket";
 import { stripeConfigured } from "@/lib/stripe";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/common/field";
 import {
   Dialog,
   DialogContent,
@@ -188,7 +188,7 @@ export function RenewDialog({
         ) : (
           <>
             <div className="space-y-4">
-              <Field label="New Expiration Date">
+              <Field label="New Expiration Date" labelClassName="text-popover-foreground">
                 <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} min={renewalStart} />
                 {weeklyInvalid && (
                   <p className="mt-1.5 text-xs text-[var(--danger-ink)]">
@@ -197,7 +197,7 @@ export function RenewDialog({
                 )}
               </Field>
 
-              <Field label="Price">
+              <Field label="Price" labelClassName="text-popover-foreground">
                 <div className="flex h-8 items-center rounded-lg border border-input bg-transparent px-2.5 font-mono text-sm">
                   {finalPrice !== null
                     ? `${currency(finalPrice)}${
@@ -213,7 +213,7 @@ export function RenewDialog({
                 </div>
               </Field>
 
-              <Field label="Payment Method">
+              <Field label="Payment Method" labelClassName="text-popover-foreground">
                 <Select value={payChoice} onValueChange={(v) => setPayChoice(v as PayChoice)}>
                   <SelectTrigger className="w-full">
                     <SelectValue>{(v: PayChoice) => PAY_CHOICES.find((p) => p.value === v)?.label ?? v}</SelectValue>
@@ -228,7 +228,7 @@ export function RenewDialog({
                 </Select>
               </Field>
               {payChoice === "check" && (
-                <Field label="Check Number">
+                <Field label="Check Number" labelClassName="text-popover-foreground">
                   <Input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} />
                 </Field>
               )}
@@ -262,16 +262,3 @@ export function RenewDialog({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  const id = useId();
-  const control = isValidElement<{ id?: string }>(children) ? cloneElement(children, { id }) : children;
-
-  return (
-    <div>
-      <Label htmlFor={id} className="mb-1.5 block">
-        {label}
-      </Label>
-      {control}
-    </div>
-  );
-}

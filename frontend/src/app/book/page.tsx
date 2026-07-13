@@ -1,6 +1,6 @@
 "use client";
 
-import { isValidElement, cloneElement, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Truck, CreditCard, Banknote, ShieldCheck, CheckCircle2, Loader2, Lock } from "lucide-react";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/common/field";
 import {
   Select,
   SelectContent,
@@ -471,25 +471,3 @@ export default function BookPage() {
   );
 }
 
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  const id = useId();
-  const control = isValidElement<{ id?: string }>(children) ? cloneElement(children, { id }) : children;
-
-  return (
-    <div>
-      <Label htmlFor={id} className="mb-1.5 block text-[var(--cream-foreground)]/80">
-        {label}
-        {required && <span className="text-[var(--amber-600)]"> *</span>}
-      </Label>
-      {control}
-    </div>
-  );
-}

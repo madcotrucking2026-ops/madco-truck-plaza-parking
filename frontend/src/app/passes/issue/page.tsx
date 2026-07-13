@@ -1,12 +1,12 @@
 "use client";
 
-import { isValidElement, cloneElement, Suspense, useCallback, useEffect, useId, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { api, ApiError, type CompanyLookupResult, type IssuePassRequest, type PassRead, type PassType, type VehicleType, type PaymentMethod, type PaymentRequestCreated } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/common/field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -457,27 +457,3 @@ function IssuePassForm() {
   );
 }
 
-function Field({
-  label,
-  required,
-  className,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const id = useId();
-  const control = isValidElement<{ id?: string }>(children) ? cloneElement(children, { id }) : children;
-
-  return (
-    <div className={className}>
-      <Label htmlFor={id} className="mb-1.5 block text-[var(--cream-foreground)]/80">
-        {label}
-        {required && <span className="text-[var(--amber-600)]"> *</span>}
-      </Label>
-      {control}
-    </div>
-  );
-}
