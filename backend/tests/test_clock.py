@@ -68,6 +68,23 @@ def test_a_payment_is_stamped_with_the_plazas_day(db):
     assert payment.paid_at.date() == business_today()
 
 
+def test_every_business_timestamp_is_stamped_in_plaza_time(db):
+    """Not just payments. The Activity Log showed a 9pm action as happening at
+    00:13 the NEXT DAY, because the database stamped it in UTC. Anything the
+    manager reads a time off must agree with the clock on the wall."""
+    from app.core.audit import log_audit
+    from app.models import AuditLog, Company, Vehicle
+    from app.models.enums import AuditAction
+
+    db.add(Company(name="Timestamp Freight", phone="313-555-0122"))
+    db.add(Vehicle(truck_number="TS01", vehicle_type=VehicleType.truck))
+    log_audit(db, AuditAction.search_performed, "lot_check", 'Searched "TS01"')
+    db.commit()
+
+    for row in (db.scalar(select(AuditLog)), db.scalar(select(Company)), db.scalar(select(Vehicle))):
+        assert row.created_at.date() == business_today(), f"{type(row).__name__} is not on the plaza's day"
+
+
 def test_tonights_takings_are_on_tonights_books(db, monkeypatch):
     """A payment taken at 10:30pm plaza time belongs to that day's revenue. The same
     instant is already tomorrow in UTC, which is exactly how it used to go missing."""

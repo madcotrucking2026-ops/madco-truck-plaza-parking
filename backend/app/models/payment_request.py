@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.clock import business_now
 from app.core.database import Base
 
 
@@ -28,4 +29,4 @@ class PaymentRequest(Base):
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255))
     parking_pass_id: Mapped[int | None] = mapped_column(Integer)  # set once paid
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=business_now, server_default=func.now())

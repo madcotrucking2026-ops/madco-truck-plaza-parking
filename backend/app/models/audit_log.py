@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, Enum, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.clock import business_now
 from app.core.database import Base
 from app.models.enums import AuditAction
 
@@ -17,4 +18,4 @@ class AuditLog(Base):
     summary: Mapped[str] = mapped_column(String(500))
     employee_name: Mapped[str | None] = mapped_column(String(255))
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=business_now, server_default=func.now())

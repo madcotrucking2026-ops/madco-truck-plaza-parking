@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.clock import business_now
 from app.core.database import Base
 
 
@@ -20,7 +21,7 @@ class Company(Base):
     needs_follow_up: Mapped[bool] = mapped_column(Boolean, default=False)
     high_risk: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=business_now, server_default=func.now())
 
     vehicles: Mapped[list["Vehicle"]] = relationship(back_populates="company")
     passes: Mapped[list["ParkingPass"]] = relationship(back_populates="company")
