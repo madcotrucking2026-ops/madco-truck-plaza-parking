@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.clock import business_today
 from app.core.database import get_db
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Vehicle
 from app.schemas.reports import (
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 @router.get("/summary", response_model=ReportsSummary)
 def reports_summary(db: Session = Depends(get_db)) -> ReportsSummary:
-    today = date.today()
+    today = business_today()
     period_start = today - timedelta(days=29)
 
     rows = db.execute(

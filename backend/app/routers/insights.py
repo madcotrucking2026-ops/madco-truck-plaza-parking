@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.clock import business_today
 from app.core.config import settings
 from app.core.database import get_db
 from app.models import Company, MonthlyCustomer, ParkingPass
@@ -47,7 +48,7 @@ def conversion_leads(db: Session = Depends(get_db)) -> ConversionLeads:
     likely save them money and lock in recurring revenue for the plaza — ranked
     hottest (biggest spend) first. Companies already on a monthly plan are
     excluded; so are one-off visitors below MIN_VISITS."""
-    since = date.today() - timedelta(days=WINDOW_DAYS)
+    since = business_today() - timedelta(days=WINDOW_DAYS)
     monthly_default = float(settings.monthly_price)
 
     rows = db.execute(

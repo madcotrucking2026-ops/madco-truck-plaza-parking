@@ -5,9 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
+from app.core.clock import business_today
 from app.core.database import get_db
 from app.core.pass_status import live_status
-from app.models import Company, ParkingPass, Vehicle
+from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Vehicle
 from app.models.enums import AuditAction
 from app.schemas.pass_ import LotCheckResult
 
@@ -38,7 +39,26 @@ def lot_check(q: str = Query(..., min_length=1), db: Session = Depends(get_db)) 
     if parking_pass is None:
         return LotCheckResult(found=False)
 
-    today = date.today()
+    today = business_today()
+
+    # The payment that bought the pass they're sitting on — a renewal writes a new
+    # Payment row, so the LATEST one is the one that matters. Same-day renewals tie
+    # on paid_at (same second), and ordering on that alone hands back whichever row
+    # the database feels like — often the ORIGINAL payment, which would tell the
+    # manager the truck paid cash when it just renewed by card. Break the tie on id.
+    last_payment = db.scalars(
+        select(Payment)
+        .where(Payment.parking_pass_id == parking_pass.id)
+        .order_by(Payment.paid_at.desc(), Payment.id.desc())
+    ).first()
+
+    is_monthly_customer = False
+    if parking_pass.company_id is not None:
+        is_monthly_customer = (
+            db.scalar(select(MonthlyCustomer.id).where(MonthlyCustomer.company_id == parking_pass.company_id))
+            is not None
+        )
+
     return LotCheckResult(
         found=True,
         status=live_status(parking_pass.expiration_date, today, parking_pass.status),
@@ -50,4 +70,8 @@ def lot_check(q: str = Query(..., min_length=1), db: Session = Depends(get_db)) 
         pass_type=parking_pass.pass_type,
         expiration_date=parking_pass.expiration_date,
         notes=parking_pass.notes,
+        amount_paid=float(last_payment.amount) if last_payment else None,
+        payment_method=last_payment.method if last_payment else None,
+        paid_at=last_payment.paid_at.date() if last_payment else None,
+        is_monthly_customer=is_monthly_customer,
     )

@@ -171,6 +171,10 @@ export type LotCheckResult = {
   pass_type?: "daily" | "weekly" | "monthly";
   expiration_date?: string;
   notes?: string;
+  amount_paid?: number | null;
+  payment_method?: "cash" | "check" | "credit_card" | "debit_card" | "phone_payment" | null;
+  paid_at?: string | null;
+  is_monthly_customer?: boolean;
 };
 
 export type VehicleType = "truck" | "trailer" | "bobtail" | "flatbed" | "car" | "other";

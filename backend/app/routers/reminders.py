@@ -1,10 +1,11 @@
-from datetime import date, datetime, timezone
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
+from app.core.clock import business_now, business_today
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
@@ -44,8 +45,12 @@ def _do_send(db: Session, mc: MonthlyCustomer, employee_name: str | None) -> boo
     db.add(
         Reminder(
             monthly_customer_id=mc.id,
-            scheduled_date=date.today(),
-            sent_at=datetime.now(timezone.utc),
+            scheduled_date=business_today(),
+            # Plaza time, because _already_reminded_today() compares this against
+            # the plaza's date. Stamped in UTC it disagreed with that date every
+            # evening after 8pm — the "did we text them already?" check came back
+            # False and the customer got a second text. No spam means no spam.
+            sent_at=business_now(),
             status=ReminderStatus.sent,
             message=message,
         )
@@ -88,7 +93,7 @@ def run_scheduled_reminders(db: Session, *, triggered_by: str = "scheduler") -> 
     if not settings.auto_reminders_enabled:
         return SweepResult(enabled=False, checked=0, sent=0, skipped=0)
 
-    today = date.today()
+    today = business_today()
     checked = sent = skipped = 0
     for mc in db.scalars(select(MonthlyCustomer)):
         checked += 1
@@ -113,7 +118,7 @@ def run_scheduled_reminders(db: Session, *, triggered_by: str = "scheduler") -> 
 
 @router.get("", response_model=RemindersOverview)
 def list_reminders(db: Session = Depends(get_db), _user: User = Depends(get_current_user)) -> RemindersOverview:
-    today = date.today()
+    today = business_today()
     customers: list[ReminderCustomer] = []
     stmt = select(MonthlyCustomer).order_by(MonthlyCustomer.renewal_date)
     for mc in db.scalars(stmt):

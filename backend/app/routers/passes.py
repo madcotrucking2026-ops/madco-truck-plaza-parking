@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
+from app.core.clock import business_today
 from app.core.codes import generate_receipt_number
 from app.core.config import settings
 from app.core.database import get_db
@@ -279,7 +280,7 @@ def renewal_quote(db: Session, parking_pass: ParkingPass, end_date: date) -> tup
     # Renew from today if the pass already lapsed (so a stale expiration
     # doesn't push the new period further into the past) — otherwise continue
     # seamlessly from the current expiration.
-    renewal_start = max(date.today(), parking_pass.expiration_date)
+    renewal_start = max(business_today(), parking_pass.expiration_date)
 
     if end_date <= renewal_start:
         raise HTTPException(status_code=400, detail=f"New expiration must be after {renewal_start.isoformat()}.")
@@ -342,7 +343,7 @@ def apply_renewal(
             method=payment_method,
             check_number=check_number,
             stripe_payment_intent_id=stripe_payment_intent_id,
-            receipt_number=generate_receipt_number("PMT", date.today()),
+            receipt_number=generate_receipt_number("PMT", business_today()),
         )
     )
 
@@ -399,7 +400,7 @@ def cancel_pass(pass_id: int, db: Session = Depends(get_db)) -> ParkingPass:
 
 @router.get("", response_model=list[PassListItem])
 def list_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
-    today = date.today()
+    today = business_today()
     stmt = select(ParkingPass).order_by(ParkingPass.issue_date.desc(), ParkingPass.id.desc())
     return [
         PassListItem(

@@ -91,3 +91,10 @@ class LotCheckResult(BaseModel):
     pass_type: PassType | None = None
     expiration_date: date | None = None
     notes: str | None = None
+
+    # Standing in front of the truck, the manager's question is "did this one pay,
+    # and how?" — answering it here is what saves a walk back to the office.
+    amount_paid: float | None = None
+    payment_method: PaymentMethod | None = None
+    paid_at: date | None = None
+    is_monthly_customer: bool = False

@@ -1,6 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { currency, daysBetween, defaultEndDate, monthsBetween } from "./pricing";
+import { addDaysISO, currency, daysBetween, defaultEndDate, monthsBetween, todayISO } from "./pricing";
+
+describe("todayISO — the plaza's day, not the device's", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("is still TODAY in Michigan when UTC has already rolled over to tomorrow", () => {
+    // 1:30am UTC on the 13th == 9:30pm on the 12th in Michigan. The old code read
+    // the UTC date, so an evening pass was issued starting TOMORROW and the truck
+    // was left unpaid for the night the driver had just paid for.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-13T01:30:00Z"));
+
+    expect(todayISO()).toBe("2026-07-12");
+  });
+
+  it("rolls over when the plaza does, not when UTC does", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-13T05:30:00Z")); // 1:30am on the 13th in Michigan
+
+    expect(todayISO()).toBe("2026-07-13");
+  });
+});
+
+describe("addDaysISO", () => {
+  it("does calendar arithmetic without dragging the date through a timezone", () => {
+    expect(addDaysISO("2026-07-12", 1)).toBe("2026-07-13");
+    expect(addDaysISO("2026-07-31", 1)).toBe("2026-08-01");
+    expect(addDaysISO("2026-01-01", -1)).toBe("2025-12-31");
+  });
+});
 
 describe("daysBetween", () => {
   it("counts calendar days", () => {

@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { api, type LotCheckResult } from "@/lib/api";
+import { currency } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -82,8 +83,21 @@ function LotCheckInner() {
 
       {result && (
         <div className="space-y-4">
-          <div className={`${style.bg} rounded-2xl py-10 text-center shadow-lg`}>
+          <div className={`${style.bg} rounded-2xl px-6 py-10 text-center shadow-lg`}>
             <p className={`text-4xl font-extrabold tracking-wide ${style.fg}`}>{style.label}</p>
+            {/* Standing at the truck, the question is "did this one pay?" — so the
+                answer goes on the card itself, not three rows down in a table. */}
+            {result.found && result.expiration_date && (
+              <p className={`mt-2 text-base font-semibold ${style.fg} opacity-90`}>
+                {expiryPhrase(result.expiration_date)}
+              </p>
+            )}
+            {result.found && result.amount_paid != null && (
+              <p className={`mt-1 font-mono text-sm tabular-nums ${style.fg} opacity-80`}>
+                Paid {currency(result.amount_paid)} · {PAYMENT_LABEL[result.payment_method ?? "cash"]}
+                {result.paid_at ? ` · ${shortDate(result.paid_at)}` : ""}
+              </p>
+            )}
           </div>
 
           {result.found && (
@@ -93,7 +107,11 @@ function LotCheckInner() {
               <DetailRow label="Truck Number" value={result.truck_number} />
               <DetailRow label="Trailer Number" value={result.trailer_number} />
               <DetailRow label="License Plate" value={result.license_plate} />
-              <DetailRow label="Pass Type" value={result.pass_type} className="capitalize" />
+              <DetailRow
+                label="Pass Type"
+                value={result.is_monthly_customer ? `${result.pass_type} · monthly customer` : result.pass_type}
+                className="capitalize"
+              />
               <DetailRow label="Expiration" value={result.expiration_date} />
               {result.notes && <DetailRow label="Notes" value={result.notes} />}
             </div>
@@ -102,6 +120,36 @@ function LotCheckInner() {
       )}
     </div>
   );
+}
+
+const PAYMENT_LABEL: Record<string, string> = {
+  cash: "Cash",
+  check: "Check",
+  credit_card: "Card",
+  debit_card: "Debit",
+  phone_payment: "Card by phone",
+};
+
+/** "expires tomorrow" beats "2026-07-14" when you're standing in a lot in the dark. */
+function expiryPhrase(expiration: string): string {
+  const days = daysFromToday(expiration);
+  if (days === 0) return "Expires TODAY";
+  if (days === 1) return "Expires tomorrow";
+  if (days < 0) return `Expired ${-days} day${days === -1 ? "" : "s"} ago`;
+  return `Expires in ${days} days · ${shortDate(expiration)}`;
+}
+
+function daysFromToday(iso: string): number {
+  const [y, m, d] = iso.split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+}
+
+function shortDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function DetailRow({ label, value, className }: { label: string; value?: string; className?: string }) {

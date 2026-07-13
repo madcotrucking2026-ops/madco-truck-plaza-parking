@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
+from app.core.clock import business_today
 from app.core.codes import generate_receipt_number
 from app.core.database import get_db
 from app.models import Payment
@@ -23,7 +24,7 @@ def list_payments(db: Session = Depends(get_db)) -> list[Payment]:
 def create_payment(payload: PaymentCreate, db: Session = Depends(get_db)) -> Payment:
     payment = Payment(
         **payload.model_dump(),
-        receipt_number=generate_receipt_number("PMT", date.today()),
+        receipt_number=generate_receipt_number("PMT", business_today()),
     )
     db.add(payment)
     db.flush()

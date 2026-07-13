@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.clock import business_now
 from app.core.database import Base
 from app.models.enums import PaymentMethod
 
@@ -26,7 +27,14 @@ class Payment(Base):
     # Unique so the same PaymentIntent can never be used to issue two passes.
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
 
-    paid_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Stamped in the PLAZA's timezone, not the database's. This column is bucketed
+    # by calendar day for "today's revenue" and the daily report, and the database's
+    # own now() is UTC: in Michigan that put every payment taken after 8pm on
+    # tomorrow's books. server_default stays as a floor for any row inserted outside
+    # the app (a manual SQL fix), but the app always supplies the value.
+    paid_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=business_now, server_default=func.now()
+    )
 
     parking_pass: Mapped["ParkingPass | None"] = relationship(back_populates="payments")
     monthly_customer: Mapped["MonthlyCustomer | None"] = relationship(back_populates="payments")

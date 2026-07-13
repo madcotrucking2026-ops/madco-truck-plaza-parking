@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { InfoTip } from "@/components/common/info-tip";
+import { addDaysISO, todayISO } from "@/lib/pricing";
 
 const QUICK_ACTIONS = [
   { label: "Issue Pass", href: "/passes/issue", icon: FilePlus2 },
@@ -47,12 +48,9 @@ const QUICK_ACTIONS = [
 const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const addDaysISO = (days: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-};
+// Both of these used to read the UTC date, so all evening the dashboard's
+// "expiring today / tomorrow" lists were a day ahead of the plaza.
+const relativeDayISO = (days: number) => addDaysISO(todayISO(), days);
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -109,7 +107,7 @@ export default function DashboardPage() {
   useEffect(() => () => clearTimeout(confirmTimer.current ?? undefined), []);
 
   const today = todayISO();
-  const tomorrow = addDaysISO(1);
+  const tomorrow = relativeDayISO(1);
 
   // The action list: passes expiring today or tomorrow (not cancelled), soonest
   // first. This is what the manager actually does something about right now.

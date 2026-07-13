@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     # readout on the dashboard. Override with PARKING_CAPACITY in .env.
     parking_capacity: int = 150
 
+    # The plaza's own timezone. Every "today" — pass expiry, today's revenue, the
+    # daily report — is decided in THIS zone, never the server's. A cloud VM runs
+    # on UTC, and without this the business day would roll over at 8pm Michigan
+    # time: passes expiring early, evening takings landing on tomorrow.
+    timezone: str = "America/Detroit"
+
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     # Base URL the customer-facing app is reachable at — used to build the
