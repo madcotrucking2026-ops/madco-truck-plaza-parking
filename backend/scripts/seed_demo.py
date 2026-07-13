@@ -10,17 +10,20 @@ payment to its pass's issue date so the revenue history/chart looks real.
 """
 
 import random
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy import func, select
 
+from app.core.clock import business_today
 from app.core.database import SessionLocal
 from app.models import Payment
 from app.models.enums import PassType, PaymentMethod, VehicleType
 from app.routers.passes import _issue_pass_and_payment
 
 random.seed(42)
-TODAY = date.today()
+# The plaza's today, not the host's — seeding from a UTC box in the evening would
+# otherwise lay the whole demo history down a day off. See app/core/clock.py.
+TODAY = business_today()
 _phone_seq = iter(range(100, 999))
 
 
