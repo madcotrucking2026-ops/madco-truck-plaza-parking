@@ -278,8 +278,9 @@ export default function DashboardPage() {
                 </Button>
               </div>
             ) : (
+              // --danger-strong, not --danger: white on the bright red is only 4.2:1.
               needsAttention.length > 0 && (
-                <span className="rounded-full bg-[var(--danger)] px-2.5 py-1 text-sm font-bold tabular-nums text-white">
+                <span className="rounded-full bg-[var(--danger-strong)] px-2.5 py-1 text-sm font-bold tabular-nums text-white">
                   {needsAttention.length}
                 </span>
               )
@@ -538,7 +539,7 @@ function SnapshotRow({
 }
 
 const LEAD_TIER: Record<string, { label: string; className: string }> = {
-  hot: { label: "Hot", className: "bg-[var(--amber-500)]/15 text-[var(--amber-600)]" },
+  hot: { label: "Hot", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]" },
   warm: { label: "Warm", className: "bg-[var(--forest-700)]/12 text-[var(--forest-700)]" },
   cold: { label: "Cold", className: "bg-black/5 text-[var(--cream-foreground)]/60" },
 };

@@ -115,58 +115,69 @@ export default function MorningReportPage() {
                     <p className="mt-1 text-sm text-[var(--cream-foreground)]/60">{group.blurb}</p>
                   </div>
 
+                  {/* Rows stack on a phone. Side by side, the buttons squeezed the reason into
+                      a column so narrow that every company name wrapped onto two lines. */}
                   <ul className="divide-y divide-black/5">
                     {items.map((item, i) => (
-                      <li key={`${item.kind}-${item.company_id ?? item.monthly_customer_id ?? i}`} className="flex flex-wrap items-center gap-3 p-4">
+                      <li
+                        key={`${item.kind}-${item.company_id ?? item.monthly_customer_id ?? i}`}
+                        className="flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center"
+                      >
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-[var(--cream-foreground)]">
                             {item.company_id ? (
-                              <Link href={`/companies/${item.company_id}`} className="hover:underline">
+                              // inline-block + padding: a 40px hit area without changing the row.
+                              <Link
+                                href={`/companies/${item.company_id}`}
+                                className="inline-block py-2.5 -my-2.5 hover:underline"
+                              >
                                 {item.company_name}
                               </Link>
                             ) : (
                               item.company_name
                             )}
                           </p>
-                          <p className="text-sm text-[var(--cream-foreground)]/60">{item.reason}</p>
+                          <p className="mt-0.5 text-sm text-[var(--cream-foreground)]/60">{item.reason}</p>
                         </div>
 
-                        {item.phone ? (
-                          <a
-                            href={telHref(item.phone)}
-                            className="btn-embossed inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-[var(--forest-700)] px-3.5 font-mono text-sm font-semibold text-[var(--ivory-100)] hover:bg-[var(--forest-600)] sm:h-9"
-                          >
-                            <Phone className="h-4 w-4" />
-                            {item.phone}
-                          </a>
-                        ) : (
-                          <span className="text-xs text-[var(--cream-foreground)]/45">no phone on file</span>
-                        )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {item.phone ? (
+                            <a
+                              href={telHref(item.phone)}
+                              className="btn-embossed inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-[var(--forest-700)] px-3.5 font-mono text-sm font-semibold text-[var(--ivory-100)] hover:bg-[var(--forest-600)] sm:h-9"
+                            >
+                              <Phone className="h-4 w-4" />
+                              {item.phone}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-[var(--cream-foreground)]/45">no phone on file</span>
+                          )}
 
-                        {item.monthly_customer_id !== null && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0 print:hidden"
-                            disabled={sendingId === item.monthly_customer_id}
-                            onClick={() => sendReminder(item)}
-                          >
-                            <Send className="h-3.5 w-3.5" />
-                            {sendingId === item.monthly_customer_id ? "Sending…" : "Text"}
-                          </Button>
-                        )}
-                        {/* nativeButton={false} is required when a Base UI button renders as an anchor. */}
-                        {item.pass_id !== null && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            nativeButton={false}
-                            className="shrink-0 print:hidden"
-                            render={<Link href="/passes" />}
-                          >
-                            Renew
-                          </Button>
-                        )}
+                          {item.monthly_customer_id !== null && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="shrink-0 print:hidden"
+                              disabled={sendingId === item.monthly_customer_id}
+                              onClick={() => sendReminder(item)}
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              {sendingId === item.monthly_customer_id ? "Sending…" : "Text"}
+                            </Button>
+                          )}
+                          {/* nativeButton={false} is required when a Base UI button renders as an anchor. */}
+                          {item.pass_id !== null && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              nativeButton={false}
+                              className="shrink-0 print:hidden"
+                              render={<Link href="/passes" />}
+                            >
+                              Renew
+                            </Button>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>

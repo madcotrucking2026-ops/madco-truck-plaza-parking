@@ -85,6 +85,9 @@
      4.2:1 behind white at badge sizes. */
   --danger-strong: #b23c3c;
   --warning: #e7b416;
+  /* Yellow is the worst offender of all as text: --warning measures 1.7:1 on cream.
+     Never use it for words — only for fills, dots and icons. */
+  --warning-ink: #8a6410;
   /* One family carries headings, labels, body and buttons. This used to lead with
      -apple-system/SF Pro, which meant the body face was chosen by the OS: Inter
      headings sat next to Segoe UI body on Windows and SF Pro on a Mac — two
@@ -138,6 +141,7 @@
   --danger-ink: #ef9b9b;
   --success-ink: #5fd39b;
   --amber-ink: #e7a659;
+  --warning-ink: #e8c65f;
   --card: var(--forest-900);
   --card-foreground: var(--ivory-100);
   --popover: var(--forest-900);
@@ -215,6 +219,7 @@
     --danger-ink: #b23c3c;
     --success-ink: #10704a;
     --amber-ink: #8c5310;
+    --warning-ink: #8a6410;
     --card: transparent;
     --border: oklch(0.3 0.05 152 / 16%);
     --input: oklch(0.3 0.05 152 / 18%);
