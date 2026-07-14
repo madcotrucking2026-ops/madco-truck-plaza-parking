@@ -1,0 +1,11 @@
+# keep the build context clean: no caches, no local db, and above all NO .env —
+# secrets reach the container as compose environment, never baked into layers
+__pycache__/
+**/__pycache__/
+.venv/
+logs/
+*.db
+*.db.bak
+.env
+.jwt_secret
+tests/

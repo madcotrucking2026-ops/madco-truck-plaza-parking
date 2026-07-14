@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends postgresql-clie
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Retries + generous timeout: a build that dies on one flaky PyPI read is a
+# build the client can't reproduce on hotel wifi.
+RUN pip install --no-cache-dir --retries 10 --timeout 60 -r requirements.txt
 
 COPY alembic.ini .
 COPY alembic ./alembic
