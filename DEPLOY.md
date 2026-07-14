@@ -27,10 +27,27 @@ What you get:
 
 ## Go-live checklist (in order)
 
-1. **Domain + HTTPS** — point DNS at the box, put certs in `deploy/certs/`,
-   uncomment the 443 block in `deploy/nginx.conf` and the `443:443` port in
-   compose. Set `PUBLIC_BASE_URL=https://…` and rebuild. HTTPS is REQUIRED for
-   live Stripe and for Apple/Google Pay.
+1. **Domain + HTTPS** — point DNS at the box, then (still in HTTP mode — the
+   HTTP config already answers Let's Encrypt's challenge):
+
+   ```bash
+   # one-shot: obtain the first certificate
+   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm certbot \
+     certonly --webroot -w /var/www/certbot --cert-name mtpms \
+     -d park.madcotruckplaza.com --email you@example.com --agree-tos --no-eff-email
+
+   # flip to TLS: in .env.prod set
+   #   NGINX_CONF=nginx-tls.conf
+   #   PUBLIC_BASE_URL=https://park.madcotruckplaza.com
+   docker compose -f docker-compose.prod.yml --env-file .env.prod --profile tls up -d --build
+   ```
+
+   `--cert-name mtpms` pins the certificate path `nginx-tls.conf` expects — no
+   config editing. The `tls` profile starts the renewal daemon (checks twice a
+   day; certbot renews when <30 days remain) and nginx reloads itself every 6h
+   to pick renewed certs up. The rebuild is required because the frontend bakes
+   `PUBLIC_BASE_URL` into the browser bundle. HTTPS is REQUIRED for live Stripe
+   and for Apple/Google Pay.
 2. **Live Stripe keys** in `.env.prod` (after Stripe business verification).
 3. **Stripe webhook** — Dashboard → Developers → Webhooks → add
    `https://<domain>/api/payments/stripe/webhook`, event
