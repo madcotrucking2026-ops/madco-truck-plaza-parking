@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Truck } from "lucide-react";
-import { api, ApiError, type AuthStatus, type TokenResponse } from "@/lib/api";
+import { api, ApiError, type AuthStatus, type TokenResponse, type UserRead } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,10 @@ export default function LoginPage() {
         ? await api.post<TokenResponse>("/api/auth/register", { name, email, password })
         : await api.post<TokenResponse>("/api/auth/login", { email, password });
       setToken(res.access_token);
-      router.replace("/");
+      // Land people on their job: the dashboard is manager-tier (revenue), so an
+      // attendant goes straight to Lot Check instead of a wall of 403s.
+      const who = await api.get<UserRead>("/api/auth/me").catch(() => null);
+      router.replace(who?.role === "attendant" ? "/lot-check" : "/");
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {

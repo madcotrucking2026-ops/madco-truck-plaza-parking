@@ -17,6 +17,7 @@ from app.schemas.auth import (
     CreateStaffUserRequest,
     LoginRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserRead,
 )
@@ -123,4 +124,32 @@ def create_staff_user(
     db.add(user)
     db.commit()
     db.refresh(user)
+    return user
+
+
+@router.get("/users", response_model=list[UserRead])
+def list_users(db: Session = Depends(get_db), _admin: User = Depends(require_admin)) -> list[User]:
+    return list(db.scalars(select(User).order_by(User.id)))
+
+
+@router.post("/users/{user_id}/reset-password", response_model=UserRead)
+def reset_password(
+    user_id: int,
+    payload: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> User:
+    """Admin sets a new password at the desk. Also clears a login lockout — a
+    forgotten password and five bad guesses arrive together, and fixing one
+    while leaving the account locked for 15 more minutes would just be cruel."""
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    user.hashed_password = hash_password(payload.new_password)
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    db.commit()
+    db.refresh(user)
+    log.info("Password reset for %s by admin.", user.email)
     return user

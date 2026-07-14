@@ -2,19 +2,25 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogOut, Menu, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS } from "@/lib/nav";
+import { navForRole, type Role } from "@/lib/nav";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { api, type UserRead } from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<UserRead | null>(null);
+
+  useEffect(() => {
+    api.get<UserRead>("/api/auth/me").then(setUser).catch(() => setUser(null));
+  }, []);
 
   function logout() {
     clearToken();
@@ -40,7 +46,7 @@ export function MobileNav() {
         <SheetContent side="left" className="panel-steel w-72 border-white/10 p-0">
           <SheetTitle className="px-5 pt-6 text-[var(--ivory-100)]">Navigation</SheetTitle>
           <nav className="space-y-1 px-3 py-4">
-            {NAV_ITEMS.map((item) => {
+            {navForRole((user?.role as Role) ?? null).map((item) => {
               const active = pathname === item.href;
               const Icon = item.icon;
               return (

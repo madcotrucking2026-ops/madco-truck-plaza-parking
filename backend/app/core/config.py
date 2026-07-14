@@ -60,5 +60,16 @@ class Settings(BaseSettings):
     # SMS only actually sends once Twilio creds above are set.
     auto_reminders_enabled: bool = True
 
+    # Shared secret that lets an external cron (the compose `cron` service, a
+    # systemd timer, Task Scheduler) trigger the reminder sweep without a JWT.
+    # The in-process scheduler only runs while the app is up; the external
+    # trigger is the belt-and-braces that survives restarts. Empty = disabled.
+    scheduler_token: str = ""
+
+    # POSTed to on every ERROR-level log line (Slack/Discord/ntfy-style webhook).
+    # A truck stop has no ops team watching a log file — if payments break at
+    # 2am, this is how anyone finds out before an angry driver tells them.
+    alert_webhook_url: str = ""
+
 
 settings = Settings()

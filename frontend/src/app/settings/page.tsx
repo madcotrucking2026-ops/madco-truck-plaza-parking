@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ExternalLink, Settings as SettingsIcon } from "lucide-react";
 import { ComingSoon } from "@/components/coming-soon";
 import { AddStaffCard } from "@/components/settings/add-staff-card";
+import { StaffListCard } from "@/components/settings/staff-list-card";
 
 export default function SettingsPage() {
   return (
@@ -22,6 +23,7 @@ export default function SettingsPage() {
         </Link>
       </div>
 
+      <StaffListCard />
       <AddStaffCard />
 
       <ComingSoon

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS } from "@/lib/nav";
+import { navForRole, type Role } from "@/lib/nav";
 import { LogOut, Search, Truck } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { openCommandPalette } from "@/lib/command-palette-events";
@@ -53,7 +53,7 @@ export function SidebarNav() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-2">
-        {NAV_ITEMS.map((item) => {
+        {navForRole((user?.role as Role) ?? null).map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
           return (

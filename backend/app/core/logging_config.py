@@ -35,6 +35,17 @@ def configure_logging() -> None:
     file_handler.setFormatter(fmt)
     logger.addHandler(file_handler)
 
+    # ERROR and up also go to a webhook (Slack/Discord/ntfy) when configured —
+    # nobody at a truck stop is tailing this log file at 2am.
+    from app.core.config import settings
+
+    if settings.alert_webhook_url:
+        from app.core.alerts import WebhookAlertHandler
+
+        alert_handler = WebhookAlertHandler(settings.alert_webhook_url)
+        alert_handler.setFormatter(fmt)
+        logger.addHandler(alert_handler)
+
     _configured = True
 
 

@@ -22,6 +22,9 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Docker build copies .next/standalone — a self-contained server with only the
+  // node_modules it actually needs, instead of shipping the full 500MB tree.
+  output: "standalone",
   async headers() {
     return [
       {

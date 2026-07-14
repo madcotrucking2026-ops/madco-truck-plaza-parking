@@ -5,7 +5,20 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import settings
 
-connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
+if settings.database_url.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+elif settings.database_url.startswith("postgresql"):
+    # The database's clock is the PLAZA's clock. Timestamps are stored as naive
+    # plaza-local wall time (see core/clock.py), and the revenue queries bucket
+    # them with SQL date(). On Postgres those columns are timestamptz: without
+    # this, a naive insert is interpreted in the SERVER's timezone (UTC on any
+    # cloud box) and date() re-extracts UTC days — silently reintroducing the
+    # "evening payments land on tomorrow's books" bug that was already fixed
+    # once on SQLite. Pinning the session timezone makes Postgres agree with
+    # the plaza end to end.
+    connect_args = {"options": f"-c timezone={settings.timezone}"}
+else:
+    connect_args = {}
 engine = create_engine(settings.database_url, pool_pre_ping=True, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

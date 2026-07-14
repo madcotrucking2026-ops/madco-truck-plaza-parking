@@ -38,6 +38,14 @@ class CreateStaffUserRequest(BaseModel):
     role: EmployeeRole = EmployeeRole.attendant
 
 
+class ResetPasswordRequest(BaseModel):
+    """Admin-only. There is no email infrastructure at a truck stop and none is
+    needed: forgotten passwords are fixed at the desk by the owner. (The owner's
+    OWN lockout is handled by scripts/reset_password.py on the server.)"""
+
+    new_password: str = _Password
+
+
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

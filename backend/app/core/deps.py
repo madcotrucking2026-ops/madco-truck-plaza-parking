@@ -45,3 +45,15 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != EmployeeRole.admin:
         raise HTTPException(status_code=403, detail="Admin access required.")
     return current_user
+
+
+def require_manager(current_user: User = Depends(get_current_user)) -> User:
+    """Admin or manager — the money tier.
+
+    An attendant's job is the front desk: issue, renew, look up, remind. Revenue
+    totals, payment history, reports and the audit trail are the owner's business,
+    not something every seasonal hire with a login can browse.
+    """
+    if current_user.role not in (EmployeeRole.admin, EmployeeRole.manager):
+        raise HTTPException(status_code=403, detail="Manager access required.")
+    return current_user

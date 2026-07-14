@@ -1,6 +1,7 @@
+import secrets
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -17,6 +18,9 @@ from app.models.enums import AuditAction, MonthlyCustomerStatus, ReminderStatus
 from app.schemas.reminder import ReminderCustomer, RemindersOverview, SendReminderResult, SweepResult
 
 router = APIRouter(prefix="/api/reminders", tags=["reminders"])
+# Mounted WITHOUT the router-level login dependency: its caller is a cron job,
+# authenticated by the shared-secret header inside the endpoint itself.
+cron_router = APIRouter(prefix="/api/reminders", tags=["reminders"])
 log = get_logger(__name__)
 
 # Send a heads-up these many days before renewal, then daily once due/overdue.
@@ -161,6 +165,26 @@ def list_reminders(db: Session = Depends(get_db), _user: User = Depends(get_curr
 def run_now(db: Session = Depends(get_db), _user: User = Depends(get_current_user)) -> SweepResult:
     """Manually trigger the same automatic sweep (also runs on its own daily)."""
     return run_scheduled_reminders(db, triggered_by=_user.name or "manual")
+
+
+@cron_router.post("/cron", response_model=SweepResult)
+def cron_trigger(request: Request, db: Session = Depends(get_db)) -> SweepResult:
+    """The external daily trigger — cron, a systemd timer, Task Scheduler.
+
+    The in-process scheduler only sweeps while the app happens to be up; this is
+    the belt-and-braces that survives restarts. Authenticated by a shared secret
+    header instead of a JWT, because a cron job can't log in and a credential
+    that never expires shouldn't be a user account. Refuses (503) when no token
+    is configured rather than running unauthenticated. Idempotent per day — the
+    sweep already skips anyone reminded today, so cron + in-process scheduler
+    firing on the same day cannot double-text a customer.
+    """
+    if not settings.scheduler_token:
+        raise HTTPException(status_code=503, detail="Scheduler token not configured.")
+    supplied = request.headers.get("x-scheduler-token", "")
+    if not secrets.compare_digest(supplied, settings.scheduler_token):
+        raise HTTPException(status_code=403, detail="Bad scheduler token.")
+    return run_scheduled_reminders(db, triggered_by="external-cron")
 
 
 @router.post("/{monthly_customer_id}/send", response_model=SendReminderResult)

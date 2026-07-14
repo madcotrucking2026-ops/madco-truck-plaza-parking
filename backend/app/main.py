@@ -6,9 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.core.database import Base, engine, run_startup_migrations
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_admin, require_manager
 from app.core.logging_config import configure_logging, get_logger
+from app.core.migrate import upgrade_database
 from app.core.scheduler import reminder_scheduler_loop
 from app.routers import (
     audit_log,
@@ -45,11 +45,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Madco Truck Plaza Parking Management System", lifespan=lifespan)
 
-# Local dev convenience: create tables directly from models (SQLite by default).
-# Swap for Alembic migrations before pointing this at the production Postgres database.
-Base.metadata.create_all(bind=engine)
-run_startup_migrations()
-log.info("Application starting — DB ready, migrations applied.")
+# Alembic is the ONE schema mechanism — dev SQLite and prod Postgres run the same
+# migrations. A pre-Alembic dev database is detected and stamped (see core/migrate.py).
+upgrade_database()
+log.info("Application starting — DB at head, migrations applied.")
 
 # Taking cards with no webhook secret means the safety net is OFF: if a customer's
 # phone dies between the charge clearing and the browser telling us about it, we
@@ -89,20 +88,27 @@ app.add_middleware(
 # cancel-intent routes are the kiosk's own payment flow and must stay
 # reachable by an anonymous customer; its webhook route is protected by
 # Stripe's signature verification instead of a login.
+# Role tiers. Any login = the front desk job: issue, renew, look up, remind.
+# Manager+ = the money: revenue, payment history, reports, business insights.
+# Admin = the owner: staff accounts and the audit trail.
 _require_login = [Depends(get_current_user)]
+_require_manager = [Depends(require_manager)]
+_require_admin = [Depends(require_admin)]
 
 app.include_router(auth.router)
 app.include_router(companies.router)
 app.include_router(passes.router, dependencies=_require_login)
 app.include_router(lot_check.router, dependencies=_require_login)
-app.include_router(dashboard.router, dependencies=_require_login)
-app.include_router(insights.router, dependencies=_require_login)
+app.include_router(dashboard.router, dependencies=_require_manager)
+app.include_router(insights.router, dependencies=_require_manager)
 app.include_router(monthly_customers.router, dependencies=_require_login)
 app.include_router(reminders.router, dependencies=_require_login)
-app.include_router(payments.router, dependencies=_require_login)
-app.include_router(audit_log.router, dependencies=_require_login)
+# /api/reminders/cron authenticates itself with the scheduler token, not a JWT.
+app.include_router(reminders.cron_router)
+app.include_router(payments.router, dependencies=_require_manager)
+app.include_router(audit_log.router, dependencies=_require_admin)
 app.include_router(search.router, dependencies=_require_login)
-app.include_router(reports.router, dependencies=_require_login)
+app.include_router(reports.router, dependencies=_require_manager)
 app.include_router(stripe_payments.router)
 app.include_router(verify.router)  # public — no login (guard scans QR)
 # payment_requests: create is manager-only (guarded inside the router); the

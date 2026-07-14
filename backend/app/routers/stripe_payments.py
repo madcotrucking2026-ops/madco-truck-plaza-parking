@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_manager
 from app.core.logging_config import get_logger
 from app.core.rate_limit import checkout_limiter
 from app.core.stripe_client import is_configured
@@ -254,7 +254,7 @@ def _ours(md: dict) -> bool:
 def stranded_charges(
     days: int = Query(default=7, ge=1, le=90),
     db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_manager),
 ) -> list[StrandedCharge]:
     """Cards Stripe accepted that produced no pass here — money taken, nothing given.
 
@@ -315,7 +315,7 @@ def stranded_charges(
 def issue_stranded_pass(
     payment_intent_id: str,
     db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_manager),
 ):
     """One-click repair for a stranded charge: issue the pass the customer paid for.
 
