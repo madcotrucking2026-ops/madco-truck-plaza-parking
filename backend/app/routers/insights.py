@@ -8,7 +8,7 @@ from app.core.clock import business_today
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models import Company, MonthlyCustomer, ParkingPass, Payment, User, Vehicle
+from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Spot, User, Vehicle
 from app.models.enums import PassStatus, PassType
 from app.schemas.insights import CallItem, ConversionLead, ConversionLeads, MorningReport
 
@@ -176,6 +176,21 @@ def morning_report(db: Session = Depends(get_db), _user: User = Depends(get_curr
                 reason=f"{parking_pass.pass_type.value.title()} pass on truck {truck} expires today",
                 amount=float(parking_pass.price),
                 pass_id=parking_pass.id,
+            )
+        )
+
+    # 2b. Spots a customer reported blocked — a truck squatting past its pass.
+    #     Someone already paid for that spot and had to move; go free it up.
+    for spot in db.scalars(select(Spot).where(Spot.overstay_reported)):
+        calls.append(
+            CallItem(
+                priority="today",
+                kind="overstay",
+                company_id=None,
+                company_name=f"Spot {spot.number}",
+                phone=None,
+                reason=f"Spot {spot.number} reported occupied by an expired truck — go move it along",
+                amount=None,
             )
         )
 

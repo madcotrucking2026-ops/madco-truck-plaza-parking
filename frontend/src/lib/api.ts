@@ -232,7 +232,7 @@ export type PaymentRequestStatus = {
 
 export type CallItem = {
   priority: "now" | "today" | "worth_a_call";
-  kind: "renewal_overdue" | "renewal_due" | "pass_expiring" | "lead";
+  kind: "renewal_overdue" | "renewal_due" | "pass_expiring" | "overstay" | "lead";
   company_id: number | null;
   company_name: string;
   phone: string | null;

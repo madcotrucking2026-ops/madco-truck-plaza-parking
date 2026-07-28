@@ -155,3 +155,22 @@ def test_money_and_lot_are_reported_for_the_plazas_day(db):
     assert report.todays_revenue == 40.0
     assert report.occupied_spaces == 2
     assert report.available_spaces == report.capacity - 2
+
+
+def test_overstays_make_the_morning_report(db, monkeypatch):
+    """A customer stood in front of a squatting truck and told us — the report
+    sends someone to go deal with it, same priority tier as expiring passes."""
+    from app.core.config import settings
+    from app.core.spots import ensure_spots
+    from app.models import Spot
+
+    monkeypatch.setattr(settings, "parking_capacity", 3)
+    ensure_spots(db)
+    spot = db.query(Spot).filter_by(number=2).one()
+    spot.overstay_reported = True
+    db.commit()
+
+    calls = morning_report(db=db, _user=_FakeUser()).calls
+    overstay = next(c for c in calls if c.kind == "overstay")
+    assert overstay.priority == "today"
+    assert "Spot 2" in overstay.reason
