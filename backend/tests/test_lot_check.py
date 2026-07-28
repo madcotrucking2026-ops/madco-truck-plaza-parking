@@ -93,3 +93,16 @@ def test_a_daily_walkup_is_not_a_monthly_customer(db):
 
 def test_unknown_truck_is_simply_not_found(db):
     assert lot_check(q="0000", db=db).found is False
+
+
+def test_lot_check_names_the_spot(db, monkeypatch):
+    """Standing at the truck, the manager needs to know which spot it SHOULD be
+    in — mismatch is how you catch a truck parked in someone else's number."""
+    from app.core.config import settings
+    from app.core.spots import ensure_spots
+
+    monkeypatch.setattr(settings, "parking_capacity", 5)
+    ensure_spots(db)
+    p = _issue(db, "7911")
+    db.commit()
+    assert lot_check(q="7911", db=db).spot_number == p.spot.number

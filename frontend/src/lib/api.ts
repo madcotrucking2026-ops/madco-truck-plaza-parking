@@ -175,6 +175,7 @@ export type LotCheckResult = {
   payment_method?: "cash" | "check" | "credit_card" | "debit_card" | "phone_payment" | null;
   paid_at?: string | null;
   is_monthly_customer?: boolean;
+  spot_number?: number | null;
 };
 
 export type VehicleType = "truck" | "trailer" | "bobtail" | "flatbed" | "car" | "other";

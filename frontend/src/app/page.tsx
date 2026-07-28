@@ -28,6 +28,7 @@ import {
   type StrandedCharge,
 } from "@/lib/api";
 import { toast } from "sonner";
+import { LotGrid } from "@/components/dashboard/lot-grid";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { StatusBadge } from "@/components/passes/status-badge";
 import { RenewDialog } from "@/components/passes/renew-dialog";
@@ -346,6 +347,7 @@ export default function DashboardPage() {
         </section>
 
         <div className="space-y-6">
+          <LotGrid />
           <section className="card-paper rounded-2xl p-5">
             <div className="mb-3 flex items-center gap-1">
               <h2 className={SUBHEAD}>Lot snapshot</h2>

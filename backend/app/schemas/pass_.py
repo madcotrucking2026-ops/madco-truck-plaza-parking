@@ -100,3 +100,4 @@ class LotCheckResult(BaseModel):
     payment_method: PaymentMethod | None = None
     paid_at: date | None = None
     is_monthly_customer: bool = False
+    spot_number: int | None = None

@@ -74,4 +74,5 @@ def lot_check(q: str = Query(..., min_length=1), db: Session = Depends(get_db)) 
         payment_method=last_payment.method if last_payment else None,
         paid_at=last_payment.paid_at.date() if last_payment else None,
         is_monthly_customer=is_monthly_customer,
+        spot_number=parking_pass.spot_number,
     )
