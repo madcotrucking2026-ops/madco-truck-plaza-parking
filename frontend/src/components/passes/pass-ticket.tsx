@@ -26,6 +26,18 @@ export function PassTicket({
         </span>
       </div>
 
+      {/* The spot is what the driver actually needs — big enough to read from a cab. */}
+      {pass.spot_number != null && (
+        <div className="mt-4 rounded-xl bg-[var(--forest-700)] p-4 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ivory-100)]/70">
+            Park in spot
+          </p>
+          <p className="font-mono text-5xl font-bold tabular-nums text-[var(--ivory-100)]">
+            {pass.spot_number}
+          </p>
+        </div>
+      )}
+
       <dl className="mt-4 space-y-2 text-sm">
         <Row label="Company" value={pass.company_name} />
         {pass.truck_number && <Row label="Truck Number" value={pass.truck_number} />}

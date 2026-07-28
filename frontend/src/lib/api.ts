@@ -305,6 +305,21 @@ export type PassVerifyResult = {
   expiration_date: string | null;
   price: number | null;
   receipt_number: string | null;
+  spot_number: number | null;
+};
+
+export type ReassignResult = {
+  spot_number: number;
+};
+
+/** One cell of the lot grid — state is derived server-side from live passes. */
+export type SpotState = {
+  number: number;
+  state: "free" | "occupied" | "expiring" | "grace" | "overstay" | "inactive";
+  company_name: string | null;
+  truck_number: string | null;
+  pass_id: number | null;
+  expiration_date: string | null;
 };
 
 export type RenewPassRequest = {
@@ -360,6 +375,7 @@ export type PassRead = {
   receipt_number: string | null;
   qr_code: string | null;
   barcode: string | null;
+  spot_number: number | null;
 };
 
 export type PassListItem = {
@@ -371,6 +387,7 @@ export type PassListItem = {
   expiration_date: string;
   receipt_number: string | null;
   qr_code: string | null;
+  spot_number: number | null;
   company_name: string | null;
   company_id: number | null;
   truck_number: string | null;

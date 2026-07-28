@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { CheckCircle2, XCircle, AlertTriangle, ShieldAlert, ShieldCheck, Truck } from "lucide-react";
-import { api, type PassVerifyResult } from "@/lib/api";
+import { toast } from "sonner";
+
+import { api, ApiError, type PassVerifyResult, type ReassignResult } from "@/lib/api";
 
 const currency = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -38,6 +40,22 @@ export default function VerifyPage() {
   const params = useParams<{ token: string }>();
   const [result, setResult] = useState<PassVerifyResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reassigning, setReassigning] = useState(false);
+
+  async function reportOccupied() {
+    const token = params?.token;
+    if (!token) return;
+    setReassigning(true);
+    try {
+      const r = await api.post<ReassignResult>(`/api/verify/${encodeURIComponent(token)}/report-occupied`, {});
+      setResult((prev) => (prev ? { ...prev, spot_number: r.spot_number } : prev));
+      toast.success(`Your new spot is ${r.spot_number}. Sorry about that — staff have been notified.`);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Couldn't reassign — please see the front desk.");
+    } finally {
+      setReassigning(false);
+    }
+  }
 
   useEffect(() => {
     const token = params?.token;
@@ -82,6 +100,27 @@ export default function VerifyPage() {
             <p className="text-2xl font-bold tracking-tight">{look.label}</p>
             <p className="text-sm">{look.sub}</p>
           </div>
+
+          {/* The spot is the actionable line — hero it, and give the driver the
+              way out when a squatter is sitting in it (no desk call at 3am). */}
+          {result?.valid && result.spot_number != null && (
+            <div className="card-paper space-y-3 rounded-2xl p-5 text-center">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--cream-foreground)]/60">
+                Park in spot
+              </p>
+              <p className="font-mono text-6xl font-bold tabular-nums text-[var(--cream-foreground)]">
+                {result.spot_number}
+              </p>
+              <button
+                type="button"
+                disabled={reassigning}
+                onClick={reportOccupied}
+                className="w-full rounded-lg border border-black/10 py-3 text-sm font-medium text-[var(--cream-foreground)]/80 hover:bg-black/5 disabled:opacity-50"
+              >
+                {reassigning ? "Finding you a new spot…" : "Spot occupied? Get a new one"}
+              </button>
+            </div>
+          )}
 
           {result?.valid && (
             <div className="card-paper rounded-2xl p-6">

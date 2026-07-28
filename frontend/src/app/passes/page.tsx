@@ -220,6 +220,7 @@ export default function PassesPage() {
             <PassTicket
               pass={{
                 id: viewingPass.id,
+                spot_number: viewingPass.spot_number,
                 pass_type: viewingPass.pass_type,
                 status: viewingPass.status,
                 price: viewingPass.price,

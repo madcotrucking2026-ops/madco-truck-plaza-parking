@@ -430,6 +430,7 @@ def list_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
             expiration_date=p.expiration_date,
             receipt_number=p.receipt_number,
             qr_code=p.qr_code,
+            spot_number=p.spot_number,
             company_name=p.company.name if p.company else None,
             company_id=p.company_id,
             truck_number=p.vehicle.truck_number,
