@@ -48,6 +48,13 @@ app = FastAPI(title="Madco Truck Plaza Parking Management System", lifespan=life
 # Alembic is the ONE schema mechanism — dev SQLite and prod Postgres run the same
 # migrations. A pre-Alembic dev database is detected and stamped (see core/migrate.py).
 upgrade_database()
+# The painted lot exists in the database before the first request: rows for
+# spots 1..PARKING_CAPACITY, idempotently (capacity changes are config).
+from app.core.database import SessionLocal  # noqa: E402
+from app.core.spots import ensure_spots  # noqa: E402
+
+with SessionLocal() as _seed_db:
+    ensure_spots(_seed_db)
 log.info("Application starting — DB at head, migrations applied.")
 
 # Taking cards with no webhook secret means the safety net is OFF: if a customer's
