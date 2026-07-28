@@ -24,6 +24,7 @@ from app.routers import (
     reminders,
     reports,
     search,
+    spots,
     stripe_payments,
     verify,
 )
@@ -115,6 +116,7 @@ app.include_router(reminders.cron_router)
 app.include_router(payments.router, dependencies=_require_manager)
 app.include_router(audit_log.router, dependencies=_require_admin)
 app.include_router(search.router, dependencies=_require_login)
+app.include_router(spots.router, dependencies=_require_login)  # attendants walk the lot
 app.include_router(reports.router, dependencies=_require_manager)
 app.include_router(stripe_payments.router)
 app.include_router(verify.router)  # public — no login (guard scans QR)
