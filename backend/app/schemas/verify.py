@@ -19,3 +19,8 @@ class PassVerifyResult(BaseModel):
     expiration_date: date | None = None
     price: float | None = None
     receipt_number: str | None = None
+    spot_number: int | None = None
+
+
+class ReassignResult(BaseModel):
+    spot_number: int
