@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.logging_config import get_logger
 from app.core.rate_limit import checkout_limiter, lookup_limiter
+from app.core.spots import free_spot_count
 from app.core.stripe_client import is_configured
 from app.models import ParkingPass, Payment, PaymentRequest, User
 from app.models.enums import PassType, PaymentMethod, VehicleType
@@ -136,6 +137,9 @@ def create_intent(token: str, db: Session = Depends(get_db)) -> CreateIntentResp
     req = _get_request(db, token)
     if req.status == "paid":
         raise HTTPException(status_code=409, detail="This has already been paid.")
+    # A NEW pass needs a spot; a renewal already holds one.
+    if req.kind == "issue" and free_spot_count(db) == 0:
+        raise HTTPException(status_code=409, detail="The lot is full right now — please see the front desk.")
 
     try:
         intent = stripe.PaymentIntent.create(

@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.deps import require_manager
 from app.core.logging_config import get_logger
 from app.core.rate_limit import checkout_limiter
+from app.core.spots import free_spot_count
 from app.core.stripe_client import is_configured
 from app.models import ParkingPass, Payment, PaymentRequest, User
 from app.models.enums import PassType, PaymentMethod, VehicleType
@@ -138,6 +139,9 @@ def _finalize_intent(db: Session, intent) -> ParkingPass:
 )
 def create_intent(payload: CreateIntentRequest, db: Session = Depends(get_db)) -> CreateIntentResponse:
     _require_configured()
+    # Never take a card for a spot that doesn't exist.
+    if free_spot_count(db) == 0:
+        raise HTTPException(status_code=409, detail="The lot is full right now — please check back later.")
     _validate_weekly_span(payload.pass_type, payload.issue_date, payload.end_date)
     _, price = _compute_price(db, payload.company_name, payload.pass_type, payload.issue_date, payload.end_date)
 
