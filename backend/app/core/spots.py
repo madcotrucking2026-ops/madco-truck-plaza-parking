@@ -81,10 +81,17 @@ def _held_spot_ids():
     return select(ParkingPass.spot_id).where(holding_filter())
 
 
+def _sellable_filter():
+    """A spot the system may hand to the NEXT customer: active, not held by a
+    live pass, and not overstay-flagged — a flagged spot has a reported squatter
+    physically on it, and selling it sends the next arrival straight into the
+    blocked spot the last customer just escaped. Staff clearing the flag returns
+    it to the pool."""
+    return Spot.active & ~Spot.overstay_reported & Spot.id.not_in(_held_spot_ids())
+
+
 def free_spot_count(db: Session) -> int:
-    return db.scalar(
-        select(func.count(Spot.id)).where(Spot.active, Spot.id.not_in(_held_spot_ids()))
-    ) or 0
+    return db.scalar(select(func.count(Spot.id)).where(_sellable_filter())) or 0
 
 
 def pick_free_spot(db: Session, prefer_spot_id: int | None = None) -> Spot | None:
@@ -92,9 +99,15 @@ def pick_free_spot(db: Session, prefer_spot_id: int | None = None) -> Spot | Non
     is the safest bet), so the spot whose truck may still be rolling out is the
     LAST one re-issued. `prefer_spot_id` implements monthly stickiness.
 
-    On Postgres the candidate row is taken FOR UPDATE SKIP LOCKED, so two
-    concurrent checkouts cannot be handed the same number — the database
-    referees, not application code. SQLite (dev) serializes writes anyway.
+    Concurrency (Postgres): the candidate row is taken FOR UPDATE SKIP LOCKED,
+    then RE-VERIFIED with a fresh statement. The lock alone is not enough: an
+    assignment INSERTS a pass but never writes the spot row, so a transaction
+    whose snapshot predates a just-committed assignment can lock the released
+    row and the engine's row-recheck sees nothing changed — the 110-customer
+    swarm sold four spots twice exactly this way. A fresh statement gets a fresh
+    snapshot (READ COMMITTED), so the re-verify sees the committed pass and the
+    loop moves to the next candidate. SQLite (dev) serializes writers, where
+    this is just a cheap second read.
     """
 
     def _locked(stmt):
@@ -102,22 +115,30 @@ def pick_free_spot(db: Session, prefer_spot_id: int | None = None) -> Spot | Non
             return stmt.with_for_update(skip_locked=True)
         return stmt
 
+    def _still_free(spot: Spot) -> bool:
+        # Fresh statement -> fresh snapshot. The lock we now hold on the spot row
+        # blocks rival pickers; this check closes the stale-snapshot window.
+        return db.scalar(select(func.count()).where(ParkingPass.spot_id == spot.id, _live_window_filter())) == 0
+
     if prefer_spot_id is not None:
         preferred = db.scalar(
-            _locked(
-                select(Spot).where(
-                    Spot.id == prefer_spot_id, Spot.active, Spot.id.not_in(_held_spot_ids())
-                )
-            )
+            _locked(select(Spot).where(Spot.id == prefer_spot_id, _sellable_filter()))
         )
-        if preferred is not None:
+        if preferred is not None and _still_free(preferred):
             return preferred
 
-    return db.scalar(
-        _locked(
-            select(Spot)
-            .where(Spot.active, Spot.id.not_in(_held_spot_ids()))
-            .order_by(Spot.last_vacated_at.asc().nulls_first(), Spot.number.asc())
-            .limit(1)
+    taken: set[int] = set()
+    while True:
+        candidate = db.scalar(
+            _locked(
+                select(Spot)
+                .where(_sellable_filter(), Spot.id.not_in(taken))
+                .order_by(Spot.last_vacated_at.asc().nulls_first(), Spot.number.asc())
+                .limit(1)
+            )
         )
-    )
+        if candidate is None:
+            return None
+        if _still_free(candidate):
+            return candidate
+        taken.add(candidate.id)  # resold under our feet — never offer it again this pick
