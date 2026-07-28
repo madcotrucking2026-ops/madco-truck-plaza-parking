@@ -84,6 +84,11 @@ only survives mistakes, not hardware.
 - **One backend worker, on purpose.** Rate limiting and the reminder scheduler
   are in-process. One uvicorn worker handles a truck stop's traffic with ease;
   before scaling out, move rate limiting to nginx/Redis.
+- **Spot inventory is config.** `PARKING_CAPACITY` sizes the painted lot (spot
+  rows are added/deactivated idempotently at startup — a 300-spot client is an
+  env var, not code). `SPOT_GRACE_DAYS` (default 3) is how long a lapsed monthly
+  keeps their number before it returns to the pool. Free/occupied is DERIVED
+  from live passes — there is no status column and no midnight job to fail.
 - **The plaza's timezone is config** (`TIMEZONE`, default America/Detroit).
   Every "today" — revenue, expiry, reminders — is computed in it, never the
   host's. On Postgres the session timezone is pinned to it too.
