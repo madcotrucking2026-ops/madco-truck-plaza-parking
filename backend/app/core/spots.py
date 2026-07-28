@@ -29,27 +29,52 @@ def ensure_spots(db: Session) -> None:
     for n, spot in existing.items():
         if n > settings.parking_capacity and spot.active:
             spot.active = False
+
+    # Backfill: a deployment that predates spots (or a capacity increase after a
+    # full-lot day) can have LIVE passes with no spot — the grid would then show
+    # a green empty lot while trucks sit on it. Give each one a spot, oldest
+    # tenants first. Idempotent: matches nothing once every live pass has one,
+    # and NULL-spot afterwards means the genuine full-lot race, which the
+    # dashboard surfaces as "paid, awaiting spot".
+    strays = db.scalars(
+        select(ParkingPass)
+        .where(ParkingPass.spot_id.is_(None), _live_window_filter())
+        .order_by(ParkingPass.issue_date.asc(), ParkingPass.id.asc())
+    ).all()
+    for parking_pass in strays:
+        spot = pick_free_spot(db)
+        if spot is None:
+            break  # genuinely more live passes than spots — dashboard shows it
+        parking_pass.spot_id = spot.id
+        # The session is autoflush=False: without this flush the next
+        # pick_free_spot's not-in-held subquery can't see the assignment just
+        # made and hands EVERY stray the same spot (live bug: 10 passes on
+        # spot 1). Flush publishes each assignment before the next pick.
+        db.flush()
+
     db.commit()
+
+
+def _live_window_filter():
+    """The date/status part of 'this pass occupies the lot': not cancelled, and
+    inside its holding window (daily/weekly through expiry day, monthly through
+    expiry + grace). Shared by holding_filter (has a spot) and the startup
+    backfill (should have one but doesn't)."""
+    today = business_today()
+    grace_cutoff = today - timedelta(days=settings.spot_grace_days)
+    return (ParkingPass.status != PassStatus.cancelled) & or_(
+        (ParkingPass.pass_type != PassType.monthly) & (ParkingPass.expiration_date >= today),
+        (ParkingPass.pass_type == PassType.monthly) & (ParkingPass.expiration_date >= grace_cutoff),
+    )
 
 
 def holding_filter():
     """Boolean clause: this pass currently HOLDS its spot.
 
-    Daily/weekly hold through their expiry day; monthly also through the grace
-    window (a late payment shouldn't cost a regular their spot); cancelled never.
     Evaluated per-query against the plaza's calendar — release at day-rollover
     is implicit, with no job to run and no stored status to drift.
     """
-    today = business_today()
-    grace_cutoff = today - timedelta(days=settings.spot_grace_days)
-    return (
-        ParkingPass.spot_id.is_not(None)
-        & (ParkingPass.status != PassStatus.cancelled)
-        & or_(
-            (ParkingPass.pass_type != PassType.monthly) & (ParkingPass.expiration_date >= today),
-            (ParkingPass.pass_type == PassType.monthly) & (ParkingPass.expiration_date >= grace_cutoff),
-        )
-    )
+    return ParkingPass.spot_id.is_not(None) & _live_window_filter()
 
 
 def _held_spot_ids():

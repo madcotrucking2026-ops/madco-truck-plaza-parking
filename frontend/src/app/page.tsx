@@ -116,6 +116,11 @@ export default function DashboardPage() {
     .filter((p) => p.status !== "cancelled" && (p.expiration_date === today || p.expiration_date === tomorrow))
     .sort((a, b) => a.expiration_date.localeCompare(b.expiration_date));
 
+  // Live passes the money took but the lot couldn't seat (spot_number null).
+  const awaitingSpot = (passes ?? []).filter(
+    (p) => p.spot_number == null && (p.status === "active" || p.status === "expiring_soon"),
+  );
+
   const upcomingRenewals = (reminders?.customers ?? [])
     .filter((c) => c.days_until_renewal <= 10)
     .slice(0, 6);
@@ -347,6 +352,19 @@ export default function DashboardPage() {
         </section>
 
         <div className="space-y-6">
+          {/* Paid but spotless: the full-lot race (finalize never refuses money).
+              Startup backfills legacy passes, so any hit here is real and rare. */}
+          {awaitingSpot.length > 0 && (
+            <div className="rounded-xl border border-[var(--warning)]/50 bg-[var(--warning)]/15 p-4">
+              <p className="text-sm font-semibold text-[var(--cream-foreground)]">
+                {awaitingSpot.length === 1 ? "A paid pass has" : `${awaitingSpot.length} paid passes have`} no spot
+              </p>
+              <p className="mt-1 text-sm text-[var(--cream-foreground)]/70">
+                The lot was full when they paid. When a spot opens, send them to it:{" "}
+                {awaitingSpot.map((p) => p.truck_number ?? p.receipt_number).join(", ")}
+              </p>
+            </div>
+          )}
           <LotGrid />
           <section className="card-paper rounded-2xl p-5">
             <div className="mb-3 flex items-center gap-1">

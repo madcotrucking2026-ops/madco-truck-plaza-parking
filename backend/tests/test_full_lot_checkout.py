@@ -31,3 +31,39 @@ def test_kiosk_refuses_when_full(db, client, monkeypatch):
     })
     assert r.status_code == 409
     assert "full" in r.json()["detail"].lower()
+
+
+def test_pay_link_refuses_new_pass_when_full_but_allows_renewal(db, client, monkeypatch):
+    """A pay-link for a NEW pass needs a spot; a renewal already holds one and
+    must never be blocked — refusing a renewal would push a paying customer
+    into lapsing."""
+    import json
+    from app.models import ParkingPass, PaymentRequest
+
+    monkeypatch.setattr(settings, "parking_capacity", 1)
+    monkeypatch.setattr("app.routers.payment_requests.is_configured", lambda: True)
+    ensure_spots(db)
+    _fill_the_lot(db)
+    held_pass = db.query(ParkingPass).first()
+
+    issue_req = PaymentRequest(
+        token="tok_full_issue", kind="issue", amount=20.0, status="pending",
+        summary="New pass while full",
+        payload_json=json.dumps({"company_name": "Latecomer", "pass_type": "daily"}),
+    )
+    renew_req = PaymentRequest(
+        token="tok_full_renew", kind="renew", amount=20.0, status="pending",
+        summary="Renewal while full",
+        payload_json=json.dumps({"pass_id": held_pass.id, "end_date": business_today().isoformat()}),
+    )
+    db.add_all([issue_req, renew_req])
+    db.commit()
+
+    r = client.post("/api/payment-requests/tok_full_issue/create-intent")
+    assert r.status_code == 409
+    assert "full" in r.json()["detail"].lower()
+
+    # Renewal reaches Stripe (fails 502 on the fake key path or succeeds in test
+    # mode — either way it is NOT the 409 full-lot refusal).
+    r2 = client.post("/api/payment-requests/tok_full_renew/create-intent")
+    assert r2.status_code != 409
