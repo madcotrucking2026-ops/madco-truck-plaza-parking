@@ -21,9 +21,14 @@ class Settings(BaseSettings):
     weekly_price: float = 100.0
     monthly_price: float = 250.0
 
-    # Total parking spots on the lot — drives the occupancy / available-spots
-    # readout on the dashboard. Override with PARKING_CAPACITY in .env.
+    # Total parking spots on the lot — sizes the spot inventory (rows are
+    # seeded/deactivated idempotently at startup) and the occupancy readout.
+    # Override with PARKING_CAPACITY in .env.
     parking_capacity: int = 150
+    # Days past expiry a monthly customer's spot stays theirs before returning
+    # to the pool. Lines up with the 7/3/1-day reminder cadence: four warnings
+    # happen before anyone loses a spot. Override with SPOT_GRACE_DAYS.
+    spot_grace_days: int = 3
 
     # The plaza's own timezone. Every "today" — pass expiry, today's revenue, the
     # daily report — is decided in THIS zone, never the server's. A cloud VM runs
