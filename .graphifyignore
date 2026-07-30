@@ -1,0 +1,8 @@
+# Files that are tooling, not this codebase. Keeping them out of the graph so
+# the map describes Madco, not the thing drawing the map.
+
+# graphify's own skill docs, committed so strict mode works on a fresh clone.
+.claude/
+
+# The graph's own output.
+graphify-out/

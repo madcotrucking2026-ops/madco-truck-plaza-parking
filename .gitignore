@@ -47,3 +47,8 @@ backups/
 graphify-out/cache/
 graphify-out/.graphify_python
 graphify-out/.graphify_root
+# Dated snapshots a rebuild takes before overwriting the graph, and its checksums.
+graphify-out/20*/
+graphify-out/*.sig
+graphify-out/memory/
+graphify-out/reflections/
