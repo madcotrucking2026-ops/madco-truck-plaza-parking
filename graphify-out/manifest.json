@@ -120,9 +120,9 @@
     "semantic_hash": "f0d1fcaefb118b1c7011e81cb9aba64d"
   },
   "backend/app/main.py": {
-    "mtime": 1785252036.4896774,
-    "ast_hash": "759290547ef4b82f5282628b2a989381",
-    "semantic_hash": "759290547ef4b82f5282628b2a989381"
+    "mtime": 1785855935.262578,
+    "ast_hash": "8936a665b898b1fac895775304ce2cab",
+    "semantic_hash": ""
   },
   "backend/app/models/__init__.py": {
     "mtime": 1785251081.9038873,
@@ -205,9 +205,9 @@
     "semantic_hash": "4c87822f8c34cb1405939b04f20d62ba"
   },
   "backend/app/routers/companies.py": {
-    "mtime": 1783901164.3397057,
-    "ast_hash": "5a6b84ac3cdff3c4bcb95e80640b2d0b",
-    "semantic_hash": "5a6b84ac3cdff3c4bcb95e80640b2d0b"
+    "mtime": 1785855935.2675755,
+    "ast_hash": "578730f42314578d1e69dc2bc0a8bc90",
+    "semantic_hash": ""
   },
   "backend/app/routers/dashboard.py": {
     "mtime": 1783901164.3397057,
@@ -230,8 +230,8 @@
     "semantic_hash": "549fcb98d94bca747bcaa4d1463fd3eb"
   },
   "backend/app/routers/passes.py": {
-    "mtime": 1785850994.6410992,
-    "ast_hash": "708111ecbbc0ec2c0569e9ffc9dcf4eb",
+    "mtime": 1785855935.262578,
+    "ast_hash": "43a09f6190e7ebc99e6038faf46366d9",
     "semantic_hash": ""
   },
   "backend/app/routers/payment_requests.py": {
@@ -260,8 +260,8 @@
     "semantic_hash": "9433ad42676efbaa7b8855fd6a5751d0"
   },
   "backend/app/routers/spots.py": {
-    "mtime": 1785851167.6044202,
-    "ast_hash": "10e19de581bcd620230ffdd8d1072b6d",
+    "mtime": 1785855935.262578,
+    "ast_hash": "646f3e679782fafda05279cd6c2b6563",
     "semantic_hash": ""
   },
   "backend/app/routers/stripe_payments.py": {
@@ -450,9 +450,9 @@
     "semantic_hash": "cae6c81f2c226a978e33d4097a1e3733"
   },
   "backend/tests/test_rbac.py": {
-    "mtime": 1784047005.991947,
-    "ast_hash": "683c0135fb67a062fa38c26853a986fb",
-    "semantic_hash": "683c0135fb67a062fa38c26853a986fb"
+    "mtime": 1785855888.840581,
+    "ast_hash": "bb35046eeab14868d2057df346eabbd3",
+    "semantic_hash": ""
   },
   "backend/tests/test_reminders_sweep.py": {
     "mtime": 1783695886.635682,
@@ -575,9 +575,9 @@
     "semantic_hash": "2534b32ddc8ea4c7776469617af9f2d6"
   },
   "frontend/src/app/login/page.tsx": {
-    "mtime": 1784046762.2140107,
-    "ast_hash": "bc994d3fcc894458e47bad466300c1ee",
-    "semantic_hash": "bc994d3fcc894458e47bad466300c1ee"
+    "mtime": 1785856093.185564,
+    "ast_hash": "e4c2023d15ba903ef248a5957e9e07ec",
+    "semantic_hash": ""
   },
   "frontend/src/app/lot-check/page.tsx": {
     "mtime": 1785252951.95805,
@@ -845,8 +845,8 @@
     "semantic_hash": "690acbd5b33471b5686f8861e3a20480"
   },
   "frontend/src/lib/nav.ts": {
-    "mtime": 1785851444.9925518,
-    "ast_hash": "0b29eac8dcc59ff93c1228bf17360a65",
+    "mtime": 1785856067.6976898,
+    "ast_hash": "6a91a51605ae336735c19b4461771737",
     "semantic_hash": ""
   },
   "frontend/src/lib/pricing.test.ts": {
@@ -895,9 +895,9 @@
     "semantic_hash": "cd20fdcb2eea1858c7c2831f14164e1d"
   },
   "DEPLOY.md": {
-    "mtime": 1785254354.8295636,
-    "ast_hash": "149945934245b79ce9438ecf9decd312",
-    "semantic_hash": "149945934245b79ce9438ecf9decd312"
+    "mtime": 1785851763.8654928,
+    "ast_hash": "0f1449649c789e32f70d3a4dfbf96ece",
+    "semantic_hash": ""
   },
   "backend/requirements-dev.txt": {
     "mtime": 1783694827.2509007,

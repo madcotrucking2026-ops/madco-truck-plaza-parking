@@ -69,43 +69,34 @@ def test_short_password_is_rejected(client):
     assert r.status_code == 422
 
 
-def _intent_body(**over):
+def _issue(client, **over):
+    """Authed desk issue — the only way a pass is created now that the customer
+    kiosk is retired. Same IssuePassRequest bounds the kiosk used to enforce."""
+    _register(client)
+    token = client.post("/api/auth/login", json={"email": EMAIL, "password": PASSWORD}).json()["access_token"]
     body = {
-        "client_request_id": "abc123",
-        "company_name": "Acme Trucking",
-        "truck_number": "T1",
-        "phone": "313-555-0100",
-        "vehicle_type": "truck",
-        "pass_type": "daily",
-        "issue_date": date.today().isoformat(),
+        "company_name": "Acme Trucking", "truck_number": "T1", "phone": "313-555-0100",
+        "vehicle_type": "truck", "pass_type": "daily", "issue_date": date.today().isoformat(),
+        "payment_method": "cash",
     }
     body.update(over)
-    return body
+    return client.post("/api/passes", headers={"Authorization": f"Bearer {token}"}, json=body)
 
 
-def test_oversized_company_name_is_rejected_on_the_public_kiosk(client):
-    """Unbounded here would flow into Stripe metadata and the database."""
-    r = client.post("/api/payments/stripe/create-intent", json=_intent_body(company_name="A" * 5000))
-    assert r.status_code == 422
+def test_oversized_company_name_is_rejected_on_issue(client):
+    """Unbounded here would flow straight into the database."""
+    assert _issue(client, company_name="A" * 5000).status_code == 422
 
 
 def test_backwards_date_range_is_rejected(client):
     today = date.today()
-    r = client.post(
-        "/api/payments/stripe/create-intent",
-        json=_intent_body(issue_date=today.isoformat(), end_date=(today - timedelta(days=5)).isoformat()),
-    )
-    assert r.status_code == 422
+    assert _issue(client, issue_date=today.isoformat(), end_date=(today - timedelta(days=5)).isoformat()).status_code == 422
 
 
 def test_absurd_pass_span_is_rejected(client):
     """A crafted end_date decades out turns into an absurd computed price."""
     today = date.today()
-    r = client.post(
-        "/api/payments/stripe/create-intent",
-        json=_intent_body(end_date=(today + timedelta(days=4000)).isoformat()),
-    )
-    assert r.status_code == 422
+    assert _issue(client, end_date=(today + timedelta(days=4000)).isoformat()).status_code == 422
 
 
 def test_negative_price_is_rejected_on_issue(client):
