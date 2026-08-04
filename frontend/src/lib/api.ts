@@ -176,6 +176,7 @@ export type LotCheckResult = {
   paid_at?: string | null;
   is_monthly_customer?: boolean;
   spot_number?: number | null;
+  spot_label?: string | null;
 };
 
 export type VehicleType = "truck" | "trailer" | "bobtail" | "flatbed" | "car" | "other";
@@ -307,6 +308,7 @@ export type PassVerifyResult = {
   price: number | null;
   receipt_number: string | null;
   spot_number: number | null;
+  spot_label: string | null;
 };
 
 export type ReassignResult = {
@@ -316,12 +318,16 @@ export type ReassignResult = {
 /** One cell of the lot grid — state is derived server-side from live passes. */
 export type SpotState = {
   number: number;
+  label: string;
   state: "free" | "occupied" | "expiring" | "grace" | "overstay" | "inactive";
   company_name: string | null;
   truck_number: string | null;
   pass_id: number | null;
   expiration_date: string | null;
 };
+
+export type MoveSpotRequest = { pass_id: number; to_number: number };
+export type MoveSpotResult = { pass_id: number; spot_number: number; spot_label: string };
 
 export type RenewPassRequest = {
   end_date: string;
@@ -377,6 +383,7 @@ export type PassRead = {
   qr_code: string | null;
   barcode: string | null;
   spot_number: number | null;
+  spot_label: string | null;
 };
 
 export type PassListItem = {
@@ -389,6 +396,7 @@ export type PassListItem = {
   receipt_number: string | null;
   qr_code: string | null;
   spot_number: number | null;
+  spot_label: string | null;
   company_name: string | null;
   company_id: number | null;
   truck_number: string | null;

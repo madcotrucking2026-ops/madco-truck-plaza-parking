@@ -221,6 +221,7 @@ export default function PassesPage() {
               pass={{
                 id: viewingPass.id,
                 spot_number: viewingPass.spot_number,
+                spot_label: viewingPass.spot_label,
                 pass_type: viewingPass.pass_type,
                 status: viewingPass.status,
                 price: viewingPass.price,

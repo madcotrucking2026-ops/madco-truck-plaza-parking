@@ -110,8 +110,8 @@
     "semantic_hash": "0a2b667f3d4c529d2d17b069f83bce5e"
   },
   "backend/app/core/spots.py": {
-    "mtime": 1785850813.686196,
-    "ast_hash": "3bb2899bba69005a3dcecc5823014e5b",
+    "mtime": 1785851147.4673972,
+    "ast_hash": "edbeea1b075d2cee82b2e832b8126b0d",
     "semantic_hash": ""
   },
   "backend/app/core/stripe_client.py": {
@@ -260,8 +260,8 @@
     "semantic_hash": "9433ad42676efbaa7b8855fd6a5751d0"
   },
   "backend/app/routers/spots.py": {
-    "mtime": 1785851014.0470655,
-    "ast_hash": "d6e1c5086b27c54b6e3686a49c34720b",
+    "mtime": 1785851167.6044202,
+    "ast_hash": "10e19de581bcd620230ffdd8d1072b6d",
     "semantic_hash": ""
   },
   "backend/app/routers/stripe_payments.py": {
@@ -340,8 +340,8 @@
     "semantic_hash": "e662b0a9bc530ca1eb4880ca189a157e"
   },
   "backend/app/schemas/spot.py": {
-    "mtime": 1785850973.6492836,
-    "ast_hash": "0b6e5d26cdecfab8e07f87fdf270fca9",
+    "mtime": 1785851167.6044202,
+    "ast_hash": "30f4ee48cce12a9309fa90e371761d6f",
     "semantic_hash": ""
   },
   "backend/app/schemas/stripe_payment.py": {
@@ -987,6 +987,11 @@
   "backend/tests/test_spot_label_on_payloads.py": {
     "mtime": 1785850923.1731765,
     "ast_hash": "f03aeb95fafa6fbb6dd79107af3927f8",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_move_spot.py": {
+    "mtime": 1785851080.9752536,
+    "ast_hash": "a6b599083fe2f4e4345884f721adbcca",
     "semantic_hash": ""
   }
 }
