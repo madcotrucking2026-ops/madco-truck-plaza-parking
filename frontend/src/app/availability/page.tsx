@@ -104,7 +104,7 @@ export default function AvailabilityPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Availability</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Open Spots</h1>
           <p className="text-sm text-muted-foreground">
             Live lot map — every zone, refreshing on its own.{" "}
             <span className="inline-flex items-center gap-1 text-[var(--success)]">

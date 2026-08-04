@@ -38,7 +38,7 @@ import { addDaysISO, todayISO } from "@/lib/pricing";
 
 const QUICK_ACTIONS = [
   { label: "Issue Pass", href: "/passes/issue", icon: FilePlus2 },
-  { label: "Search a Truck", href: "/lot-check", icon: Search },
+  { label: "Find a Truck", href: "/lot-check", icon: Search },
   { label: "Add Monthly Customer", href: "/passes/issue?type=monthly", icon: UserPlus },
   { label: "All Passes", href: "/passes", icon: ClipboardList },
 ];

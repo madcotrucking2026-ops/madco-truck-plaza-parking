@@ -26,7 +26,7 @@ export default function PassesPage() {
   const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   // Desk lookup — filter the already-loaded list by truck/trailer/plate,
-  // company, or receipt. (Lot Check is the separate walk-the-lot tool.)
+  // company, or receipt. (Find a Truck is the separate walk-the-lot tool.)
   const q = query.trim().toLowerCase();
   const filtered = !passes
     ? null

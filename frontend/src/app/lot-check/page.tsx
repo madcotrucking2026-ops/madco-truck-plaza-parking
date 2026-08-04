@@ -58,7 +58,7 @@ function LotCheckInner() {
   return (
     <div className="max-w-xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Lot Check</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Find a Truck</h1>
         <p className="text-sm text-muted-foreground">
           Search truck #, trailer #, license plate, company, USDOT, or phone — instantly see payment status.
         </p>

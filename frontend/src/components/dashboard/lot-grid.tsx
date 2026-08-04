@@ -40,10 +40,10 @@ export function LotGrid() {
   }
   useEffect(load, []);
 
-  async function clearOverstay(number: number) {
+  async function clearOverstay(number: number, label: string) {
     try {
       await api.post(`/api/spots/${number}/clear-overstay`, {});
-      toast.success(`Spot ${number} back in service.`);
+      toast.success(`Spot ${label} back in service.`);
       load();
     } catch {
       toast.error("Couldn't clear that spot — try again.");
@@ -68,7 +68,7 @@ export function LotGrid() {
               <li key={s.number} className="flex items-center gap-3 text-sm text-[var(--danger-ink)]/90">
                 <span className="font-mono font-bold tabular-nums">Spot {s.label}</span>
                 <span className="flex-1">go move the truck along, then clear it</span>
-                <Button variant="outline" size="sm" className="shrink-0" onClick={() => clearOverstay(s.number)}>
+                <Button variant="outline" size="sm" className="shrink-0" onClick={() => clearOverstay(s.number, s.label)}>
                   Cleared
                 </Button>
               </li>
