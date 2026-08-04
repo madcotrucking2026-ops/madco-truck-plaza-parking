@@ -968,5 +968,15 @@
     "mtime": 1783099391.5250552,
     "ast_hash": "a2760511c65806022ad20adf74370ff3",
     "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  },
+  "docs/superpowers/plans/2026-08-04-zone-availability.md": {
+    "mtime": 1785850728.7922864,
+    "ast_hash": "87c31f27a4c2ecfcbe3b7f96618d4e4d",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-08-04-zone-availability-design.md": {
+    "mtime": 1785850654.6729567,
+    "ast_hash": "ee43e1a69459d52d93b9cec66b7e564b",
+    "semantic_hash": ""
   }
 }

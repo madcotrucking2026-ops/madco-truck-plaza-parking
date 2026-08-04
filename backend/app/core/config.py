@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     # happen before anyone loses a spot. Override with SPOT_GRACE_DAYS.
     spot_grace_days: int = 3
 
+    # Physical zoning: spots are painted into lettered zones of this size
+    # (Madco = 6 zones of 25 -> A1..F25). Purely a DISPLAY label over the integer
+    # spot number; the number stays the key. 0 disables zoning (bare numbers).
+    # Override with SPOTS_PER_ZONE.
+    spots_per_zone: int = 25
+
     # The plaza's own timezone. Every "today" — pass expiry, today's revenue, the
     # daily report — is decided in THIS zone, never the server's. A cloud VM runs
     # on UTC, and without this the business day would roll over at 8pm Michigan

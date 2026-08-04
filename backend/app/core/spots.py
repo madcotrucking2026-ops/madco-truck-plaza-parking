@@ -17,6 +17,21 @@ from app.models import ParkingPass, Spot
 from app.models.enums import PassStatus, PassType
 
 
+def spot_label(number: int) -> str:
+    """Display label for a spot: 1 -> 'A1', 26 -> 'B1', 150 -> 'F25'. The integer
+    number stays the stable key (URLs, grid keys, existing passes); this is only
+    how it reads on a pass and the board. Falls back to the bare number when
+    zoning is off (spots_per_zone <= 0) or the zone index runs past 'Z'."""
+    per = settings.spots_per_zone
+    if per <= 0:
+        return str(number)
+    zone_index = (number - 1) // per
+    if zone_index > 25:
+        return str(number)
+    within = (number - 1) % per + 1
+    return f"{chr(ord('A') + zone_index)}{within}"
+
+
 def ensure_spots(db: Session) -> None:
     """Idempotent: rows exist for 1..capacity, and exactly those are active.
     Shrinking capacity deactivates (never deletes — spots carry history)."""
