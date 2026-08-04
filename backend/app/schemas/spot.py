@@ -11,3 +11,14 @@ class SpotState(BaseModel):
     truck_number: str | None = None
     pass_id: int | None = None
     expiration_date: date | None = None
+
+
+class MoveSpotRequest(BaseModel):
+    pass_id: int
+    to_number: int
+
+
+class MoveSpotResult(BaseModel):
+    pass_id: int
+    spot_number: int
+    spot_label: str

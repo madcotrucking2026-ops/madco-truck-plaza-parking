@@ -11,10 +11,11 @@ from datetime import timedelta
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.core.clock import business_today
+from app.core.audit import log_audit
+from app.core.clock import business_now, business_today
 from app.core.config import settings
 from app.models import ParkingPass, Spot
-from app.models.enums import PassStatus, PassType
+from app.models.enums import AuditAction, PassStatus, PassType
 
 
 def spot_label(number: int) -> str:
@@ -157,3 +158,62 @@ def pick_free_spot(db: Session, prefer_spot_id: int | None = None) -> Spot | Non
         if _still_free(candidate):
             return candidate
         taken.add(candidate.id)  # resold under our feet — never offer it again this pick
+
+
+class MoveError(Exception):
+    """A move the cashier asked for that can't be honored. `status` is the HTTP
+    code the router should surface, `detail` the message the cashier reads."""
+
+    def __init__(self, status: int, detail: str):
+        self.status = status
+        self.detail = detail
+        super().__init__(detail)
+
+
+def move_pass_to_spot(db: Session, pass_id: int, to_number: int) -> ParkingPass:
+    """Cashier override: put a truck in a specific FREE spot.
+
+    Race-safe against the auto-assigner: the target is locked and re-verified free
+    with the same mechanism pick_free_spot uses, so a spot handed out in the last
+    few seconds raises 409 rather than double-selling. Frees the old spot instantly
+    (derived state — no separate release), and audits who moved which truck where.
+    Truck-to-truck swapping is intentionally not supported (v1); the target must be
+    an open spot.
+    """
+    parking_pass = db.get(ParkingPass, pass_id)
+    if parking_pass is None:
+        raise MoveError(404, "Pass not found.")
+
+    target = db.scalar(select(Spot).where(Spot.number == to_number))
+    if target is None:
+        raise MoveError(404, "No such spot.")
+    if parking_pass.spot_id == target.id:
+        raise MoveError(400, "That truck is already in that spot.")
+    if not target.active:
+        raise MoveError(400, "That spot is out of service.")
+    if target.overstay_reported:
+        raise MoveError(400, "That spot is flagged as blocked — clear it first.")
+
+    # Lock + fresh-snapshot re-verify, exactly as the auto-assigner does.
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(select(Spot.id).where(Spot.id == target.id).with_for_update(skip_locked=True))
+    still_free = db.scalar(select(func.count()).where(ParkingPass.spot_id == target.id, _live_window_filter())) == 0
+    if not still_free:
+        raise MoveError(409, "That spot was just taken — pick another.")
+
+    old = db.get(Spot, parking_pass.spot_id) if parking_pass.spot_id else None
+    truck = parking_pass.vehicle.truck_number or parking_pass.vehicle.trailer_number or parking_pass.vehicle.license_plate or "—"
+    if old is not None:
+        old.last_vacated_at = business_now()
+    parking_pass.spot_id = target.id
+
+    from_label = spot_label(old.number) if old else "no spot"
+    log_audit(
+        db,
+        AuditAction.edited,
+        "parking_pass",
+        f"Cashier moved {truck} from {from_label} to {spot_label(target.number)}",
+        entity_id=parking_pass.id,
+    )
+    db.commit()
+    return parking_pass

@@ -1,44 +1,44 @@
 # Graph Report - madco-truck-plaza-parking  (2026-08-04)
 
 ## Corpus Check
-- 187 files · ~68,743 words
+- 188 files · ~68,941 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1353 nodes · 3608 edges · 90 communities (73 shown, 17 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 201 edges (avg confidence: 0.65)
+- 1368 nodes · 3485 edges · 97 communities (69 shown, 28 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 175 edges (avg confidence: 0.67)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `45a58639`
+- Built from commit: `32a52ac5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- _do_send
+- reminders.py
 - passes.py
 - test_spot_assignment.py
-- apply_renewal
+- test_lot_check.py
 - routers/auth.py
 - issue/page.tsx
 - test_morning_report.py
-- core/spots.py
-- payments/page.tsx
-- cn
-- payment_requests.py
-- clock.py
-- PassType
+- test_spot_label.py
 - api.ts
-- stripe_payments.py
+- cn
+- create_payment_request
+- User
+- PassType
+- api
+- test_stranded_charges.py
 - renew-dialog.tsx
 - compilerOptions
 - app/page.tsx
 - monthly-customers/page.tsx
 - components.json
-- button.tsx
+- issue_stranded_pass
 - devDependencies
 - prod service: backend
-- enums.py
+- payments.py
 - main.py
 - test_security.py
 - test_report_occupied.py
@@ -48,10 +48,10 @@
 - AI Search
 - Monthly Reminder System
 - seed_demo.py
-- Payment
-- _price_for
-- _get
-- PaymentMethod
+- test_webhook_payment_request.py
+- _issue_pass_and_payment
+- routers/reports.py
+- MonthlyCustomer
 - Tech Stack
 - test_auth_api.py
 - package.json
@@ -59,21 +59,21 @@
 - RateLimiter
 - ensure_spots
 - Core Principle: The Software Remembers Everything
-- verify/[token]/page.tsx
+- revenue-chart.tsx
 - Monochrome 16x16 Glyph Icon System (#666, evenodd fill)
 - test_reminders_sweep.py
 - test_cron_endpoint.py
-- run_startup_migrations
-- get_db
+- stripe_payments.py
+- routers/spots.py
 - Go-Live Checklist
-- company_profile
+- ParkingPass
 - next.config.ts
 - book/layout.tsx
 - login/layout.tsx
 - pay/[token]/layout.tsx
 - verify/[token]/layout.tsx
 - swarm_test.py
-- _issue_pass_and_payment
+- business_today
 - eslint.config.mjs
 - lucide-react
 - next
@@ -83,33 +83,40 @@
 - tailwind-merge
 - tw-animate-css
 - postcss.config.mjs
-- test_lot_check.py
+- LotCheckResult
 - models/__init__.py
-- payments.py
+- payments/page.tsx
 - Global Constraints
 - Architecture: labels + polling + one move endpoint (engine untouched)
 - test_insights.py
 - WebhookAlertHandler
 - _log_unhandled
-- test_dashboard.py
-- test_dedup.py
-- reminders.py
-- sms.py
-- lot_state
-- test_idempotency.py
+- routers/verify.py
+- routers/insights.py
+- _compute_price
+- _FakeMeta
+- SpotState
+- date
 - Session
+- PassType
+- model_validator
+- IssuePassRequest
+- PassListItem
+- PassVerifyResult
+- ReassignResult
+- RenewPassRequest
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 80 edges
-2. `_issue_pass_and_payment()` - 65 edges
-3. `PassType` - 63 edges
-4. `business_today()` - 62 edges
-5. `PaymentMethod` - 53 edges
-6. `ensure_spots()` - 46 edges
-7. `VehicleType` - 46 edges
-8. `_get()` - 42 edges
-9. `PassStatus` - 34 edges
-10. `ParkingPass` - 34 edges
+2. `_issue_pass_and_payment()` - 61 edges
+3. `business_today()` - 52 edges
+4. `PassType` - 51 edges
+5. `ensure_spots()` - 46 edges
+6. `PaymentMethod` - 46 edges
+7. `VehicleType` - 39 edges
+8. `_get()` - 34 edges
+9. `ParkingPass` - 29 edges
+10. `api` - 27 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Sticky Monthly Spot + Grace Window` --semantically_similar_to--> `Spot Holder Logic`  [INFERRED] [semantically similar]
@@ -135,79 +142,79 @@
 - **Derived-state spot dispatch flow (hold → pick → assign → overstay reassign)** — docs_superpowers_specs_2026_07_28_spot_inventory_design_derived_state, docs_superpowers_specs_2026_07_28_spot_inventory_design_holding_predicate, docs_superpowers_specs_2026_07_28_spot_inventory_design_assignment_algorithm, docs_superpowers_specs_2026_07_28_spot_inventory_design_full_lot_never_strand_money, docs_superpowers_specs_2026_07_28_spot_inventory_design_asphalt_gap [EXTRACTED 1.00]
 - **Untouched create-next-app public/ asset set (vendor branding, not Madco brand)** — frontend_public_file_document_icon, frontend_public_globe_globe_icon, frontend_public_window_window_icon, frontend_public_next_nextjs_wordmark, frontend_public_vercel_vercel_triangle_logo [INFERRED 0.85]
 
-## Communities (90 total, 17 thin omitted)
+## Communities (97 total, 28 thin omitted)
 
-### Community 0 - "_do_send"
-Cohesion: 0.13
-Nodes (21): _already_reminded_today(), cron_trigger(), _do_send(), list_reminders(), monthly_renewal_list(), date, MonthlyCustomer, post (+13 more)
+### Community 0 - "reminders.py"
+Cohesion: 0.10
+Nodes (32): is_configured(), Twilio requires E.164 (+15551234567). Customer phones are stored loosely…, Send an SMS via Twilio. Returns True if it went out, False if SMS isn't…, send_sms(), to_e164(), _already_reminded_today(), cron_trigger(), _do_send() (+24 more)
 
 ### Community 1 - "passes.py"
-Cohesion: 0.37
-Nodes (9): VehicleType, IssuePassRequest, LotCheckResult, PassListItem, PassRead, BaseModel, model_validator, RenewPassRequest (+1 more)
+Cohesion: 0.17
+Nodes (18): cancel_pass(), get_pass(), issue_pass(), list_passes(), get, post, Session, Removes a truck from a monthly plan (or cancels any pass) without deleting its… (+10 more)
 
 ### Community 2 - "test_spot_assignment.py"
 Cohesion: 0.31
 Nodes (9): _issue(), Assignment is part of issuing a pass — same transaction, no separate step., Sticky: a lapsed monthly who comes back gets the number they always had., Money already taken must NEVER fail for lack of a spot — pass issues with…, test_full_lot_issues_pass_with_no_spot(), test_issue_assigns_a_spot(), test_renewal_keeps_the_spot(), test_returning_monthly_gets_their_old_spot() (+1 more)
 
-### Community 3 - "apply_renewal"
+### Community 3 - "test_lot_check.py"
 Cohesion: 0.12
-Nodes (24): add_months(), date, apply_renewal(), cancel_pass(), issue_pass(), list_passes(), post, Session (+16 more)
+Nodes (27): add_months(), date, lot_check(), get, Session, apply_renewal(), Validates a proposed renewal and returns (renewal_start, price) WITHOUT…, Applies a validated renewal: extends the pass, records a Payment, and updates… (+19 more)
 
 ### Community 4 - "routers/auth.py"
-Cohesion: 0.11
-Nodes (40): AuthStatus, get_current_user(), Session, Admin or manager — the money tier. An attendant's job is the front desk: issue,…, require_admin(), require_manager(), create_access_token(), decode_access_token() (+32 more)
+Cohesion: 0.09
+Nodes (44): AuthStatus, create_access_token(), hash_password(), verify_password(), health(), EmployeeRole, auth_status(), create_staff_user() (+36 more)
 
 ### Community 5 - "issue/page.tsx"
-Cohesion: 0.10
-Nodes (39): BookPage(), PASS_TYPES, PayWay, expiryPhrase(), LotCheckInner(), PAYMENT_LABEL, shortDate(), STATUS_STYLE (+31 more)
+Cohesion: 0.09
+Nodes (41): BookPage(), PASS_TYPES, PayWay, expiryPhrase(), LotCheckInner(), PAYMENT_LABEL, shortDate(), STATUS_STYLE (+33 more)
 
 ### Community 6 - "test_morning_report.py"
-Cohesion: 0.17
-Nodes (23): _money(), morning_report(), date, Session, The manager's 7am briefing: who to call today, and why. The dashboard already…, _revenue_on(), _daily(), _FakeUser (+15 more)
+Cohesion: 0.23
+Nodes (19): morning_report(), The manager's 7am briefing: who to call today, and why. The dashboard already…, _daily(), _FakeUser, _monthly(), The 7am briefing: who to call today, in the order money is at risk. The ORDER…, Caught on real data: the report said "8 visits, spending $53/mo — offer the…, The customer who already outspends the plan closes himself — call him first. (+11 more)
 
-### Community 7 - "core/spots.py"
-Cohesion: 0.18
-Nodes (14): _held_spot_ids(), holding_filter(), _live_window_filter(), Spot inventory. State is DERIVED: a spot is free iff no live pass holds it.…, A spot the system may hand to the NEXT customer: active, not held by a live…, Display label for a spot: 1 -> 'A1', 26 -> 'B1', 150 -> 'F25'. The integer…, The date/status part of 'this pass occupies the lot': not cancelled, and inside…, Boolean clause: this pass currently HOLDS its spot. Evaluated per-query against… (+6 more)
+### Community 7 - "test_spot_label.py"
+Cohesion: 0.43
+Nodes (6): Display label for a spot: 1 -> 'A1', 26 -> 'B1', 150 -> 'F25'. The integer…, spot_label(), spot_label: the integer number stays the key; this is only how it reads., test_disabled_zoning_is_bare_number(), test_overflow_past_Z_degrades_to_number(), test_zone_labels_at_boundaries()
 
-### Community 8 - "payments/page.tsx"
+### Community 8 - "api.ts"
 Cohesion: 0.07
-Nodes (35): ACTION_STYLE, AuditLogPage(), fmt(), styleFor(), currency(), GROUPS, MorningReportPage(), telHref() (+27 more)
+Nodes (38): ACTION_STYLE, AuditLogPage(), fmt(), styleFor(), currency(), GROUPS, MorningReportPage(), telHref() (+30 more)
 
 ### Community 9 - "cn"
-Cohesion: 0.10
-Nodes (36): Badge(), badgeVariants, Card(), CardAction(), CardContent(), CardDescription(), CardFooter(), CardHeader() (+28 more)
+Cohesion: 0.09
+Nodes (37): Badge(), badgeVariants, Card(), CardAction(), CardContent(), CardDescription(), CardFooter(), CardHeader() (+29 more)
 
-### Community 10 - "payment_requests.py"
-Cohesion: 0.18
-Nodes (17): _expiration_for(), _lookup_monthly_rate(), date, PassType, The company's established per-month rate, or None if it has no monthly plan on…, _validate_weekly_span(), create_payment_request(), _vehicle_label() (+9 more)
+### Community 10 - "create_payment_request"
+Cohesion: 0.19
+Nodes (16): create_intent(), create_payment_request(), finalize(), finalize_request(), get_payment_request(), _get_request(), CreateIntentResponse, post (+8 more)
 
-### Community 11 - "clock.py"
-Cohesion: 0.13
-Nodes (17): business_now(), plaza_tz(), datetime, What day is it *at the plaza*. Two separate bugs live here if you get this…, Wall-clock time at the plaza, naive — stored as-is so `date(paid_at)` in SQL is…, Settings, Company, DashboardStats (+9 more)
+### Community 11 - "User"
+Cohesion: 0.17
+Nodes (16): get_current_user(), Session, Admin or manager — the money tier. An attendant's job is the front desk: issue,…, require_admin(), require_manager(), decode_access_token(), Company, User (+8 more)
 
 ### Community 12 - "PassType"
-Cohesion: 0.23
-Nodes (22): live_status(), date, PassStatus, PassType, create_company(), get_company(), list_companies(), lookup_company() (+14 more)
+Cohesion: 0.07
+Nodes (60): live_status(), date, PassStatus, PassType, PaymentMethod, company_profile(), lookup_company(), Everything about one company in one place: totals, trucks, recent passes and… (+52 more)
 
-### Community 13 - "api.ts"
-Cohesion: 0.10
-Nodes (29): CommandPalette(), AppShell(), isPublicPath(), MobileNav(), SidebarNav(), api, AuthStatus, ConversionLead (+21 more)
+### Community 13 - "api"
+Cohesion: 0.09
+Nodes (32): CommandPalette(), Field(), AppShell(), isPublicPath(), MobileNav(), SidebarNav(), ThemeToggle(), Button() (+24 more)
 
-### Community 14 - "stripe_payments.py"
-Cohesion: 0.05
-Nodes (83): is_configured(), _require_configured(), cancel_intent(), _compute_price(), create_intent(), finalize(), _finalize_intent(), _finalize_payment_request() (+75 more)
+### Community 14 - "test_stranded_charges.py"
+Cohesion: 0.22
+Nodes (24): Cards Stripe accepted that produced no pass here — money taken, nothing given.…, stranded_charges(), _configured(), _FakeCharge, _FakeUser, _intent(), _listing(), The stranded-charge detector: cards Stripe accepted that produced no pass. This… (+16 more)
 
 ### Community 15 - "renew-dialog.tsx"
-Cohesion: 0.14
-Nodes (21): currency(), PassesPage(), Field(), PAY_CHOICES, PayChoice, vehicleOf(), PassTicket(), PAY_CHOICES (+13 more)
+Cohesion: 0.15
+Nodes (19): currency(), PassesPage(), PAY_CHOICES, PayChoice, PassTicket(), PAY_CHOICES, PayChoice, Dialog() (+11 more)
 
 ### Community 16 - "compilerOptions"
 Cohesion: 0.07
 Nodes (28): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+20 more)
 
 ### Community 17 - "app/page.tsx"
-Cohesion: 0.11
-Nodes (17): CompanyProfilePage(), fmtDate(), fmtDateTime(), money(), money2(), currency(), DashboardPage(), LEAD_TIER (+9 more)
+Cohesion: 0.09
+Nodes (21): CompanyProfilePage(), fmtDate(), fmtDateTime(), money(), money2(), currency(), DashboardPage(), LEAD_TIER (+13 more)
 
 ### Community 18 - "monthly-customers/page.tsx"
 Cohesion: 0.13
@@ -217,9 +224,9 @@ Nodes (18): currency(), MonthlyCustomer, MonthlyCustomersPage(), STATUS_LABEL, C
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
-### Community 20 - "button.tsx"
-Cohesion: 0.14
-Nodes (15): LEGEND, LotGrid(), STATE_CLASS, ThemeToggle(), Button(), buttonVariants, Sheet(), SheetContent() (+7 more)
+### Community 20 - "issue_stranded_pass"
+Cohesion: 0.13
+Nodes (20): is_configured(), cancel_intent(), create_intent(), finalize(), issue_stranded_pass(), _metadata_from_payload(), _ours(), CreateIntentResponse (+12 more)
 
 ### Community 21 - "devDependencies"
 Cohesion: 0.10
@@ -229,21 +236,21 @@ Nodes (21): eslint, eslint-config-next, devDependencies, eslint, eslint-config-n
 Cohesion: 0.14
 Nodes (20): CI job: Frontend · typecheck + test + build (Node 20), Non-blocking lint (react-hooks/set-state-in-effect), Nightly Off-Box Backups (14 kept, host bind mount), One-Command Docker Deployment, Service: cron (reminder sweep + nightly pg_dump), Service: frontend (Next.js), Service: nginx (only published port, /api routing), Service: postgres (named volume) (+12 more)
 
-### Community 23 - "enums.py"
-Cohesion: 0.19
-Nodes (13): log_audit(), Session, Per-client sliding-window rate limiting, as a FastAPI dependency. Deliberately…, AuditLog, AuditAction, list_audit_log(), Session, AuditLogRead (+5 more)
+### Community 23 - "payments.py"
+Cohesion: 0.17
+Nodes (15): log_audit(), Session, generate_receipt_number(), date, AuditLog, AuditAction, list_audit_log(), Session (+7 more)
 
 ### Community 24 - "main.py"
-Cohesion: 0.22
-Nodes (10): configure_logging(), get_logger(), Console + rotating-file logging for the app. Called once at startup. File…, Child of the app logger, named for the calling module., Schema management at startup — Alembic is the single mechanism. Replaces the…, reminder_scheduler_loop(), _run_sweep_once(), health() (+2 more)
+Cohesion: 0.11
+Nodes (19): _backfill_pass_qr_codes(), `Base.metadata.create_all()` only creates missing *tables* — it never alters an…, Passes issued before the signed-QR system stored their plaintext receipt number…, run_startup_migrations(), get_logger(), Child of the app logger, named for the calling module., _alembic_config(), Schema management at startup — Alembic is the single mechanism. Replaces the… (+11 more)
 
 ### Community 25 - "test_security.py"
 Cohesion: 0.13
 Nodes (16): _intent_body(), Rate limiting and input validation on the unauthenticated surface. Each test…, A crafted end_date decades out turns into an absurd computed price., A negative price would record a NEGATIVE payment against the drawer., Blocks two things the per-account lockout does NOT: a spray across many…, Public and unauthenticated: it answers "does this company exist, what is its…, An unbounded password field means megabytes fed straight into bcrypt on an…, Unbounded here would flow into Stripe metadata and the database. (+8 more)
 
 ### Community 26 - "test_report_occupied.py"
-Cohesion: 0.16
-Nodes (16): make_pass_token(), Returns the pass id if the token's signature is valid, else None., _sign(), verify_pass_token(), post, Session, The asphalt gap: no sensors, so an expired truck can still sit in a spot the…, report_occupied() (+8 more)
+Cohesion: 0.30
+Nodes (9): make_pass_token(), Returns the pass id if the token's signature is valid, else None., _sign(), verify_pass_token(), _issue(), Customer finds a squatter in their assigned spot: one tap moves them and flags…, test_full_lot_says_see_the_desk(), test_reassigns_and_flags_old_spot() (+1 more)
 
 ### Community 27 - "dependencies"
 Cohesion: 0.11
@@ -266,24 +273,24 @@ Cohesion: 0.24
 Nodes (15): AI Insights / Morning Manager Report, AI Sales Opportunities (Hot/Warm/Cold Leads), Celery Background Jobs, Company Profiles, Daily Customer Tracking, Daily Pass ($20, custom day range), Monthly Customers, Monthly Pass ($250 default, overridable) (+7 more)
 
 ### Community 32 - "seed_demo.py"
-Cohesion: 0.19
-Nodes (12): _issue(), main(), _phone(), Seed realistic demo data into the dev database so every screen populates. Run…, seed(), client(), db(), fixture (+4 more)
+Cohesion: 0.14
+Nodes (18): get_db(), Session, _issue(), main(), _phone(), Seed realistic demo data into the dev database so every screen populates. Run…, seed(), client() (+10 more)
 
-### Community 33 - "Payment"
-Cohesion: 0.29
-Nodes (4): Payment, What the payment was for — the vehicle on its pass., A payment taken at 10:30pm plaza time belongs to that day's revenue. The same…, test_tonights_takings_are_on_tonights_books()
-
-### Community 34 - "_price_for"
+### Community 33 - "test_webhook_payment_request.py"
 Cohesion: 0.26
-Nodes (11): _monthly_rate_for(), _months_between(), _price_for(), Whole calendar months between two dates, rounding UP for any partial overage…, The established PER-MONTH rate — never multiplied by month count. An existing…, Pricing math: partial-month rounding and per-type price., test_daily_price_scales_with_days(), test_monthly_override_only_for_new_company() (+3 more)
+Nodes (14): _finalize_payment_request(), Webhook safety net for pay-link payments. Imported lazily to keep the router…, _FakeIntent, _pending_request(), The webhook safety net for manager-created pay links. The bug this guards: the…, Customer pays, phone dies. Stripe's webhook must still produce the pass., Both paths race on a good connection. Second one must return the same pass, not…, If Stripe charged something other than the quote, no retry will ever fix it.… (+6 more)
 
-### Community 35 - "_get"
-Cohesion: 0.11
-Nodes (33): get_pass(), create_intent(), finalize(), finalize_request(), get_payment_request(), _get_request(), CreateIntentResponse, post (+25 more)
+### Community 34 - "_issue_pass_and_payment"
+Cohesion: 0.14
+Nodes (22): _expiration_for(), _find_or_create_vehicle(), _issue_pass_and_payment(), _monthly_rate_for(), _months_between(), _price_for(), Reuse the company's existing vehicle instead of inserting a new row every time…, Shared by the normal Issue Pass endpoint and the Stripe finalize/webhook… (+14 more)
 
-### Community 36 - "PaymentMethod"
-Cohesion: 0.21
-Nodes (20): MonthlyCustomerStatus, PaymentMethod, ReminderStatus, MonthlyCustomer, create_monthly_customer(), list_monthly_customers(), MonthlyCustomer, post (+12 more)
+### Community 35 - "routers/reports.py"
+Cohesion: 0.41
+Nodes (10): Session, reports_summary(), CompanyStat, OutstandingBalance, PaymentMethodStat, BaseModel, ReportsSummary, RevenuePoint (+2 more)
+
+### Community 36 - "MonthlyCustomer"
+Cohesion: 0.22
+Nodes (18): MonthlyCustomerStatus, ReminderStatus, MonthlyCustomer, create_monthly_customer(), list_monthly_customers(), MonthlyCustomer, post, Session (+10 more)
 
 ### Community 37 - "Tech Stack"
 Cohesion: 0.12
@@ -306,16 +313,16 @@ Cohesion: 0.28
 Nodes (5): _client_key(), Request, RateLimiter, Allow `times` requests per `seconds` per client, else 429., Tests only — start from a clean window.
 
 ### Community 42 - "ensure_spots"
-Cohesion: 0.15
-Nodes (25): ensure_spots(), free_spot_count(), pick_free_spot(), FCFS with a memory: longest-vacant first (NULLS FIRST — a never-used spot is…, Idempotent: rows exist for 1..capacity, and exactly those are active. Shrinking…, _issue(), A spot is held while its pass is live: daily through expiry day, monthly…, test_cancelled_pass_frees_immediately() (+17 more)
+Cohesion: 0.11
+Nodes (35): ensure_spots(), free_spot_count(), _held_spot_ids(), holding_filter(), _live_window_filter(), pick_free_spot(), Spot inventory. State is DERIVED: a spot is free iff no live pass holds it.…, A spot the system may hand to the NEXT customer: active, not held by a live… (+27 more)
 
 ### Community 43 - "Core Principle: The Software Remembers Everything"
 Cohesion: 0.22
 Nodes (9): Engineering Identity Mandate, AI Development Rules (Plan, Build, Verify, Optimize), Coding Standards, Core Principle: The Software Remembers Everything, Feature Justification Rule, Reusable Claude Skill Folder, Madco Truck Plaza Parking Management System, Manual Processes Replaced (+1 more)
 
-### Community 44 - "verify/[token]/page.tsx"
-Cohesion: 0.21
-Nodes (9): currency(), Look, lookFor(), VerifyPage(), currency(), formatDate(), RevenueChart(), PassVerifyResult (+1 more)
+### Community 44 - "revenue-chart.tsx"
+Cohesion: 0.83
+Nodes (3): currency(), formatDate(), RevenueChart()
 
 ### Community 46 - "Monochrome 16x16 Glyph Icon System (#666, evenodd fill)"
 Cohesion: 0.48
@@ -325,37 +332,33 @@ Nodes (7): Document/File Glyph Icon (16x16, #666), Monochrome 16x16 Glyph Icon S
 Cohesion: 0.35
 Nodes (12): The daily sweep: for every monthly customer, text a renewal reminder if one is…, run_scheduled_reminders(), auto_on(), _mc(), fixture, The daily renewal-reminder sweep: who gets a text and who's skipped. SMS isn't…, _reminder_count(), test_renewed_customer_is_not_due() (+4 more)
 
-### Community 49 - "run_startup_migrations"
-Cohesion: 0.20
-Nodes (11): _backfill_pass_qr_codes(), `Base.metadata.create_all()` only creates missing *tables* — it never alters an…, Passes issued before the signed-QR system stored their plaintext receipt number…, run_startup_migrations(), _alembic_config(), Bring the schema to head, whatever state the database is in. Three cases: *…, upgrade_database(), engine() (+3 more)
+### Community 49 - "stripe_payments.py"
+Cohesion: 0.31
+Nodes (11): VehicleType, Was this charge given back? A refunded card is not stranded money — the…, _refunded(), CancelIntentRequest, CreateIntentRequest, CreateIntentResponse, FinalizeStripePaymentRequest, BaseModel (+3 more)
 
-### Community 50 - "get_db"
-Cohesion: 0.22
-Nodes (7): get_db(), Session, The lot, painted by query. `expiring` = holder's last day is today or tomorrow…, BaseModel, SearchResultItem, BaseModel, SpotState
+### Community 50 - "routers/spots.py"
+Cohesion: 0.21
+Nodes (9): clear_overstay(), lot_state(), get, post, Session, The lot, painted by query. `expiring` = holder's last day is today or tomorrow…, Staff dealt with the squatter — put the spot back to normal., BaseModel (+1 more)
 
 ### Community 51 - "Go-Live Checklist"
 Cohesion: 0.50
 Nodes (4): ALERT_WEBHOOK_URL Error Alerting (1/min rate limit), Go-Live Checklist, purge_demo Script (Wipe Demo Data, Keep Logins), Twilio A2P Activation (No Code Change)
 
-### Community 52 - "company_profile"
-Cohesion: 0.31
-Nodes (10): company_profile(), Everything about one company in one place: totals, trucks, recent passes and…, _find_company(), Match a company by name case-insensitively, ignoring surrounding whitespace —…, _issue(), Company profile aggregation: totals, per-truck rollup, monthly fields., test_profile_404_for_unknown_company(), test_profile_aggregates_visits_trucks_and_spend() (+2 more)
+### Community 52 - "ParkingPass"
+Cohesion: 0.27
+Nodes (10): ParkingPass, _finalize_intent(), Shared by the client-driven /finalize call (fast path, for immediate UI…, _md(), Stripe finalize core (_finalize_intent) — the path that turns a confirmed…, test_finalize_is_idempotent(), test_finalize_issues_pass_from_metadata(), test_finalize_rejects_intent_without_pass_metadata() (+2 more)
 
-### Community 61 - "_issue_pass_and_payment"
-Cohesion: 0.15
-Nodes (20): business_today(), date, The plaza's current calendar day. Use this everywhere `date.today()` was used,…, _issue_pass_and_payment(), Shared by the normal Issue Pass endpoint and the Stripe finalize/webhook…, Kiritimati (UTC+14) and Niue (UTC-11) are 25 hours apart, so their calendar…, The invariant the money depends on: the day a payment is recorded under is the…, test_a_payment_is_stamped_with_the_plazas_day() (+12 more)
-
-### Community 75 - "test_lot_check.py"
-Cohesion: 0.26
-Nodes (13): lot_check(), Session, _issue(), Lot check — the flagship feature: the manager walks up to a truck, types its…, A renewed pass writes a second Payment row. Reporting the original one would…, Standing at the truck, the manager needs to know which spot it SHOULD be in —…, test_a_daily_walkup_is_not_a_monthly_customer(), test_a_renewal_reports_the_LATEST_payment_not_the_first() (+5 more)
+### Community 61 - "business_today"
+Cohesion: 0.10
+Nodes (29): business_now(), business_today(), plaza_tz(), date, datetime, What day is it *at the plaza*. Two separate bugs live here if you get this…, Wall-clock time at the plaza, naive — stored as-is so `date(paid_at)` in SQL is…, The plaza's current calendar day. Use this everywhere `date.today()` was used,… (+21 more)
 
 ### Community 76 - "models/__init__.py"
-Cohesion: 0.14
-Nodes (15): Alembic environment — wired to the app's own settings and metadata, so there is…, Base, ParkingPass, PaymentRequest, A pending card payment a manager hands off to the customer to self-pay. Created…, Reminder, A singleton row (always id=1) inserted atomically alongside the very first…, SetupLock (+7 more)
+Cohesion: 0.11
+Nodes (17): Alembic environment — wired to the app's own settings and metadata, so there is…, Base, Payment, What the payment was for — the vehicle on its pass., PaymentRequest, A pending card payment a manager hands off to the customer to self-pay. Created…, Reminder, A singleton row (always id=1) inserted atomically alongside the very first… (+9 more)
 
-### Community 77 - "payments.py"
-Cohesion: 0.26
-Nodes (10): generate_receipt_number(), date, create_payment(), list_payments(), post, Session, PaymentCreate, PaymentRead (+2 more)
+### Community 77 - "payments/page.tsx"
+Cohesion: 0.24
+Nodes (10): bucketOf(), currency(), inPeriod(), METHOD_STYLE, MethodBadge(), Payment, PaymentsPage(), Period (+2 more)
 
 ### Community 78 - "Global Constraints"
 Cohesion: 0.20
@@ -366,60 +369,48 @@ Cohesion: 0.22
 Nodes (8): 1. Zone labels (derived — no migration, no data change), 2. The cashier availability page (`/availability`), 3. Cashier override — move a truck to a free spot, Architecture: labels + polling + one move endpoint (engine untouched), Decisions (settled with the owner, 2026-08-04), Testing, What does NOT change, Zone Availability + Cashier Override — Design
 
 ### Community 80 - "test_insights.py"
-Cohesion: 0.13
-Nodes (22): conversion_leads(), _monthly_equivalent(), What this company effectively spends per month right now. The window is 90…, Daily/weekly customers who come often enough that a monthly plan would likely…, _tier(), CallItem, ConversionLead, ConversionLeads (+14 more)
+Cohesion: 0.15
+Nodes (19): conversion_leads(), _monthly_equivalent(), date, Session, What this company effectively spends per month right now. The window is 90…, Daily/weekly customers who come often enough that a monthly plan would likely…, _revenue_on(), _tier() (+11 more)
 
 ### Community 81 - "WebhookAlertHandler"
-Cohesion: 0.29
-Nodes (3): ERROR-level logs become a phone notification, not a line in a file. A truck…, WebhookAlertHandler, LogRecord
+Cohesion: 0.22
+Nodes (5): ERROR-level logs become a phone notification, not a line in a file. A truck…, WebhookAlertHandler, configure_logging(), Console + rotating-file logging for the app. Called once at startup. File…, LogRecord
 
 ### Community 82 - "_log_unhandled"
 Cohesion: 0.40
 Nodes (5): _log_unhandled(), Request, Exception, exception_handler, JSONResponse
 
-### Community 83 - "test_dashboard.py"
+### Community 83 - "routers/verify.py"
+Cohesion: 0.31
+Nodes (9): get, post, Session, The asphalt gap: no sensors, so an expired truck can still sit in a spot the…, report_occupied(), verify_pass(), PassVerifyResult, BaseModel (+1 more)
+
+### Community 84 - "routers/insights.py"
+Cohesion: 0.42
+Nodes (7): _money(), CallItem, ConversionLead, ConversionLeads, MorningReport, BaseModel, One line of the morning report: a person to call, and the reason to call them.…
+
+### Community 85 - "_compute_price"
 Cohesion: 0.33
-Nodes (9): dashboard_stats(), Session, _issue_active(), Dashboard occupancy: capacity, available spots, occupancy %., A cancelled pass keeps its expiration_date, so counting purely on…, test_available_never_negative(), test_cancelled_pass_does_not_occupy_a_spot(), test_capacity_available_and_occupancy() (+1 more)
-
-### Community 84 - "test_dedup.py"
-Cohesion: 0.27
-Nodes (9): _find_or_create_vehicle(), Reuse the company's existing vehicle instead of inserting a new row every time…, _issue(), Company + vehicle de-duplication on issue (the freeform-name bug)., test_find_company_ignores_case_and_whitespace(), test_find_or_create_vehicle_reuses_by_truck_number(), test_issue_dedupes_company_and_vehicle(), test_new_company_name_is_stored_canonical() (+1 more)
-
-### Community 85 - "reminders.py"
-Cohesion: 0.50
-Nodes (6): _reminder_due_today(), BaseModel, ReminderCustomer, RemindersOverview, SendReminderResult, SweepResult
-
-### Community 86 - "sms.py"
-Cohesion: 0.47
-Nodes (5): is_configured(), Twilio requires E.164 (+15551234567). Customer phones are stored loosely…, Send an SMS via Twilio. Returns True if it went out, False if SMS isn't…, send_sms(), to_e164()
-
-### Community 87 - "lot_state"
-Cohesion: 0.33
-Nodes (6): clear_overstay(), lot_state(), post, Session, Staff dealt with the squatter — put the spot back to normal., SpotState
-
-### Community 88 - "test_idempotency.py"
-Cohesion: 0.60
-Nodes (4): _issue_with_intent(), A single Stripe PaymentIntent can never mint two passes., test_duplicate_payment_intent_is_rejected(), test_price_from_charge_is_used_verbatim()
+Nodes (6): _lookup_monthly_rate(), The company's established per-month rate, or None if it has no monthly plan on…, _compute_price(), date, PassType, The single source of truth both create-intent and (as a sanity check only, not…
 
 ## Knowledge Gaps
 - **155 isolated node(s):** `Task 1: `spot_label` helper + config`, `Task 2: expose `spot_label` on every spot-bearing payload`, `Task 3: move-a-truck endpoint`, `Task 4: `SpotState` label + `spot_label` frontend types; zone grouping helper`, `Task 5: the `/availability` page — live board + move flow` (+150 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **28 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `_get()` connect `_get` to `_do_send`, `apply_renewal`, `routers/auth.py`, `PaymentMethod`, `test_morning_report.py`, `payment_requests.py`, `test_lot_check.py`, `PassType`, `payments.py`, `stripe_payments.py`, `test_insights.py`, `test_dashboard.py`, `company_profile`, `lot_state`, `enums.py`, `main.py`, `test_report_occupied.py`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `business_today()` connect `_issue_pass_and_payment` to `_do_send`, `passes.py`, `test_spot_assignment.py`, `apply_renewal`, `test_morning_report.py`, `clock.py`, `PassType`, `enums.py`, `test_report_occupied.py`, `seed_demo.py`, `_get`, `ensure_spots`, `test_reminders_sweep.py`, `get_db`, `company_profile`, `test_lot_check.py`, `models/__init__.py`, `payments.py`, `test_insights.py`, `test_dashboard.py`, `reminders.py`, `lot_state`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Why does `_issue_pass_and_payment()` connect `_issue_pass_and_payment` to `passes.py`, `test_spot_assignment.py`, `apply_renewal`, `test_morning_report.py`, `payment_requests.py`, `clock.py`, `stripe_payments.py`, `enums.py`, `test_report_occupied.py`, `seed_demo.py`, `Payment`, `_price_for`, `_get`, `PaymentMethod`, `ensure_spots`, `company_profile`, `test_lot_check.py`, `models/__init__.py`, `payments.py`, `test_insights.py`, `test_dashboard.py`, `test_dedup.py`, `test_idempotency.py`?**
+- **Why does `_issue_pass_and_payment()` connect `_issue_pass_and_payment` to `seed_demo.py`, `passes.py`, `test_spot_assignment.py`, `test_lot_check.py`, `test_morning_report.py`, `create_payment_request`, `ensure_spots`, `PassType`, `models/__init__.py`, `test_insights.py`, `stripe_payments.py`, `ParkingPass`, `test_report_occupied.py`, `business_today`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Are the 28 inferred relationships involving `PassType` (e.g. with `ParkingPass` and `CompanyBase`) actually correct?**
-  _`PassType` has 28 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 22 inferred relationships involving `PaymentMethod` (e.g. with `MonthlyCustomer` and `Payment`) actually correct?**
-  _`PaymentMethod` has 22 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `_get()` connect `routers/auth.py` to `reminders.py`, `routers/reports.py`, `MonthlyCustomer`, `test_morning_report.py`, `create_payment_request`, `User`, `PassType`, `test_stranded_charges.py`, `test_insights.py`, `ParkingPass`, `issue_stranded_pass`, `payments.py`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Why does `business_today()` connect `business_today` to `reminders.py`, `seed_demo.py`, `test_spot_assignment.py`, `routers/reports.py`, `test_morning_report.py`, `ensure_spots`, `User`, `PassType`, `models/__init__.py`, `test_reminders_sweep.py`, `test_insights.py`, `routers/insights.py`, `payments.py`, `test_report_occupied.py`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Are the 20 inferred relationships involving `PassType` (e.g. with `CompanyBase` and `CompanyCreate`) actually correct?**
+  _`PassType` has 20 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Task 1: `spot_label` helper + config`, `Task 2: expose `spot_label` on every spot-bearing payload`, `Task 3: move-a-truck endpoint` to the rest of the system?**
   _155 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `_do_send` be split into smaller, more focused modules?**
-  _Cohesion score 0.12857142857142856 - nodes in this community are weakly interconnected._
+- **Should `reminders.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.10252100840336134 - nodes in this community are weakly interconnected._
+- **Should `test_lot_check.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.11954022988505747 - nodes in this community are weakly interconnected._

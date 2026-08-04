@@ -150,9 +150,9 @@
     "semantic_hash": "236680dd3ae9df6b9e69efe3678bb500"
   },
   "backend/app/models/parking_pass.py": {
-    "mtime": 1785251107.9142287,
-    "ast_hash": "81af9f41c6eafae293b8831efc03fc5c",
-    "semantic_hash": "81af9f41c6eafae293b8831efc03fc5c"
+    "mtime": 1785850957.0438912,
+    "ast_hash": "95115de1b730459eed88418065f45461",
+    "semantic_hash": ""
   },
   "backend/app/models/payment.py": {
     "mtime": 1783901411.379419,
@@ -220,9 +220,9 @@
     "semantic_hash": "05f468c16ea35edd3161d790cc397316"
   },
   "backend/app/routers/lot_check.py": {
-    "mtime": 1785252842.0979576,
-    "ast_hash": "a53474c24d05064175aa93ae0066eb77",
-    "semantic_hash": "a53474c24d05064175aa93ae0066eb77"
+    "mtime": 1785850994.6410992,
+    "ast_hash": "001a1a61ea30115030990953f367db10",
+    "semantic_hash": ""
   },
   "backend/app/routers/monthly_customers.py": {
     "mtime": 1783093129.7874188,
@@ -230,9 +230,9 @@
     "semantic_hash": "549fcb98d94bca747bcaa4d1463fd3eb"
   },
   "backend/app/routers/passes.py": {
-    "mtime": 1785252166.2506862,
-    "ast_hash": "d95da2f5f5186bf2b2407f881cd93241",
-    "semantic_hash": "d95da2f5f5186bf2b2407f881cd93241"
+    "mtime": 1785850994.6410992,
+    "ast_hash": "708111ecbbc0ec2c0569e9ffc9dcf4eb",
+    "semantic_hash": ""
   },
   "backend/app/routers/payment_requests.py": {
     "mtime": 1785251707.5922759,
@@ -260,9 +260,9 @@
     "semantic_hash": "9433ad42676efbaa7b8855fd6a5751d0"
   },
   "backend/app/routers/spots.py": {
-    "mtime": 1785252012.0729697,
-    "ast_hash": "bbe6e82b9f534438662160765eb844ef",
-    "semantic_hash": "bbe6e82b9f534438662160765eb844ef"
+    "mtime": 1785851014.0470655,
+    "ast_hash": "d6e1c5086b27c54b6e3686a49c34720b",
+    "semantic_hash": ""
   },
   "backend/app/routers/stripe_payments.py": {
     "mtime": 1785251707.591293,
@@ -270,9 +270,9 @@
     "semantic_hash": "c29478df7e4e909bb22ed90843e8a9dd"
   },
   "backend/app/routers/verify.py": {
-    "mtime": 1785251855.6526027,
-    "ast_hash": "10373c7cada97394ca60d090f95ab3eb",
-    "semantic_hash": "10373c7cada97394ca60d090f95ab3eb"
+    "mtime": 1785850994.6410992,
+    "ast_hash": "d90bda2b4afb14d3003d3de5513b26ec",
+    "semantic_hash": ""
   },
   "backend/app/schemas/__init__.py": {
     "mtime": 1783093170.1650734,
@@ -310,9 +310,9 @@
     "semantic_hash": "638a5576ee60deb0c05f9b4e8b640d33"
   },
   "backend/app/schemas/pass_.py": {
-    "mtime": 1785252842.0979576,
-    "ast_hash": "0ae13a8daafd8f681183911a201503e5",
-    "semantic_hash": "0ae13a8daafd8f681183911a201503e5"
+    "mtime": 1785850973.6406515,
+    "ast_hash": "252626c0c9bdba600073a1562bdfa773",
+    "semantic_hash": ""
   },
   "backend/app/schemas/payment.py": {
     "mtime": 1783476132.4671042,
@@ -340,9 +340,9 @@
     "semantic_hash": "e662b0a9bc530ca1eb4880ca189a157e"
   },
   "backend/app/schemas/spot.py": {
-    "mtime": 1785251992.8345244,
-    "ast_hash": "c194f0d7750b95512f1d534bbb775713",
-    "semantic_hash": "c194f0d7750b95512f1d534bbb775713"
+    "mtime": 1785850973.6492836,
+    "ast_hash": "0b6e5d26cdecfab8e07f87fdf270fca9",
+    "semantic_hash": ""
   },
   "backend/app/schemas/stripe_payment.py": {
     "mtime": 1783899270.0959063,
@@ -350,9 +350,9 @@
     "semantic_hash": "f528bba4f5a5601ff54f951909469854"
   },
   "backend/app/schemas/verify.py": {
-    "mtime": 1785251855.6515956,
-    "ast_hash": "3eba39f4ac9497f85dcc5922ecdc5773",
-    "semantic_hash": "3eba39f4ac9497f85dcc5922ecdc5773"
+    "mtime": 1785850973.6492836,
+    "ast_hash": "e4b2db6013f189daaf968a80b9e4470f",
+    "semantic_hash": ""
   },
   "backend/scripts/purge_demo.py": {
     "mtime": 1784047283.265249,
@@ -982,6 +982,11 @@
   "backend/tests/test_spot_label.py": {
     "mtime": 1785850771.4145725,
     "ast_hash": "daad0061c888e136ba129e0ce2c5c85c",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_spot_label_on_payloads.py": {
+    "mtime": 1785850923.1731765,
+    "ast_hash": "f03aeb95fafa6fbb6dd79107af3927f8",
     "semantic_hash": ""
   }
 }

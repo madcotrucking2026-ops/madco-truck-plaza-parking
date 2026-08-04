@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import business_today
 from app.core.database import get_db
-from app.core.spots import holding_filter, spot_label
+from app.core.spots import MoveError, holding_filter, move_pass_to_spot, spot_label
 from app.models import ParkingPass, Spot
-from app.schemas.spot import SpotState
+from app.schemas.spot import MoveSpotRequest, MoveSpotResult, SpotState
 
 router = APIRouter(prefix="/api/spots", tags=["spots"])
 
@@ -64,3 +64,18 @@ def clear_overstay(number: int, db: Session = Depends(get_db)) -> dict:
     spot.overstay_reported_at = None
     db.commit()
     return {"cleared": True}
+
+
+@router.post("/move", response_model=MoveSpotResult)
+def move_spot(payload: MoveSpotRequest, db: Session = Depends(get_db)) -> MoveSpotResult:
+    """Cashier override: move a truck to a specific free spot. Login-gated by the
+    router mount (any desk staff); the engine enforces free-only + race-safety."""
+    try:
+        parking_pass = move_pass_to_spot(db, payload.pass_id, payload.to_number)
+    except MoveError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+    return MoveSpotResult(
+        pass_id=parking_pass.id,
+        spot_number=parking_pass.spot.number,
+        spot_label=spot_label(parking_pass.spot.number),
+    )
