@@ -63,6 +63,7 @@ class PassRead(BaseModel):
     qr_code: str | None
     barcode: str | None
     spot_number: int | None = None
+    spot_label: str | None = None
 
 
 class PassListItem(BaseModel):
@@ -75,6 +76,7 @@ class PassListItem(BaseModel):
     receipt_number: str | None
     qr_code: str | None
     spot_number: int | None = None
+    spot_label: str | None = None
     company_name: str | None
     company_id: int | None = None
     truck_number: str | None
@@ -101,3 +103,4 @@ class LotCheckResult(BaseModel):
     paid_at: date | None = None
     is_monthly_customer: bool = False
     spot_number: int | None = None
+    spot_label: str | None = None

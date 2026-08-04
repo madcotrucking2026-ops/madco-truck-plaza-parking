@@ -20,6 +20,7 @@ class PassVerifyResult(BaseModel):
     price: float | None = None
     receipt_number: str | None = None
     spot_number: int | None = None
+    spot_label: str | None = None
 
 
 class ReassignResult(BaseModel):

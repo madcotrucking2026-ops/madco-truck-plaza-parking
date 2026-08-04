@@ -45,9 +45,9 @@
     "semantic_hash": "cf7b1851fd6b0764281cca746d5f9324"
   },
   "backend/app/core/config.py": {
-    "mtime": 1785251358.7205303,
-    "ast_hash": "2cb053cd9fd61a651e9f0f12262a8e8c",
-    "semantic_hash": "2cb053cd9fd61a651e9f0f12262a8e8c"
+    "mtime": 1785850802.9589062,
+    "ast_hash": "86e8cd19263a4c561b91c6f39e72f9e8",
+    "semantic_hash": ""
   },
   "backend/app/core/database.py": {
     "mtime": 1784044518.563701,
@@ -110,9 +110,9 @@
     "semantic_hash": "0a2b667f3d4c529d2d17b069f83bce5e"
   },
   "backend/app/core/spots.py": {
-    "mtime": 1785264005.3134706,
-    "ast_hash": "fccc1bac12e8dcad4438ccf4484aaa4f",
-    "semantic_hash": "fccc1bac12e8dcad4438ccf4484aaa4f"
+    "mtime": 1785850813.686196,
+    "ast_hash": "3bb2899bba69005a3dcecc5823014e5b",
+    "semantic_hash": ""
   },
   "backend/app/core/stripe_client.py": {
     "mtime": 1783345918.1670704,
@@ -977,6 +977,11 @@
   "docs/superpowers/specs/2026-08-04-zone-availability-design.md": {
     "mtime": 1785850654.6729567,
     "ast_hash": "ee43e1a69459d52d93b9cec66b7e564b",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_spot_label.py": {
+    "mtime": 1785850771.4145725,
+    "ast_hash": "daad0061c888e136ba129e0ce2c5c85c",
     "semantic_hash": ""
   }
 }

@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import business_today
 from app.core.database import get_db
-from app.core.spots import holding_filter
+from app.core.spots import holding_filter, spot_label
 from app.models import ParkingPass, Spot
 from app.schemas.spot import SpotState
 
@@ -43,6 +43,7 @@ def lot_state(db: Session = Depends(get_db)) -> list[SpotState]:
         out.append(
             SpotState(
                 number=spot.number,
+                label=spot_label(spot.number),
                 state=state,
                 company_name=p.company.name if p and p.company else None,
                 truck_number=p.vehicle.truck_number if p and p.vehicle else None,

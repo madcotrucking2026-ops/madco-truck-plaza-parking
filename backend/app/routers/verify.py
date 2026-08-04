@@ -44,6 +44,7 @@ def verify_pass(token: str, db: Session = Depends(get_db)) -> PassVerifyResult:
         price=float(parking_pass.price),
         receipt_number=parking_pass.receipt_number,
         spot_number=parking_pass.spot_number,
+        spot_label=parking_pass.spot_label,
     )
 
 

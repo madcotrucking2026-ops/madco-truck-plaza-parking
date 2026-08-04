@@ -39,5 +39,13 @@ class ParkingPass(Base):
     @property
     def spot_number(self) -> int | None:
         return self.spot.number if self.spot else None
+
+    @property
+    def spot_label(self) -> str | None:
+        # Lazy import: app.core.spots imports models, so importing it at module
+        # top would cycle.
+        from app.core.spots import spot_label
+
+        return spot_label(self.spot.number) if self.spot else None
     vehicle: Mapped["Vehicle"] = relationship(back_populates="passes")
     payments: Mapped[list["Payment"]] = relationship(back_populates="parking_pass")
