@@ -4,15 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { api, type SpotState } from "@/lib/api";
+import { byZone } from "@/lib/zones";
 import { Button } from "@/components/ui/button";
 
-const STATE_CLASS: Record<SpotState["state"], string> = {
-  free: "bg-[var(--success)]/20 text-[var(--cream-foreground)]/60",
-  occupied: "bg-[var(--forest-700)] text-[var(--ivory-100)]",
-  expiring: "bg-[var(--warning)]/70 text-[var(--forest-950)]",
-  grace: "bg-[var(--amber-500)]/45 text-[var(--forest-950)]",
-  overstay: "bg-[var(--danger)] text-white",
-  inactive: "bg-black/10 text-[var(--cream-foreground)]/30",
+// Cells are a colour-coded heatmap of the lot, one square per painted spot.
+// No number is printed on the square: at 150 cells in the dashboard's narrow
+// right rail a three-digit number can't fit and the digits collide — the map's
+// job here is "how full, and where", read at a glance. The exact spot is on
+// hover (title), and the full findable board lives at /availability.
+const STATE_BG: Record<SpotState["state"], string> = {
+  free: "bg-[var(--success)]/25",
+  occupied: "bg-[var(--forest-700)]",
+  expiring: "bg-[var(--warning)]/80",
+  grace: "bg-[var(--amber-500)]/55",
+  overstay: "bg-[var(--danger)]",
+  inactive: "bg-black/10",
 };
 
 const LEGEND: { state: SpotState["state"]; label: string }[] = [
@@ -24,7 +30,8 @@ const LEGEND: { state: SpotState["state"]; label: string }[] = [
 ];
 
 /** The whole lot at a glance: one cell per painted spot, colour = derived state,
- *  tap an occupied cell for the truck sitting on it. */
+ *  grouped into the lettered zones the lot is actually painted into. Tap an
+ *  occupied cell for the truck sitting on it. */
 export function LotGrid() {
   const [spots, setSpots] = useState<SpotState[] | null>(null);
 
@@ -45,6 +52,7 @@ export function LotGrid() {
 
   if (!spots) return null;
   const overstays = spots.filter((s) => s.state === "overstay");
+  const zones = byZone(spots);
 
   return (
     <div className="space-y-3">
@@ -58,7 +66,7 @@ export function LotGrid() {
           <ul className="space-y-1.5">
             {overstays.map((s) => (
               <li key={s.number} className="flex items-center gap-3 text-sm text-[var(--danger-ink)]/90">
-                <span className="font-mono font-bold tabular-nums">Spot {s.number}</span>
+                <span className="font-mono font-bold tabular-nums">Spot {s.label}</span>
                 <span className="flex-1">go move the truck along, then clear it</span>
                 <Button variant="outline" size="sm" className="shrink-0" onClick={() => clearOverstay(s.number)}>
                   Cleared
@@ -69,28 +77,51 @@ export function LotGrid() {
         </div>
       )}
 
-      <div className="card-paper rounded-2xl p-4">
-        <div className="grid grid-cols-[repeat(15,minmax(0,1fr))] gap-1 sm:grid-cols-[repeat(20,minmax(0,1fr))]">
-          {spots.map((s) => {
-            const cell = (
-              <div
-                title={`Spot ${s.number}${s.company_name ? ` — ${s.company_name}` : ""} (${s.state})`}
-                className={`flex aspect-square items-center justify-center rounded font-mono text-[9px] tabular-nums ${STATE_CLASS[s.state]}`}
-              >
-                {s.number}
+      <div className="card-paper rounded-2xl p-5">
+        <h2 className="mb-4 text-sm font-medium text-[var(--cream-foreground)]/70">Lot map</h2>
+
+        <div className="space-y-3.5">
+          {zones.map(({ zone, spots: cells, free }) => (
+            <div key={zone} className="space-y-1.5">
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono text-xs font-semibold tracking-wide text-[var(--cream-foreground)]/70">
+                  {zone === "•" ? "Lot" : `Zone ${zone}`}
+                </span>
+                <span className="text-[11px] tabular-nums text-[var(--cream-foreground)]/45">{free} free</span>
               </div>
-            );
-            return s.truck_number ? (
-              <Link key={s.number} href={`/lot-check?q=${encodeURIComponent(s.truck_number)}`}>{cell}</Link>
-            ) : (
-              <span key={s.number}>{cell}</span>
-            );
-          })}
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(0.9rem,1fr))] gap-1">
+                {cells.map((s) => {
+                  const swatch = (
+                    <div
+                      title={`Spot ${s.label}${s.company_name ? ` — ${s.company_name}` : ""} (${s.state})`}
+                      className={`aspect-square rounded-[3px] ring-1 ring-inset ring-black/[0.06] ${STATE_BG[s.state]} ${
+                        s.truck_number
+                          ? "cursor-pointer transition hover:ring-2 hover:ring-[var(--forest-600)]"
+                          : ""
+                      }`}
+                    />
+                  );
+                  return s.truck_number ? (
+                    <Link
+                      key={s.number}
+                      href={`/lot-check?q=${encodeURIComponent(s.truck_number)}`}
+                      aria-label={`Spot ${s.label}, ${s.company_name ?? "occupied"}`}
+                    >
+                      {swatch}
+                    </Link>
+                  ) : (
+                    <span key={s.number}>{swatch}</span>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-black/5 pt-3">
           {LEGEND.map((l) => (
             <span key={l.state} className="flex items-center gap-1.5 text-xs text-[var(--cream-foreground)]/60">
-              <span className={`h-3 w-3 rounded ${STATE_CLASS[l.state].split(" ")[0]}`} />
+              <span className={`h-3 w-3 rounded-[3px] ring-1 ring-inset ring-black/[0.06] ${STATE_BG[l.state]}`} />
               {l.label}
             </span>
           ))}
