@@ -845,9 +845,9 @@
     "semantic_hash": "690acbd5b33471b5686f8861e3a20480"
   },
   "frontend/src/lib/nav.ts": {
-    "mtime": 1784046720.6633513,
-    "ast_hash": "a182ffdd2dd532fce8fd5a1e175bcdb1",
-    "semantic_hash": "a182ffdd2dd532fce8fd5a1e175bcdb1"
+    "mtime": 1785851444.9925518,
+    "ast_hash": "0b29eac8dcc59ff93c1228bf17360a65",
+    "semantic_hash": ""
   },
   "frontend/src/lib/pricing.test.ts": {
     "mtime": 1783901794.3063362,
@@ -997,6 +997,11 @@
   "frontend/src/lib/zones.ts": {
     "mtime": 1785851291.3634648,
     "ast_hash": "b9e67ba619acd1c532ede1c1bb1cd438",
+    "semantic_hash": ""
+  },
+  "frontend/src/app/availability/page.tsx": {
+    "mtime": 1785851415.2944396,
+    "ast_hash": "9c5547570619a603a2252ae09ccc5e97",
     "semantic_hash": ""
   }
 }

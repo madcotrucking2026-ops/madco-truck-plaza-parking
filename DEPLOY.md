@@ -87,8 +87,10 @@ only survives mistakes, not hardware.
 - **Spot inventory is config.** `PARKING_CAPACITY` sizes the painted lot (spot
   rows are added/deactivated idempotently at startup — a 300-spot client is an
   env var, not code). `SPOT_GRACE_DAYS` (default 3) is how long a lapsed monthly
-  keeps their number before it returns to the pool. Free/occupied is DERIVED
-  from live passes — there is no status column and no midnight job to fail.
+  keeps their number before it returns to the pool. `SPOTS_PER_ZONE` (default 25)
+  paints the lot into lettered zones for display (Madco = 6 zones of 25 -> A1..F25,
+  shown on the /availability board and on passes); set 0 to show bare numbers.
+  Free/occupied is DERIVED from live passes — no status column, no midnight job.
 - **The plaza's timezone is config** (`TIMEZONE`, default America/Detroit).
   Every "today" — revenue, expiry, reminders — is computed in it, never the
   host's. On Postgres the session timezone is pinned to it too.
