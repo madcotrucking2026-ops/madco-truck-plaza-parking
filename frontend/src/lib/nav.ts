@@ -6,7 +6,7 @@ import {
   FilePlus2,
   Users,
   Building2,
-  ClipboardCheck,
+  ScanSearch,
   Grid3x3,
   CreditCard,
   BarChart3,
@@ -44,9 +44,11 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Issue New Pass", href: "/passes/issue", icon: FilePlus2, minRole: "attendant" },
   { label: "Monthly Customers", href: "/monthly-customers", icon: Users, minRole: "manager" },
   { label: "Companies", href: "/companies", icon: Building2, minRole: "manager" },
-  { label: "Lot Check", href: "/lot-check", icon: ClipboardCheck, minRole: "manager" },
-  // The cashier's live availability board — front-desk tool, so attendant-visible.
-  { label: "Availability", href: "/availability", icon: Grid3x3, minRole: "attendant" },
+  // "Find a Truck": type a truck / trailer / plate, get the PAID / expiry card.
+  // Matches the dashboard's "Search a Truck" tile — same page, same intent.
+  { label: "Find a Truck", href: "/lot-check", icon: ScanSearch, minRole: "manager" },
+  // The cashier's live open-spots board — front-desk tool, so attendant-visible.
+  { label: "Open Spots", href: "/availability", icon: Grid3x3, minRole: "attendant" },
   { label: "Payments", href: "/payments", icon: CreditCard, minRole: "manager" },
   { label: "Reports", href: "/reports", icon: BarChart3, minRole: "manager" },
   { label: "Reminders", href: "/reminders", icon: BellRing, minRole: "manager" },
