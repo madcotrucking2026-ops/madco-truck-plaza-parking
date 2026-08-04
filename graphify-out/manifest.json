@@ -514,16 +514,6 @@
     "ast_hash": "c6d3f5adeb0568bd98b1445c3bc2e32a",
     "semantic_hash": "c6d3f5adeb0568bd98b1445c3bc2e32a"
   },
-  "frontend/src/app/book/layout.tsx": {
-    "mtime": 1783623291.4512558,
-    "ast_hash": "e49f3b3d26ab6b70e17a0d4a6a514acd",
-    "semantic_hash": "e49f3b3d26ab6b70e17a0d4a6a514acd"
-  },
-  "frontend/src/app/book/page.tsx": {
-    "mtime": 1783900583.206271,
-    "ast_hash": "04dce078257dc2d2811f0012f18d78de",
-    "semantic_hash": "04dce078257dc2d2811f0012f18d78de"
-  },
   "frontend/src/app/companies/[id]/page.tsx": {
     "mtime": 1783892391.6892254,
     "ast_hash": "fb86664427d741f38cc2fd31910a28d0",
@@ -565,29 +555,19 @@
     "semantic_hash": "16757a2bb008d19b74b6fc27474b27a1"
   },
   "frontend/src/app/page.tsx": {
-    "mtime": 1785255522.0655603,
-    "ast_hash": "89156f3b21bc2003a2b26fc537d19df4",
-    "semantic_hash": "89156f3b21bc2003a2b26fc537d19df4"
+    "mtime": 1785858803.1336055,
+    "ast_hash": "b6d15450c47655f8a2eee3c2929dc3f2",
+    "semantic_hash": ""
   },
   "frontend/src/app/passes/issue/page.tsx": {
-    "mtime": 1783900583.20727,
-    "ast_hash": "e4e7d92eaa2d03a55d4f1b12d6f72629",
-    "semantic_hash": "e4e7d92eaa2d03a55d4f1b12d6f72629"
+    "mtime": 1785858226.0803828,
+    "ast_hash": "12e58b274c6df8ca844bcf268a2c018a",
+    "semantic_hash": ""
   },
   "frontend/src/app/passes/page.tsx": {
     "mtime": 1785851343.193066,
     "ast_hash": "273c588e7200bf3887b78695fec67461",
     "semantic_hash": ""
-  },
-  "frontend/src/app/pay/[token]/layout.tsx": {
-    "mtime": 1783623297.5483,
-    "ast_hash": "a088deaafc3dbe798623cc547cbbe359",
-    "semantic_hash": "a088deaafc3dbe798623cc547cbbe359"
-  },
-  "frontend/src/app/pay/[token]/page.tsx": {
-    "mtime": 1783898175.625158,
-    "ast_hash": "8d8cdaf3d89a79420b5ef2b04c38c1cf",
-    "semantic_hash": "8d8cdaf3d89a79420b5ef2b04c38c1cf"
   },
   "frontend/src/app/payments/page.tsx": {
     "mtime": 1783951156.2723503,
@@ -605,9 +585,9 @@
     "semantic_hash": "1503ad8a77b0d6cf37c0be0f2dc898aa"
   },
   "frontend/src/app/settings/page.tsx": {
-    "mtime": 1784046835.2415729,
-    "ast_hash": "f888aab0fc8e17966c97143b73ead6e3",
-    "semantic_hash": "f888aab0fc8e17966c97143b73ead6e3"
+    "mtime": 1785858489.2245708,
+    "ast_hash": "d338b0243fb04574e9160bf8b5a1720b",
+    "semantic_hash": ""
   },
   "frontend/src/app/verify/[token]/layout.tsx": {
     "mtime": 1783623301.4202375,
@@ -618,16 +598,6 @@
     "mtime": 1785252320.1278274,
     "ast_hash": "35afd4eea78474dca775132ced758257",
     "semantic_hash": "35afd4eea78474dca775132ced758257"
-  },
-  "frontend/src/components/checkout/card-checkout.tsx": {
-    "mtime": 1783390438.4221027,
-    "ast_hash": "d8cda0d8f7c284524505691daeb8192b",
-    "semantic_hash": "d8cda0d8f7c284524505691daeb8192b"
-  },
-  "frontend/src/components/checkout/payment-request-qr.tsx": {
-    "mtime": 1783441275.8823187,
-    "ast_hash": "f74c11cadd3704f673f09c34165bbb61",
-    "semantic_hash": "f74c11cadd3704f673f09c34165bbb61"
   },
   "frontend/src/components/coming-soon.tsx": {
     "mtime": 1783263166.2265298,
@@ -670,9 +640,9 @@
     "semantic_hash": "6b3ce4d4493536f6df7cb4af612a609d"
   },
   "frontend/src/components/layout/app-shell.tsx": {
-    "mtime": 1783536515.9750924,
-    "ast_hash": "b480b755962044298fdd316e30028da5",
-    "semantic_hash": "b480b755962044298fdd316e30028da5"
+    "mtime": 1785858468.7752738,
+    "ast_hash": "97a46c3f230861d81d5404f1d0ab42e1",
+    "semantic_hash": ""
   },
   "frontend/src/components/layout/mobile-nav.tsx": {
     "mtime": 1784046745.53059,
@@ -685,9 +655,9 @@
     "semantic_hash": "f32ac64cdcbbfb2a8f6dc30c67af05fc"
   },
   "frontend/src/components/passes/bulk-renew-dialog.tsx": {
-    "mtime": 1783896040.0684557,
-    "ast_hash": "9b0d69f55c4267dbe65429ec83b3ae17",
-    "semantic_hash": "9b0d69f55c4267dbe65429ec83b3ae17"
+    "mtime": 1785858410.5656536,
+    "ast_hash": "ecc19ace2e2d231d83ebb28a4eb70e90",
+    "semantic_hash": ""
   },
   "frontend/src/components/passes/pass-ticket.tsx": {
     "mtime": 1785252286.1654687,
@@ -695,9 +665,9 @@
     "semantic_hash": "60edc7929e69684772812757a4471ed8"
   },
   "frontend/src/components/passes/renew-dialog.tsx": {
-    "mtime": 1783900583.2082632,
-    "ast_hash": "50bd29ff4fa17904f7b0ef539fd0cc7d",
-    "semantic_hash": "50bd29ff4fa17904f7b0ef539fd0cc7d"
+    "mtime": 1785858384.9301698,
+    "ast_hash": "96419cbf1df395210f80acad3f99b259",
+    "semantic_hash": ""
   },
   "frontend/src/components/passes/status-badge.tsx": {
     "mtime": 1784039398.2658374,
@@ -800,8 +770,8 @@
     "semantic_hash": "d448d2a90e48542e51b93a1189127bf2"
   },
   "frontend/src/lib/api.ts": {
-    "mtime": 1785851281.5099154,
-    "ast_hash": "271b7c83fa0044023e13cbe53457dd2a",
+    "mtime": 1785858616.5361536,
+    "ast_hash": "c7ae619a73a0e4ad2ca74f3321c7c017",
     "semantic_hash": ""
   },
   "frontend/src/lib/auth.ts": {
@@ -833,11 +803,6 @@
     "mtime": 1783898162.8499029,
     "ast_hash": "0b489d1926ce9eb32b396354260dc928",
     "semantic_hash": "0b489d1926ce9eb32b396354260dc928"
-  },
-  "frontend/src/lib/stripe.ts": {
-    "mtime": 1783346666.2149897,
-    "ast_hash": "852b33ff366fca59086019bedece3e4e",
-    "semantic_hash": "852b33ff366fca59086019bedece3e4e"
   },
   "frontend/src/lib/utils.ts": {
     "mtime": 1783099650.0371726,

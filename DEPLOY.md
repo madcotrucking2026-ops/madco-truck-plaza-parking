@@ -46,21 +46,19 @@ What you get:
    config editing. The `tls` profile starts the renewal daemon (checks twice a
    day; certbot renews when <30 days remain) and nginx reloads itself every 6h
    to pick renewed certs up. The rebuild is required because the frontend bakes
-   `PUBLIC_BASE_URL` into the browser bundle. HTTPS is REQUIRED for live Stripe
-   and for Apple/Google Pay.
-2. **Live Stripe keys** in `.env.prod` (after Stripe business verification).
-3. **Stripe webhook** — Dashboard → Developers → Webhooks → add
-   `https://<domain>/api/payments/stripe/webhook`, event
-   `payment_intent.succeeded`; copy the `whsec_…` into `STRIPE_WEBHOOK_SECRET`.
-   The backend WARNS at startup while this is missing — that warning must be
-   gone before real cards are charged.
-4. **Stripe payment-method domain** — Dashboard → Settings → Payment method
-   domains → add the domain → Verify (enables Apple/Google Pay).
-5. **Twilio** — creds into `.env.prod`; texts start delivering the moment the
+   `PUBLIC_BASE_URL` into the browser bundle.
+
+   HTTPS is still worth having for a login-only staff app, but it is no longer
+   REQUIRED by a payment processor: as of 2026-08 the plaza is STAFF-ONLY. There
+   is no customer kiosk and no online card processing — the cashier records
+   cash/credit/debit/check at the desk (card swiped on the plaza's own terminal).
+   So there are **no Stripe steps**: no keys, no webhook, no payment-method
+   domain. The `STRIPE_*` env vars are ignored and can stay blank.
+2. **Twilio** — creds into `.env.prod`; texts start delivering the moment the
    A2P campaign shows Approved. No code change.
-6. **Alerting** — put a Slack/Discord/ntfy webhook in `ALERT_WEBHOOK_URL`;
+3. **Alerting** — put a Slack/Discord/ntfy webhook in `ALERT_WEBHOOK_URL`;
    every application ERROR pings it (rate-limited to 1/min).
-7. **Wipe the demo data** —
+4. **Wipe the demo data** —
    `docker compose -f docker-compose.prod.yml exec backend python -m scripts.purge_demo --yes`
    (keeps logins, empties the books).
 
