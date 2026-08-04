@@ -120,8 +120,8 @@
     "semantic_hash": "f0d1fcaefb118b1c7011e81cb9aba64d"
   },
   "backend/app/main.py": {
-    "mtime": 1785855935.262578,
-    "ast_hash": "8936a665b898b1fac895775304ce2cab",
+    "mtime": 1785857836.3397174,
+    "ast_hash": "b785b7f2c3e207f73a4880877809f1b4",
     "semantic_hash": ""
   },
   "backend/app/models/__init__.py": {
@@ -234,11 +234,6 @@
     "ast_hash": "43a09f6190e7ebc99e6038faf46366d9",
     "semantic_hash": ""
   },
-  "backend/app/routers/payment_requests.py": {
-    "mtime": 1785251707.5922759,
-    "ast_hash": "c38051ba6cf073d3b04e3576b71bfb73",
-    "semantic_hash": "c38051ba6cf073d3b04e3576b71bfb73"
-  },
   "backend/app/routers/payments.py": {
     "mtime": 1783901289.1747534,
     "ast_hash": "e4e3bddd217d669bf74318e239a559af",
@@ -263,11 +258,6 @@
     "mtime": 1785855935.262578,
     "ast_hash": "646f3e679782fafda05279cd6c2b6563",
     "semantic_hash": ""
-  },
-  "backend/app/routers/stripe_payments.py": {
-    "mtime": 1785251707.591293,
-    "ast_hash": "c29478df7e4e909bb22ed90843e8a9dd",
-    "semantic_hash": "c29478df7e4e909bb22ed90843e8a9dd"
   },
   "backend/app/routers/verify.py": {
     "mtime": 1785850994.6410992,
@@ -409,11 +399,6 @@
     "ast_hash": "d838cf28929f4f0791f4484cc84ec72a",
     "semantic_hash": "d838cf28929f4f0791f4484cc84ec72a"
   },
-  "backend/tests/test_full_lot_checkout.py": {
-    "mtime": 1785255554.0795157,
-    "ast_hash": "90e73429b46c82da25045f64e6983e8a",
-    "semantic_hash": "90e73429b46c82da25045f64e6983e8a"
-  },
   "backend/tests/test_idempotency.py": {
     "mtime": 1783694737.8216834,
     "ast_hash": "3317fcb6e4487fce83475b227d0a0449",
@@ -470,9 +455,9 @@
     "semantic_hash": "73aeb3246129daa787741f5f43e5c7f3"
   },
   "backend/tests/test_security.py": {
-    "mtime": 1783894729.1465604,
-    "ast_hash": "0147e1c418ea22789a79ccae021344fd",
-    "semantic_hash": "0147e1c418ea22789a79ccae021344fd"
+    "mtime": 1785857970.95361,
+    "ast_hash": "06a2c80edc297510104669d66f62bcaa",
+    "semantic_hash": ""
   },
   "backend/tests/test_spot_assignment.py": {
     "mtime": 1785251533.4353704,
@@ -498,21 +483,6 @@
     "mtime": 1785255771.08953,
     "ast_hash": "1a6ce4504e34cea263de9a04a48afdc0",
     "semantic_hash": "1a6ce4504e34cea263de9a04a48afdc0"
-  },
-  "backend/tests/test_stranded_charges.py": {
-    "mtime": 1783899740.3396275,
-    "ast_hash": "c6e6e4d7757522bc6f491458ae47c7ad",
-    "semantic_hash": "c6e6e4d7757522bc6f491458ae47c7ad"
-  },
-  "backend/tests/test_stripe_finalize.py": {
-    "mtime": 1783695630.941338,
-    "ast_hash": "acae51c5c0086c4b974aa39ca19e1b93",
-    "semantic_hash": "acae51c5c0086c4b974aa39ca19e1b93"
-  },
-  "backend/tests/test_webhook_payment_request.py": {
-    "mtime": 1783896999.157879,
-    "ast_hash": "b8e1f71bda9712e90a30ff6963b4b207",
-    "semantic_hash": "b8e1f71bda9712e90a30ff6963b4b207"
   },
   "frontend/components.json": {
     "mtime": 1783099635.1416743,

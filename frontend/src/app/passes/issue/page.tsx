@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { api, ApiError, type CompanyLookupResult, type IssuePassRequest, type PassRead, type PassType, type VehicleType, type PaymentMethod, type PaymentRequestCreated } from "@/lib/api";
+import { api, ApiError, type CompanyLookupResult, type IssuePassRequest, type PassRead, type PassType, type VehicleType, type PaymentMethod } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/common/field";
@@ -16,8 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PassTicket } from "@/components/passes/pass-ticket";
-import { PaymentRequestQR } from "@/components/checkout/payment-request-qr";
-import { stripeConfigured } from "@/lib/stripe";
 import { DAILY_RATE, WEEKLY_RATE, todayISO, currency, defaultEndDate, daysBetween, monthsBetween } from "@/lib/pricing";
 
 const VEHICLE_TYPES: VehicleType[] = ["truck", "trailer", "bobtail", "flatbed", "car", "other"];
@@ -36,13 +34,15 @@ const PASS_TYPES: { value: PassType; label: string; hint: string }[] = [
   { value: "weekly", label: "Weekly", hint: "$100 flat" },
   { value: "monthly", label: "Monthly", hint: "custom per company" },
 ];
-// "card_link" is not a real PaymentMethod — it hands the customer a QR/link to
-// self-pay by card instead of recording a payment at the desk.
-type PayChoice = "cash" | "check" | "card_link";
+// The cashier records how the customer paid at the desk. Card/debit are swiped
+// on the plaza's own terminal; the system just records the method (there is no
+// online processing — customer self-service was retired).
+type PayChoice = "cash" | "credit_card" | "debit_card" | "check";
 const PAY_CHOICES: { value: PayChoice; label: string }[] = [
-  { value: "cash", label: "Cash (at the desk)" },
-  { value: "check", label: "Check (at the desk)" },
-  { value: "card_link", label: "Card — customer pays by phone" },
+  { value: "cash", label: "Cash" },
+  { value: "credit_card", label: "Credit Card" },
+  { value: "debit_card", label: "Debit Card" },
+  { value: "check", label: "Check" },
 ];
 
 export default function IssuePassPage() {
@@ -70,13 +70,12 @@ function IssuePassForm() {
       start_date: startDate,
       end_date: defaultEndDate(initialPassType, startDate),
       new_company_monthly_rate: "",
-      pay_choice: (stripeConfigured() ? "card_link" : "cash") as PayChoice,
+      pay_choice: "cash" as PayChoice,
       check_number: "",
     };
   });
   const [submitting, setSubmitting] = useState(false);
   const [issued, setIssued] = useState<(PassRead & { company_name: string; truck_number?: string }) | null>(null);
-  const [paymentRequest, setPaymentRequest] = useState<PaymentRequestCreated | null>(null);
   // Keyed by the company name that produced it: a lookup that lands after the
   // manager has retyped the company is no longer "for" what's on screen, so it
   // can't quote her a different company's monthly rate. (The backend recomputes
@@ -189,28 +188,6 @@ function IssuePassForm() {
     try {
       const priceOverride = isNewMonthlyCompany ? Number(form.new_company_monthly_rate) : undefined;
 
-      if (form.pay_choice === "card_link") {
-        // Customer self-pays by card — create a pending request + show the
-        // QR/link. The pass is NOT issued until they actually pay.
-        const created = await api.post<PaymentRequestCreated>("/api/payment-requests", {
-          kind: "issue",
-          issue: {
-            company_name: form.company_name,
-            truck_number: form.truck_number || undefined,
-            trailer_number: form.trailer_number || undefined,
-            license_plate: form.license_plate || undefined,
-            phone: form.phone,
-            vehicle_type: form.vehicle_type,
-            pass_type: form.pass_type,
-            issue_date: form.start_date,
-            end_date: form.end_date || undefined,
-            price: priceOverride,
-          },
-        });
-        setPaymentRequest(created);
-        return;
-      }
-
       const payload: IssuePassRequest = {
         company_name: form.company_name,
         truck_number: form.truck_number || undefined,
@@ -240,13 +217,6 @@ function IssuePassForm() {
     }
   }
 
-  function afterCardPaid() {
-    toast.success("Payment received — pass issued.");
-    setPaymentRequest(null);
-    if (form.pass_type === "monthly") fetchCompany(form.company_name.trim());
-    setForm((f) => ({ ...f, truck_number: "", trailer_number: "", license_plate: "", new_company_monthly_rate: "" }));
-  }
-
   function addAnother() {
     setIssued(null);
     // Keep company/phone/pass type/payment method — only clear what's
@@ -259,19 +229,6 @@ function IssuePassForm() {
       license_plate: "",
       new_company_monthly_rate: "",
     }));
-  }
-
-  if (paymentRequest) {
-    return (
-      <div className="mx-auto max-w-md space-y-4">
-        <div className="card-paper rounded-2xl p-6">
-          <PaymentRequestQR request={paymentRequest} onPaid={afterCardPaid} />
-        </div>
-        <Button variant="outline" className="w-full" onClick={() => setPaymentRequest(null)}>
-          Cancel
-        </Button>
-      </div>
-    );
   }
 
   if (issued) {
@@ -422,7 +379,7 @@ function IssuePassForm() {
               </SelectTrigger>
               <SelectContent>
                 {PAY_CHOICES.map((p) => (
-                  <SelectItem key={p.value} value={p.value} disabled={p.value === "card_link" && !stripeConfigured()}>
+                  <SelectItem key={p.value} value={p.value}>
                     {p.label}
                   </SelectItem>
                 ))}
@@ -434,11 +391,6 @@ function IssuePassForm() {
               <Input value={form.check_number} onChange={(e) => set("check_number", e.target.value)} />
             </Field>
           )}
-          {form.pay_choice === "card_link" && (
-            <p className="text-xs text-[var(--cream-foreground)]/60 sm:col-span-2">
-              Next screen shows a QR code + link for the customer to pay by card on their phone. The pass is issued only after they pay.
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -449,9 +401,7 @@ function IssuePassForm() {
       >
         {submitting
           ? "Working…"
-          : form.pay_choice === "card_link"
-            ? "Show Payment QR"
-            : `Issue Pass & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`}
+          : `Issue Pass & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`}
       </Button>
     </form>
   );

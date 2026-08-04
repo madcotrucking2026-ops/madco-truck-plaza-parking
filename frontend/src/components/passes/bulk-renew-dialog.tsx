@@ -39,13 +39,15 @@ import {
   todayISO,
 } from "@/lib/pricing";
 
-// Bulk renew is a front-desk action: the manager is collecting cash or a check
-// for a stack of trucks at once. Card renewals stay one-at-a-time, because each
-// customer has to pay on their own phone.
-type PayChoice = "cash" | "check";
+// Bulk renew is a front-desk action: the manager collects payment for a stack of
+// trucks at once, recording ONE method for the batch. Card/debit are swiped on
+// the plaza's own terminal; the system records the method only.
+type PayChoice = "cash" | "credit_card" | "debit_card" | "check";
 const PAY_CHOICES: { value: PayChoice; label: string }[] = [
-  { value: "cash", label: "Cash (at the desk)" },
-  { value: "check", label: "Check (at the desk)" },
+  { value: "cash", label: "Cash" },
+  { value: "credit_card", label: "Credit Card" },
+  { value: "debit_card", label: "Debit Card" },
+  { value: "check", label: "Check" },
 ];
 
 const vehicleOf = (p: PassListItem) =>

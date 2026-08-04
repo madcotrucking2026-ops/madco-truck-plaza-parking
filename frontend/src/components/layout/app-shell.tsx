@@ -8,21 +8,13 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { CommandPalette } from "@/components/command-palette";
 
-// /book (customer kiosk) and /login are separate, bare experiences with no
-// manager nav/search and no auth requirement — everything else is the
-// manager app and requires a signed-in session.
+// /login and the public /verify page (a guard scanning a pass QR) are bare
+// experiences with no manager nav and no auth requirement — everything else is
+// the staff app and requires a signed-in session. (The customer kiosk /book and
+// pay-links were retired when the plaza went staff-only.)
 function isPublicPath(pathname: string | null): boolean {
   if (!pathname) return false;
-  // Exact or sub-path matches only — NOT a bare prefix, or "/payments" would
-  // wrongly match "/pay" and render without the manager sidebar/auth.
-  return (
-    pathname === "/login" ||
-    pathname === "/book" ||
-    pathname.startsWith("/book/") ||
-    pathname.startsWith("/verify/") ||
-    pathname === "/pay" ||
-    pathname.startsWith("/pay/")
-  );
+  return pathname === "/login" || pathname.startsWith("/verify/");
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {

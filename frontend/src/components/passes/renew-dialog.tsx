@@ -10,12 +10,9 @@ import {
   type PassListItem,
   type PassRead,
   type PaymentMethod,
-  type PaymentRequestCreated,
   type RenewPassRequest,
 } from "@/lib/api";
-import { PaymentRequestQR } from "@/components/checkout/payment-request-qr";
 import { PassTicket } from "@/components/passes/pass-ticket";
-import { stripeConfigured } from "@/lib/stripe";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/common/field";
@@ -36,14 +33,21 @@ import {
 } from "@/components/ui/select";
 import { DAILY_RATE, WEEKLY_RATE, todayISO, currency, defaultEndDate, daysBetween, monthsBetween } from "@/lib/pricing";
 
-// "card_link" is not a real PaymentMethod — it routes to the customer
-// self-pay flow (QR / link) instead of recording a payment at the desk.
-type PayChoice = "cash" | "check" | "card_link";
+// The cashier/manager records how the renewal was paid at the desk. Card/debit
+// go through the plaza's own terminal; the system records the method only.
+type PayChoice = "cash" | "credit_card" | "debit_card" | "check";
 const PAY_CHOICES: { value: PayChoice; label: string }[] = [
-  { value: "cash", label: "Cash (at the desk)" },
-  { value: "check", label: "Check (at the desk)" },
-  { value: "card_link", label: "Card — customer pays by phone" },
+  { value: "cash", label: "Cash" },
+  { value: "credit_card", label: "Credit Card" },
+  { value: "debit_card", label: "Debit Card" },
+  { value: "check", label: "Check" },
 ];
+const METHOD_LABEL: Record<PayChoice, string> = {
+  cash: "Cash",
+  credit_card: "Credit Card",
+  debit_card: "Debit Card",
+  check: "Check",
+};
 
 export function RenewDialog({
   pass,
@@ -59,13 +63,11 @@ export function RenewDialog({
   const renewalStart = todayISO() > pass.expiration_date ? todayISO() : pass.expiration_date;
 
   const [endDate, setEndDate] = useState(() => defaultEndDate(pass.pass_type, renewalStart));
-  const [payChoice, setPayChoice] = useState<PayChoice>(stripeConfigured() ? "card_link" : "cash");
+  const [payChoice, setPayChoice] = useState<PayChoice>("cash");
   const [checkNumber, setCheckNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [monthlyRate, setMonthlyRate] = useState<number | null>(null);
   const [rateLookupDone, setRateLookupDone] = useState(pass.pass_type !== "monthly");
-  // When set, the customer-self-pay QR is showing and we're polling for payment.
-  const [request, setRequest] = useState<PaymentRequestCreated | null>(null);
   // When set, the renewal is DONE and we show a solid receipt/confirmation
   // (not just a toast) so the manager has proof it was recorded.
   const [confirmed, setConfirmed] = useState<
@@ -101,16 +103,6 @@ export function RenewDialog({
     if (weeklyInvalid || finalPrice === null) return;
     setSubmitting(true);
     try {
-      if (payChoice === "card_link") {
-        // Customer self-pays by card — create a pending request and show the
-        // QR/link. The pass is NOT renewed until they actually pay.
-        const created = await api.post<PaymentRequestCreated>("/api/payment-requests", {
-          kind: "renew",
-          renew: { pass_id: pass.id, end_date: endDate },
-        });
-        setRequest(created);
-        return;
-      }
       const payload: RenewPassRequest = {
         end_date: endDate,
         payment_method: payChoice as PaymentMethod,
@@ -118,29 +110,18 @@ export function RenewDialog({
       };
       const res = await api.post<PassRead>(`/api/passes/${pass.id}/renew`, payload);
       onRenewed(); // refresh the list behind the dialog immediately
-      // Show a real confirmation receipt, not just a toast — the manager
-      // needs proof the front-desk payment was recorded.
+      // Show a real confirmation receipt, not just a toast — proof the
+      // front-desk payment was recorded.
       setConfirmed({
         ...res,
         company_name: pass.company_name ?? "—",
         truck_number: vehicleId,
-        methodLabel: payChoice === "check" ? `Check${checkNumber ? ` #${checkNumber}` : ""}` : "Cash",
+        methodLabel: payChoice === "check" ? `Check${checkNumber ? ` #${checkNumber}` : ""}` : METHOD_LABEL[payChoice],
       });
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to renew pass.");
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function handleCardPaid() {
-    onRenewed(); // refresh list
-    try {
-      const res = await api.get<PassRead>(`/api/passes/${pass.id}`);
-      setConfirmed({ ...res, company_name: pass.company_name ?? "—", truck_number: vehicleId, methodLabel: "Card" });
-    } catch {
-      // Couldn't fetch the fresh pass — payment still succeeded, just close.
-      onOpenChange(false);
     }
   }
 
@@ -173,15 +154,6 @@ export function RenewDialog({
                 onClick={() => onOpenChange(false)}
               >
                 Done
-              </Button>
-            </DialogFooter>
-          </div>
-        ) : request ? (
-          <div className="space-y-4">
-            <PaymentRequestQR request={request} onPaid={handleCardPaid} />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Close
               </Button>
             </DialogFooter>
           </div>
@@ -220,7 +192,7 @@ export function RenewDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {PAY_CHOICES.map((p) => (
-                      <SelectItem key={p.value} value={p.value} disabled={p.value === "card_link" && !stripeConfigured()}>
+                      <SelectItem key={p.value} value={p.value}>
                         {p.label}
                       </SelectItem>
                     ))}
@@ -231,11 +203,6 @@ export function RenewDialog({
                 <Field label="Check Number" labelClassName="text-popover-foreground">
                   <Input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} />
                 </Field>
-              )}
-              {payChoice === "card_link" && (
-                <p className="text-xs text-muted-foreground">
-                  Next screen shows a QR code + link for the customer to pay by card on their phone. The pass renews only after they pay.
-                </p>
               )}
             </div>
 
@@ -250,9 +217,7 @@ export function RenewDialog({
               >
                 {submitting
                   ? "Working…"
-                  : payChoice === "card_link"
-                    ? "Show Payment QR"
-                    : `Confirm & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`}
+                  : `Confirm & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`}
               </Button>
             </DialogFooter>
           </>

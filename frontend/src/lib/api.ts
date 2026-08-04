@@ -255,15 +255,6 @@ export type MorningReport = {
   all_clear: boolean;
 };
 
-/** A card Stripe charged that produced no pass here. Should always be empty. */
-export type StrandedCharge = {
-  payment_intent_id: string;
-  amount: number;
-  charged_at: string;
-  company_name: string | null;
-  vehicle: string | null;
-  reason: string;
-};
 
 export type ReminderCustomer = {
   monthly_customer_id: number;
