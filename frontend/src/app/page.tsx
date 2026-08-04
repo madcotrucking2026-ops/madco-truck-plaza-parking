@@ -168,7 +168,11 @@ export default function DashboardPage() {
               key={action.label}
               render={<Link href={action.href} />}
               nativeButton={false}
-              className="btn-embossed h-auto flex-col gap-2 rounded-xl bg-[var(--forest-700)] py-4 text-[var(--ivory-100)] hover:bg-[var(--forest-600)]"
+              // h-auto AND sm:h-auto: the button `default` size is `h-11 sm:h-8`,
+              // and tailwind-merge keeps the `sm:`-prefixed height as a separate
+              // key — so plain `h-auto` only drops `h-11`, leaving `sm:h-8` to
+              // squash this icon+label pill to 32px on desktop and overflow both.
+              className="btn-embossed h-auto sm:h-auto flex-col gap-2 rounded-xl bg-[var(--forest-700)] py-4 text-[var(--ivory-100)] hover:bg-[var(--forest-600)]"
             >
               <action.icon className="h-5 w-5" strokeWidth={2.25} />
               <span className="text-xs font-semibold">{action.label}</span>
