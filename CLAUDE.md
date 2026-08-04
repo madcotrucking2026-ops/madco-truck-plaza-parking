@@ -60,6 +60,13 @@ Classic Skeuomorphic Truck Stop UI.
 
 # Design Philosophy
 
+> **Canonical visual system: [DESIGN.md](DESIGN.md).** The sections below
+> (Design Philosophy, Brand Colors, Typography) are the original brief — the
+> intent. DESIGN.md is the implemented source of truth: real tokens, the
+> 60-30-10 balance, the ink-twin contrast rule, the skeuomorphic surfaces,
+> motion, and accessibility. When the two conflict, DESIGN.md wins — and it's
+> what the design tooling reads. Update DESIGN.md when the system changes.
+
 DO NOT create a boring dashboard.
 
 Every screen should feel purpose built.
