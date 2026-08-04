@@ -9,6 +9,7 @@ from app.core.clock import business_today
 from app.core.codes import generate_receipt_number
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.deps import require_manager
 from app.core.dates import add_months
 from app.core.pass_status import live_status
 from app.core.pass_token import make_pass_token
@@ -385,7 +386,7 @@ def apply_renewal(
     return parking_pass
 
 
-@router.post("/{pass_id}/renew", response_model=PassRead)
+@router.post("/{pass_id}/renew", response_model=PassRead, dependencies=[Depends(require_manager)])
 def renew_pass(pass_id: int, payload: RenewPassRequest, db: Session = Depends(get_db)) -> ParkingPass:
     parking_pass = db.get(ParkingPass, pass_id)
     if parking_pass is None:
@@ -393,7 +394,7 @@ def renew_pass(pass_id: int, payload: RenewPassRequest, db: Session = Depends(ge
     return apply_renewal(db, parking_pass, payload.end_date, payload.payment_method, payload.check_number)
 
 
-@router.post("/{pass_id}/cancel", response_model=PassRead)
+@router.post("/{pass_id}/cancel", response_model=PassRead, dependencies=[Depends(require_manager)])
 def cancel_pass(pass_id: int, db: Session = Depends(get_db)) -> ParkingPass:
     """Removes a truck from a monthly plan (or cancels any pass) without
     deleting its history — payments and audit entries are never deleted."""
@@ -416,7 +417,7 @@ def cancel_pass(pass_id: int, db: Session = Depends(get_db)) -> ParkingPass:
     return parking_pass
 
 
-@router.get("", response_model=list[PassListItem])
+@router.get("", response_model=list[PassListItem], dependencies=[Depends(require_manager)])
 def list_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
     today = business_today()
     stmt = select(ParkingPass).order_by(ParkingPass.issue_date.desc(), ParkingPass.id.desc())
@@ -442,7 +443,7 @@ def list_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
     ]
 
 
-@router.get("/{pass_id}", response_model=PassRead)
+@router.get("/{pass_id}", response_model=PassRead, dependencies=[Depends(require_manager)])
 def get_pass(pass_id: int, db: Session = Depends(get_db)) -> ParkingPass:
     parking_pass = db.get(ParkingPass, pass_id)
     if parking_pass is None:

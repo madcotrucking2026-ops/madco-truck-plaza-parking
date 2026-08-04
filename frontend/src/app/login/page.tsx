@@ -55,9 +55,10 @@ export default function LoginPage() {
         : await api.post<TokenResponse>("/api/auth/login", { email, password });
       setToken(res.access_token);
       // Land people on their job: the dashboard is manager-tier (revenue), so an
-      // attendant goes straight to Lot Check instead of a wall of 403s.
+      // The cashier's whole job is issuing passes, so land them there — the
+      // dashboard is manager-tier and would 403.
       const who = await api.get<UserRead>("/api/auth/me").catch(() => null);
-      router.replace(who?.role === "attendant" ? "/lot-check" : "/");
+      router.replace(who?.role === "attendant" ? "/passes/issue" : "/");
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {

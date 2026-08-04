@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import business_today
 from app.core.database import get_db
+from app.core.deps import require_manager
 from app.core.spots import MoveError, holding_filter, move_pass_to_spot, spot_label
 from app.models import ParkingPass, Spot
 from app.schemas.spot import MoveSpotRequest, MoveSpotResult, SpotState
@@ -54,7 +55,7 @@ def lot_state(db: Session = Depends(get_db)) -> list[SpotState]:
     return out
 
 
-@router.post("/{number}/clear-overstay")
+@router.post("/{number}/clear-overstay", dependencies=[Depends(require_manager)])
 def clear_overstay(number: int, db: Session = Depends(get_db)) -> dict:
     """Staff dealt with the squatter — put the spot back to normal."""
     spot = db.scalar(select(Spot).where(Spot.number == number))

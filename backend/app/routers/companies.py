@@ -6,7 +6,7 @@ from datetime import date
 
 from app.core.clock import business_today
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_manager
 from app.core.pass_status import live_status
 from app.core.rate_limit import lookup_limiter
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, User, Vehicle
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/companies", tags=["companies"])
 
 @router.get("", response_model=list[CompanyRead])
 def list_companies(
-    q: str | None = None, db: Session = Depends(get_db), _user: User = Depends(get_current_user)
+    q: str | None = None, db: Session = Depends(get_db), _user: User = Depends(require_manager)
 ) -> list[Company]:
     stmt = select(Company)
     if q:
@@ -37,7 +37,7 @@ def list_companies(
 
 @router.post("", response_model=CompanyRead)
 def create_company(
-    payload: CompanyCreate, db: Session = Depends(get_db), _user: User = Depends(get_current_user)
+    payload: CompanyCreate, db: Session = Depends(get_db), _user: User = Depends(require_manager)
 ) -> Company:
     company = Company(**payload.model_dump())
     db.add(company)
@@ -97,7 +97,7 @@ def lookup_company(
 
 @router.get("/{company_id}", response_model=CompanyRead)
 def get_company(
-    company_id: int, db: Session = Depends(get_db), _user: User = Depends(get_current_user)
+    company_id: int, db: Session = Depends(get_db), _user: User = Depends(require_manager)
 ) -> Company:
     company = db.get(Company, company_id)
     if company is None:
@@ -107,7 +107,7 @@ def get_company(
 
 @router.get("/{company_id}/profile", response_model=CompanyProfile)
 def company_profile(
-    company_id: int, db: Session = Depends(get_db), _user: User = Depends(get_current_user)
+    company_id: int, db: Session = Depends(get_db), _user: User = Depends(require_manager)
 ) -> CompanyProfile:
     """Everything about one company in one place: totals, trucks, recent passes
     and payments, monthly status + outstanding balance, and a simple loyalty

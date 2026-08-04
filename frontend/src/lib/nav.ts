@@ -40,16 +40,16 @@ export const NAV_ITEMS: NavItem[] = [
   // Sits right under the dashboard on purpose: it's the first thing read in the
   // morning, and the only screen that says what to DO rather than what happened.
   { label: "Morning Report", href: "/morning-report", icon: Sun, minRole: "manager" },
-  { label: "Parking Passes", href: "/passes", icon: Ticket, minRole: "attendant" },
+  { label: "Parking Passes", href: "/passes", icon: Ticket, minRole: "manager" },
   { label: "Issue New Pass", href: "/passes/issue", icon: FilePlus2, minRole: "attendant" },
-  { label: "Monthly Customers", href: "/monthly-customers", icon: Users, minRole: "attendant" },
-  { label: "Companies", href: "/companies", icon: Building2, minRole: "attendant" },
-  { label: "Lot Check", href: "/lot-check", icon: ClipboardCheck, minRole: "attendant" },
+  { label: "Monthly Customers", href: "/monthly-customers", icon: Users, minRole: "manager" },
+  { label: "Companies", href: "/companies", icon: Building2, minRole: "manager" },
+  { label: "Lot Check", href: "/lot-check", icon: ClipboardCheck, minRole: "manager" },
   // The cashier's live availability board — front-desk tool, so attendant-visible.
   { label: "Availability", href: "/availability", icon: Grid3x3, minRole: "attendant" },
   { label: "Payments", href: "/payments", icon: CreditCard, minRole: "manager" },
   { label: "Reports", href: "/reports", icon: BarChart3, minRole: "manager" },
-  { label: "Reminders", href: "/reminders", icon: BellRing, minRole: "attendant" },
+  { label: "Reminders", href: "/reminders", icon: BellRing, minRole: "manager" },
   { label: "Activity Log", href: "/audit-log", icon: History, minRole: "admin" },
   { label: "Settings", href: "/settings", icon: Settings, minRole: "admin" },
 ];
