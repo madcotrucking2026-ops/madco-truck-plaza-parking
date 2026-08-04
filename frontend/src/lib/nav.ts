@@ -7,6 +7,7 @@ import {
   Users,
   Building2,
   ClipboardCheck,
+  Grid3x3,
   CreditCard,
   BarChart3,
   BellRing,
@@ -44,6 +45,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Monthly Customers", href: "/monthly-customers", icon: Users, minRole: "attendant" },
   { label: "Companies", href: "/companies", icon: Building2, minRole: "attendant" },
   { label: "Lot Check", href: "/lot-check", icon: ClipboardCheck, minRole: "attendant" },
+  // The cashier's live availability board — front-desk tool, so attendant-visible.
+  { label: "Availability", href: "/availability", icon: Grid3x3, minRole: "attendant" },
   { label: "Payments", href: "/payments", icon: CreditCard, minRole: "manager" },
   { label: "Reports", href: "/reports", icon: BarChart3, minRole: "manager" },
   { label: "Reminders", href: "/reminders", icon: BellRing, minRole: "attendant" },

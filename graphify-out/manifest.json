@@ -605,9 +605,9 @@
     "semantic_hash": "e4e7d92eaa2d03a55d4f1b12d6f72629"
   },
   "frontend/src/app/passes/page.tsx": {
-    "mtime": 1785252258.4180832,
-    "ast_hash": "221c54ff86f445b94672a707e863145b",
-    "semantic_hash": "221c54ff86f445b94672a707e863145b"
+    "mtime": 1785851343.193066,
+    "ast_hash": "273c588e7200bf3887b78695fec67461",
+    "semantic_hash": ""
   },
   "frontend/src/app/pay/[token]/layout.tsx": {
     "mtime": 1783623297.5483,
@@ -830,9 +830,9 @@
     "semantic_hash": "d448d2a90e48542e51b93a1189127bf2"
   },
   "frontend/src/lib/api.ts": {
-    "mtime": 1785253298.3150766,
-    "ast_hash": "993c891f3912293c8455b60d71cd77db",
-    "semantic_hash": "993c891f3912293c8455b60d71cd77db"
+    "mtime": 1785851281.5099154,
+    "ast_hash": "271b7c83fa0044023e13cbe53457dd2a",
+    "semantic_hash": ""
   },
   "frontend/src/lib/auth.ts": {
     "mtime": 1783351266.1900504,
@@ -992,6 +992,11 @@
   "backend/tests/test_move_spot.py": {
     "mtime": 1785851080.9752536,
     "ast_hash": "a6b599083fe2f4e4345884f721adbcca",
+    "semantic_hash": ""
+  },
+  "frontend/src/lib/zones.ts": {
+    "mtime": 1785851291.3634648,
+    "ast_hash": "b9e67ba619acd1c532ede1c1bb1cd438",
     "semantic_hash": ""
   }
 }
