@@ -256,7 +256,7 @@ function IssuePassForm() {
 
       <Card className="card-paper border-none">
         <CardHeader>
-          <CardTitle className="text-[var(--cream-foreground)]">Vehicle &amp; Company</CardTitle>
+          <CardTitle className="text-[var(--cream-foreground)]">Vehicle &amp; company</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Vehicle Type">
@@ -320,7 +320,7 @@ function IssuePassForm() {
 
       <Card className="card-paper border-none">
         <CardHeader>
-          <CardTitle className="text-[var(--cream-foreground)]">Parking Type &amp; Dates</CardTitle>
+          <CardTitle className="text-[var(--cream-foreground)]">Parking type &amp; dates</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Parking Type">

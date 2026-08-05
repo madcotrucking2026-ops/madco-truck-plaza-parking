@@ -137,6 +137,10 @@ Restrained and orchestrated, never a fade on every element.
 - **Focus:** visible keyboard ring in `--amber-500` (`--ring`). Never `outline: none`
   without a replacement.
 - **Buttons:** one amber CTA per view; everything else forest/outline/ghost.
+- **Casing:** Title Case for short labels — nav items, buttons, column headers,
+  status badges, field labels ("Find a Truck", "Open Spots", "Monthly Price").
+  Sentence case for section/card headings and body sentences ("Needs attention",
+  "Vehicle & company"). Choose by role and don't let the two roles bleed together.
 - **Empty states:** icon + warm one-line message + the action (e.g. "All caught up —
   nothing expiring today or tomorrow"), never a bare "No items."
 - **Data at a glance beats labels-on-everything.** The lot map is a colour heatmap
