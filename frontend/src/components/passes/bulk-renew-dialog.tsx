@@ -36,7 +36,6 @@ import {
   daysBetween,
   defaultEndDate,
   monthsBetween,
-  todayISO,
 } from "@/lib/pricing";
 
 // Bulk renew is a front-desk action: the manager collects payment for a stack of
@@ -72,11 +71,10 @@ export function BulkRenewDialog({
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState<{ ok: number; failed: string[] } | null>(null);
 
-  // Each pass renews by its own natural span: a lapsed pass restarts from today,
-  // an active one continues from its expiration. Same rule the backend applies.
-  const today = todayISO();
+  // Each pass renews from where it ended — the old end date is the new start,
+  // even for a lapsed pass (client rule, 2026-08). Same rule the backend applies.
   const plan = passes.map((pass) => {
-    const start = today > pass.expiration_date ? today : pass.expiration_date;
+    const start = pass.expiration_date;
     return { pass, start, end: defaultEndDate(pass.pass_type, start) };
   });
 

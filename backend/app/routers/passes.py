@@ -296,10 +296,11 @@ def renewal_quote(db: Session, parking_pass: ParkingPass, end_date: date) -> tup
     applying it. Shared by the direct renew endpoint and the customer-self-pay
     payment-request path so both price/validate renewals identically. Raises
     HTTPException(400) on an invalid date/span."""
-    # Renew from today if the pass already lapsed (so a stale expiration
-    # doesn't push the new period further into the past) — otherwise continue
-    # seamlessly from the current expiration.
-    renewal_start = max(business_today(), parking_pass.expiration_date)
+    # A renewal always continues from where the last pass ended — never from
+    # "today," even when the customer pays late. A loyal customer whose spot was
+    # held keeps paying from the old end date, with no free gap (client rule,
+    # 2026-08). The end date the caller passes decides how far it runs.
+    renewal_start = parking_pass.expiration_date
 
     if end_date <= renewal_start:
         raise HTTPException(status_code=400, detail=f"New expiration must be after {renewal_start.isoformat()}.")

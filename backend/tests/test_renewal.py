@@ -31,21 +31,27 @@ def _issue(db, *, pass_type, issue_date, end_date=None):
     )
 
 
-def test_renewal_quote_rejects_end_date_not_after_start(db):
+def test_renewal_quote_rejects_end_date_not_after_old_end(db):
     today = date.today()
     p = _issue(db, pass_type=PassType.daily, issue_date=today - timedelta(days=10))  # lapsed
+    old_end = p.expiration_date
+    # The new end must be AFTER the old end date — a renewal continues from there.
     with pytest.raises(HTTPException):
-        renewal_quote(db, p, today)  # not after the rebased "renew from today" floor
+        renewal_quote(db, p, old_end)
     with pytest.raises(HTTPException):
-        renewal_quote(db, p, today - timedelta(days=1))
+        renewal_quote(db, p, old_end - timedelta(days=1))
 
 
-def test_renewal_quote_rebases_from_today_for_lapsed_pass(db):
+def test_renewal_quote_continues_from_old_end_when_paid_late(db):
+    # Client rule: a late-paying customer's renewal starts from the old end date,
+    # never from today — no free gap, they pay from where they left off.
     today = date.today()
     p = _issue(db, pass_type=PassType.daily, issue_date=today - timedelta(days=10))
-    start, price = renewal_quote(db, p, today + timedelta(days=3))
-    assert start == today  # not the stale expiration in the past
-    assert price == settings.daily_price * 3
+    old_end = p.expiration_date  # in the past — the pass already lapsed
+    new_end = today + timedelta(days=3)
+    start, price = renewal_quote(db, p, new_end)
+    assert start == old_end  # continues from where it ended, NOT from today
+    assert price == settings.daily_price * (new_end - old_end).days
 
 
 def test_apply_renewal_with_stripe_charge_skips_revalidation(db):

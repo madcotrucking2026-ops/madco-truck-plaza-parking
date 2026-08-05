@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DAILY_RATE, WEEKLY_RATE, todayISO, currency, defaultEndDate, daysBetween, monthsBetween } from "@/lib/pricing";
+import { DAILY_RATE, WEEKLY_RATE, currency, defaultEndDate, daysBetween, monthsBetween } from "@/lib/pricing";
 
 // The cashier/manager records how the renewal was paid at the desk. Card/debit
 // go through the plaza's own terminal; the system records the method only.
@@ -58,9 +58,9 @@ export function RenewDialog({
   onOpenChange: (open: boolean) => void;
   onRenewed: () => void;
 }) {
-  // A lapsed pass renews from today, not its stale expiration date; a still-
-  // active pass continues seamlessly from its current expiration.
-  const renewalStart = todayISO() > pass.expiration_date ? todayISO() : pass.expiration_date;
+  // A renewal always continues from where the last pass ended — the old end date
+  // is the new start, even when the customer pays late (client rule, 2026-08).
+  const renewalStart = pass.expiration_date;
 
   const [endDate, setEndDate] = useState(() => defaultEndDate(pass.pass_type, renewalStart));
   const [payChoice, setPayChoice] = useState<PayChoice>("cash");
