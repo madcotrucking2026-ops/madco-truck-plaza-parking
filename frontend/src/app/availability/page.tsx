@@ -107,7 +107,7 @@ export default function AvailabilityPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Open Spots</h1>
           <p className="text-sm text-muted-foreground">
             Live lot map — every zone, refreshing on its own.{" "}
-            <span className="inline-flex items-center gap-1 text-[var(--success)]">
+            <span className="inline-flex items-center gap-1 text-[var(--success-ink)]">
               <RefreshCw className="h-3 w-3" />
               {spots ? `updated ${updatedAgo}s ago` : "loading…"}
             </span>
@@ -123,7 +123,7 @@ export default function AvailabilityPage() {
         <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--amber-500)]/50 bg-[var(--amber-500)]/15 p-3">
           <p className="text-sm font-medium text-[var(--cream-foreground)]">
             Moving <b>{moving.truck_number ?? "truck"}</b> ({moving.company_name ?? "—"}) — tap a{" "}
-            <span className="font-semibold text-[var(--success)]">free</span> spot to place it.
+            <span className="font-semibold text-[var(--success-ink)]">free</span> spot to place it.
           </p>
           <Button variant="outline" size="sm" onClick={() => setMoving(null)}>
             <X className="h-3.5 w-3.5" />

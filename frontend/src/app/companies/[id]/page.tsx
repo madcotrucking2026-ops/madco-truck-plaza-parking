@@ -84,7 +84,7 @@ export default function CompanyProfilePage() {
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <div className="inline-flex items-center gap-1 text-[var(--amber-600)]">
+            <div className="inline-flex items-center gap-1 text-[var(--amber-ink)]">
               <Star className="h-4 w-4" />
               <span className="font-mono text-lg font-bold tabular-nums">{p.loyalty_score}</span>
               <InfoTip label="How the loyalty score is calculated">

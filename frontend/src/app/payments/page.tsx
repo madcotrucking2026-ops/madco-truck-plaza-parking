@@ -29,10 +29,10 @@ const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 const METHOD_STYLE: Record<string, { label: string; className: string; Icon: LucideIcon }> = {
-  cash: { label: "Cash", className: "bg-[var(--success)]/15 text-[var(--success)]", Icon: Banknote },
-  credit_card: { label: "Credit Card", className: "bg-[var(--amber-500)]/15 text-[var(--amber-600)]", Icon: CreditCard },
-  debit_card: { label: "Debit Card", className: "bg-[var(--amber-500)]/15 text-[var(--amber-600)]", Icon: CreditCard },
-  phone: { label: "Card / Phone", className: "bg-[var(--amber-500)]/15 text-[var(--amber-600)]", Icon: CreditCard },
+  cash: { label: "Cash", className: "bg-[var(--success)]/15 text-[var(--success-ink)]", Icon: Banknote },
+  credit_card: { label: "Credit Card", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]", Icon: CreditCard },
+  debit_card: { label: "Debit Card", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]", Icon: CreditCard },
+  phone: { label: "Card / Phone", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]", Icon: CreditCard },
   check: { label: "Check", className: "bg-[var(--forest-600)]/15 text-[var(--forest-600)]", Icon: FileCheck2 },
 };
 
@@ -134,17 +134,21 @@ export default function PaymentsPage() {
           </p>
         </div>
         {/* Segmented period control */}
-        <div className="inline-flex rounded-xl bg-black/[0.05] p-1">
+        <div className="inline-flex rounded-xl bg-foreground/[0.06] p-1">
           {PERIODS.map((p) => (
             <button
               key={p.value}
               type="button"
               onClick={() => setPeriod(p.value)}
               className={cn(
-                "rounded-lg px-3.5 py-1.5 text-sm font-medium transition",
+                // h-11 on phones (the desk taps this in gloves), snapping to the
+                // tight desktop rhythm at sm. Unselected labels use the
+                // mode-aware muted token, not the cream-fixed ink, so they don't
+                // vanish on the dark page in dark mode.
+                "flex h-11 items-center rounded-lg px-3.5 text-sm font-medium transition sm:h-8",
                 period === p.value
                   ? "btn-embossed bg-[var(--forest-700)] text-[var(--ivory-100)]"
-                  : "text-[var(--cream-foreground)]/70 hover:text-[var(--cream-foreground)]",
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {p.label}
