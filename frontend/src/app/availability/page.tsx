@@ -18,6 +18,14 @@ const STATE_CLASS: Record<SpotState["state"], string> = {
   inactive: "bg-black/10 text-[var(--cream-foreground)]/30",
 };
 
+const LEGEND: { state: SpotState["state"]; label: string }[] = [
+  { state: "free", label: "Free" },
+  { state: "occupied", label: "Occupied" },
+  { state: "expiring", label: "Expiring" },
+  { state: "grace", label: "Grace (monthly)" },
+  { state: "overstay", label: "Overstay" },
+];
+
 const REFRESH_MS = 5000;
 
 export default function AvailabilityPage() {
@@ -117,6 +125,17 @@ export default function AvailabilityPage() {
           <p className="font-mono text-2xl font-bold tabular-nums text-[var(--cream-foreground)]">{totalFree}</p>
           <p className="text-xs text-[var(--cream-foreground)]/60">free of {totalActive}</p>
         </div>
+      </div>
+
+      {/* Persistent key for the colours — the board is glanced at from across the
+          desk, so state can't live in a hover tooltip alone. Mode-aware labels. */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {LEGEND.map((l) => (
+          <span key={l.state} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className={`h-3 w-3 rounded ${STATE_CLASS[l.state].split(" ")[0]}`} />
+            {l.label}
+          </span>
+        ))}
       </div>
 
       {moving && (

@@ -336,7 +336,7 @@ function IssuePassForm() {
             </Select>
           </Field>
           <Field label="Price">
-            <div className="flex h-8 items-center rounded-lg border border-input bg-transparent px-2.5 font-mono text-sm">
+            <div className="flex h-11 items-center rounded-lg border border-input bg-transparent px-2.5 font-mono text-sm sm:h-8">
               {finalPrice !== null
                 ? `${currency(finalPrice)}${
                     form.pass_type === "daily"
