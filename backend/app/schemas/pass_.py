@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -48,6 +49,9 @@ class RenewPassRequest(BaseModel):
     end_date: date
     payment_method: PaymentMethod
     check_number: str | None = Field(default=None, max_length=IDENT_MAX)
+    # "continue" keeps the plan going (whole periods forward); "close_out" settles
+    # a departing customer for the time used and closes the account.
+    mode: Literal["continue", "close_out"] = "continue"
 
 
 class PassRead(BaseModel):

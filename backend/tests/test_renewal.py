@@ -84,3 +84,53 @@ def test_monthly_renewal_advances_customer_and_prices_by_rate(db):
     mc = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == p.company_id))
     assert mc is not None
     assert mc.renewal_date == new_end
+
+
+def test_continue_monthly_catches_up_whole_months(db):
+    # Late & continuing: Aug 8 old end, renew to Oct 8 = 2 whole months.
+    p = _issue(db, pass_type=PassType.monthly, issue_date=date(2026, 7, 8))
+    p.expiration_date = date(2026, 8, 8)
+    db.commit()
+    _, price = renewal_quote(db, p, date(2026, 10, 8), mode="continue")
+    assert price == settings.monthly_price * 2
+
+
+def test_close_out_monthly_whole_months_plus_leftover_days(db):
+    # Client's example: Jul 8 -> Aug 8 monthly, leaves Sep 11.
+    # Aug 8 -> Sep 11 = 1 whole month + 3 leftover days at the daily rate.
+    p = _issue(db, pass_type=PassType.monthly, issue_date=date(2026, 7, 8))
+    p.expiration_date = date(2026, 8, 8)
+    db.commit()
+    start, price = renewal_quote(db, p, date(2026, 9, 11), mode="close_out")
+    assert start == date(2026, 8, 8)
+    assert price == settings.monthly_price + 3 * settings.daily_price
+
+
+def test_close_out_leftover_is_capped_at_one_period(db):
+    # Leaves Sep 5 — before the Sep 8 anniversary, so 0 whole months + 28 leftover
+    # days. 28*daily would exceed a month, so it caps at one month's rate.
+    p = _issue(db, pass_type=PassType.monthly, issue_date=date(2026, 7, 8))
+    p.expiration_date = date(2026, 8, 8)
+    db.commit()
+    _, price = renewal_quote(db, p, date(2026, 9, 5), mode="close_out")
+    assert price == settings.monthly_price  # capped, never more than continuing
+
+
+def test_close_out_daily_bills_days_used(db):
+    p = _issue(db, pass_type=PassType.daily, issue_date=date(2026, 8, 5))
+    p.expiration_date = date(2026, 8, 6)
+    db.commit()
+    _, price = renewal_quote(db, p, date(2026, 8, 9), mode="close_out")
+    assert price == settings.daily_price * 3  # Aug 6 -> Aug 9 = 3 days
+
+
+def test_close_out_marks_monthly_customer_inactive_and_stops_reminders(db):
+    from app.models.enums import MonthlyCustomerStatus, ReminderStatus
+
+    p = _issue(db, pass_type=PassType.monthly, issue_date=date(2026, 7, 8))
+    p.expiration_date = date(2026, 8, 8)
+    db.commit()
+    apply_renewal(db, p, date(2026, 9, 11), PaymentMethod.cash, mode="close_out")
+    mc = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == p.company_id))
+    assert mc.status == MonthlyCustomerStatus.inactive
+    assert mc.reminder_status == ReminderStatus.stopped

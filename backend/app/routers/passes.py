@@ -15,7 +15,15 @@ from app.core.pass_status import live_status
 from app.core.pass_token import make_pass_token
 from app.core.spots import pick_free_spot
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Vehicle
-from app.models.enums import AuditAction, PassStatus, PassType, PaymentMethod, VehicleType
+from app.models.enums import (
+    AuditAction,
+    MonthlyCustomerStatus,
+    PassStatus,
+    PassType,
+    PaymentMethod,
+    ReminderStatus,
+    VehicleType,
+)
 from app.schemas.pass_ import IssuePassRequest, PassListItem, PassRead, RenewPassRequest
 
 router = APIRouter(prefix="/api/passes", tags=["passes"])
@@ -63,11 +71,43 @@ def _price_for(
         days = max((expiration_date - issue_date).days, 1)
         return settings.daily_price * days
     if pass_type == PassType.weekly:
-        return settings.weekly_price
+        # Per whole week — a single-week renewal (the common case) is unchanged;
+        # a multi-week catch-up on a lapsed weekly bills each week.
+        weeks = max((expiration_date - issue_date).days // 7, 1)
+        return settings.weekly_price * weeks
     # Monthly: customers sometimes pay for several months at once (2, 3+) —
     # the total is the per-month rate times how many months this pass spans.
     rate = _monthly_rate_for(existing_monthly_price, override)
     return rate * _months_between(issue_date, expiration_date)
+
+
+def _whole_months(start: date, end: date) -> int:
+    """COMPLETE calendar months from start to end (floors — unlike _months_between,
+    which rounds up for billing). Aug 8 -> Sep 11 is 1 whole month; the extra 3
+    days are leftover."""
+    months = (end.year - start.year) * 12 + (end.month - start.month)
+    if end.day < start.day:
+        months -= 1
+    return max(months, 0)
+
+
+def _close_out_price(pass_type: PassType, start: date, end: date, existing_monthly_price: float | None) -> float:
+    """A departing customer pays for time ACTUALLY used: whole periods at the
+    period rate + leftover days at the daily rate. The leftover is capped at one
+    more period's rate, so closing out never costs more than just continuing."""
+    if pass_type == PassType.daily:
+        return float(settings.daily_price) * max((end - start).days, 1)
+    if pass_type == PassType.weekly:
+        rate = float(settings.weekly_price)
+        whole, leftover_days = divmod((end - start).days, 7)
+    else:
+        # mc.monthly_price is a DB Decimal; daily_price is a float — coerce so the
+        # mixed arithmetic below doesn't TypeError.
+        rate = float(_monthly_rate_for(existing_monthly_price, None))
+        whole = _whole_months(start, end)
+        leftover_days = (end - add_months(start, whole)).days
+    leftover = min(leftover_days * float(settings.daily_price), rate)
+    return whole * rate + leftover
 
 
 def _validate_weekly_span(pass_type: PassType, issue_date: date, end_date: date | None) -> None:
@@ -291,11 +331,13 @@ def issue_pass(payload: IssuePassRequest, db: Session = Depends(get_db)) -> Park
     )
 
 
-def renewal_quote(db: Session, parking_pass: ParkingPass, end_date: date) -> tuple[date, float]:
+def renewal_quote(
+    db: Session, parking_pass: ParkingPass, end_date: date, mode: str = "continue"
+) -> tuple[date, float]:
     """Validates a proposed renewal and returns (renewal_start, price) WITHOUT
-    applying it. Shared by the direct renew endpoint and the customer-self-pay
-    payment-request path so both price/validate renewals identically. Raises
-    HTTPException(400) on an invalid date/span."""
+    applying it. `mode` is "continue" (keep the plan going — whole periods) or
+    "close_out" (the customer is leaving — pay for the exact time used, then the
+    account closes). Raises HTTPException(400) on an invalid date/span."""
     # A renewal always continues from where the last pass ended — never from
     # "today," even when the customer pays late. A loyal customer whose spot was
     # held keeps paying from the old end date, with no free gap (client rule,
@@ -305,26 +347,26 @@ def renewal_quote(db: Session, parking_pass: ParkingPass, end_date: date) -> tup
     if end_date <= renewal_start:
         raise HTTPException(status_code=400, detail=f"New expiration must be after {renewal_start.isoformat()}.")
 
+    monthly_price = None
+    if parking_pass.pass_type == PassType.monthly:
+        mc = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == parking_pass.company_id))
+        monthly_price = mc.monthly_price if mc else None
+
+    if mode == "close_out":
+        # A departing customer settles for the exact days used — any end date is
+        # allowed (no whole-period requirement).
+        return renewal_start, _close_out_price(parking_pass.pass_type, renewal_start, end_date, monthly_price)
+
+    # continue: a weekly renewal lands on a whole number of weeks (a lapsed weekly
+    # can catch up several).
     if parking_pass.pass_type == PassType.weekly:
         span = (end_date - renewal_start).days
-        if span != 7:
+        if span % 7 != 0:
             raise HTTPException(
                 status_code=400,
-                detail=f"Weekly passes must be exactly 7 days ({renewal_start.isoformat()} → {end_date.isoformat()} is {span} days).",
+                detail=f"Weekly renewals must be whole weeks ({renewal_start.isoformat()} → {end_date.isoformat()} is {span} days).",
             )
-
-    monthly_customer = None
-    if parking_pass.pass_type == PassType.monthly:
-        monthly_customer = db.scalar(
-            select(MonthlyCustomer).where(MonthlyCustomer.company_id == parking_pass.company_id)
-        )
-    price = _price_for(
-        parking_pass.pass_type,
-        renewal_start,
-        end_date,
-        None,
-        monthly_customer.monthly_price if monthly_customer else None,
-    )
+    price = _price_for(parking_pass.pass_type, renewal_start, end_date, None, monthly_price)
     return renewal_start, price
 
 
@@ -337,6 +379,7 @@ def apply_renewal(
     *,
     stripe_payment_intent_id: str | None = None,
     price_from_charge: float | None = None,
+    mode: str = "continue",
 ) -> ParkingPass:
     """Applies a validated renewal: extends the pass, records a Payment, and
     updates the monthly customer. `price_from_charge` (a real Stripe amount)
@@ -350,7 +393,7 @@ def apply_renewal(
     if price_from_charge is not None:
         price = price_from_charge
     else:
-        _, price = renewal_quote(db, parking_pass, end_date)
+        _, price = renewal_quote(db, parking_pass, end_date, mode)
 
     parking_pass.expiration_date = end_date
     parking_pass.price = price
@@ -373,7 +416,13 @@ def apply_renewal(
         )
         if monthly_customer is not None:
             monthly_customer.renewal_date = end_date
-            monthly_customer.reminder_status = "pending"
+            if mode == "close_out":
+                # The customer is done: stop reminders and mark the account
+                # inactive so it drops off the "who renews next" lists.
+                monthly_customer.status = MonthlyCustomerStatus.inactive
+                monthly_customer.reminder_status = ReminderStatus.stopped
+            else:
+                monthly_customer.reminder_status = ReminderStatus.pending
 
     log_audit(
         db,
@@ -392,7 +441,7 @@ def renew_pass(pass_id: int, payload: RenewPassRequest, db: Session = Depends(ge
     parking_pass = db.get(ParkingPass, pass_id)
     if parking_pass is None:
         raise HTTPException(status_code=404, detail="Pass not found")
-    return apply_renewal(db, parking_pass, payload.end_date, payload.payment_method, payload.check_number)
+    return apply_renewal(db, parking_pass, payload.end_date, payload.payment_method, payload.check_number, mode=payload.mode)
 
 
 @router.post("/{pass_id}/cancel", response_model=PassRead, dependencies=[Depends(require_manager)])
