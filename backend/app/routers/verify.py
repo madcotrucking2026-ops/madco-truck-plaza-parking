@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
-from app.core.clock import business_now, business_today
+from app.core.clock import business_now
 from app.core.database import get_db
 from app.core.pass_status import live_status
 from app.core.pass_token import verify_pass_token
@@ -33,7 +33,7 @@ def verify_pass(token: str, db: Session = Depends(get_db)) -> PassVerifyResult:
 
     return PassVerifyResult(
         valid=True,
-        status=live_status(parking_pass.expiration_date, business_today(), parking_pass.status),
+        status=live_status(parking_pass.pass_type, parking_pass.expiration_date, business_now(), parking_pass.status),
         company_name=parking_pass.company.name if parking_pass.company else None,
         truck_number=parking_pass.vehicle.truck_number,
         trailer_number=parking_pass.vehicle.trailer_number,

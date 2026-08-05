@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
-from app.core.clock import business_today
+from app.core.clock import business_now, business_today
 from app.core.codes import generate_receipt_number
 from app.core.config import settings
 from app.core.database import get_db
@@ -419,13 +419,13 @@ def cancel_pass(pass_id: int, db: Session = Depends(get_db)) -> ParkingPass:
 
 @router.get("", response_model=list[PassListItem], dependencies=[Depends(require_manager)])
 def list_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
-    today = business_today()
+    now = business_now()
     stmt = select(ParkingPass).order_by(ParkingPass.issue_date.desc(), ParkingPass.id.desc())
     return [
         PassListItem(
             id=p.id,
             pass_type=p.pass_type,
-            status=live_status(p.expiration_date, today, p.status),
+            status=live_status(p.pass_type, p.expiration_date, now, p.status),
             price=p.price,
             issue_date=p.issue_date,
             expiration_date=p.expiration_date,

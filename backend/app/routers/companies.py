@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from datetime import date
 
-from app.core.clock import business_today
+from app.core.clock import business_now, business_today
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_manager
 from app.core.pass_status import live_status
@@ -186,7 +186,7 @@ def company_profile(
             ProfilePass(
                 id=p.id,
                 pass_type=p.pass_type,
-                status=live_status(p.expiration_date, today, p.status),
+                status=live_status(p.pass_type, p.expiration_date, business_now(), p.status),
                 price=float(p.price),
                 issue_date=p.issue_date,
                 expiration_date=p.expiration_date,

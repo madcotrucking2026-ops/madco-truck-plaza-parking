@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
-from app.core.clock import business_today
+from app.core.clock import business_now
 from app.core.database import get_db
 from app.core.pass_status import live_status
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Vehicle
@@ -39,8 +39,6 @@ def lot_check(q: str = Query(..., min_length=1), db: Session = Depends(get_db)) 
     if parking_pass is None:
         return LotCheckResult(found=False)
 
-    today = business_today()
-
     # The payment that bought the pass they're sitting on — a renewal writes a new
     # Payment row, so the LATEST one is the one that matters. Same-day renewals tie
     # on paid_at (same second), and ordering on that alone hands back whichever row
@@ -61,7 +59,7 @@ def lot_check(q: str = Query(..., min_length=1), db: Session = Depends(get_db)) 
 
     return LotCheckResult(
         found=True,
-        status=live_status(parking_pass.expiration_date, today, parking_pass.status),
+        status=live_status(parking_pass.pass_type, parking_pass.expiration_date, business_now(), parking_pass.status),
         company_name=parking_pass.company.name if parking_pass.company else None,
         phone=parking_pass.company.phone if parking_pass.company else None,
         truck_number=parking_pass.vehicle.truck_number,
