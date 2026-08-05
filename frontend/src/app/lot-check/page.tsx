@@ -142,9 +142,10 @@ function expiryPhrase(expiration: string): string {
   return `Expires in ${days} days · ${shortDate(expiration)}`;
 }
 
+// ISO (2026-08-15) — the plaza's chosen date style everywhere. `iso` is already
+// a YYYY-MM-DD (or ISO datetime); take the date part.
 function shortDate(iso: string): string {
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return iso.slice(0, 10);
 }
 
 function DetailRow({

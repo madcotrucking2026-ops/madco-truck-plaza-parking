@@ -13,10 +13,13 @@ import { InfoTip } from "@/components/common/info-tip";
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const money2 = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-const fmtDate = (iso: string | null) =>
-  iso ? new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+// Plaza reads dates as ISO (2026-08-15), matching every other screen; these are
+// already YYYY-MM-DD (or an ISO datetime), so just take the date part.
+const fmtDate = (iso: string | null) => (iso ? iso.slice(0, 10) : "—");
+// ISO date + local time (2026-07-07, 9:58 PM), matching the payments table's own
+// date/time split so timestamps read the same everywhere.
 const fmtDateTime = (iso: string) =>
-  new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  `${iso.slice(0, 10)}, ${new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
 
 export default function CompanyProfilePage() {
   const params = useParams<{ id: string }>();
