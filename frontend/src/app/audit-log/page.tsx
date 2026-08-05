@@ -23,13 +23,10 @@ function styleFor(action: string) {
   );
 }
 
+// ISO date + local time (2026-08-05, 11:06 AM) — the plaza's date style, same as
+// the payments table and company profile.
 const fmt = (iso: string) =>
-  new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  `${iso.slice(0, 10)}, ${new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
 
 export default function AuditLogPage() {
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null);
