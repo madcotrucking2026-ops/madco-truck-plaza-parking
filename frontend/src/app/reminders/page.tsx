@@ -142,7 +142,9 @@ export default function RemindersPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-mono">{currency(c.monthly_price)}/mo</td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono tabular-nums">{currency(c.monthly_price)}</span>/mo
+                      </td>
                       <td className="px-4 py-3 text-[var(--cream-foreground)]/70">
                         {c.last_reminder_at ? c.last_reminder_at.slice(0, 10) : "Never"}
                       </td>

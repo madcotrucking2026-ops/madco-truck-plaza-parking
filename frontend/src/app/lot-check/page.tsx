@@ -102,12 +102,12 @@ function LotCheckInner() {
 
           {result.found && (
             <div className="card-paper space-y-2 rounded-2xl p-5 text-sm">
-              <DetailRow label="Spot" value={result.spot_number != null ? `#${result.spot_number}` : undefined} />
+              <DetailRow label="Spot" value={result.spot_number != null ? `#${result.spot_number}` : undefined} mono />
               <DetailRow label="Company" value={result.company_name} />
-              <DetailRow label="Phone" value={result.phone} />
-              <DetailRow label="Truck Number" value={result.truck_number} />
-              <DetailRow label="Trailer Number" value={result.trailer_number} />
-              <DetailRow label="License Plate" value={result.license_plate} />
+              <DetailRow label="Phone" value={result.phone} mono />
+              <DetailRow label="Truck Number" value={result.truck_number} mono />
+              <DetailRow label="Trailer Number" value={result.trailer_number} mono />
+              <DetailRow label="License Plate" value={result.license_plate} mono />
               <DetailRow
                 label="Pass Type"
                 value={result.is_monthly_customer ? `${result.pass_type} · monthly customer` : result.pass_type}
@@ -147,12 +147,28 @@ function shortDate(iso: string): string {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function DetailRow({ label, value, className }: { label: string; value?: string; className?: string }) {
+function DetailRow({
+  label,
+  value,
+  className,
+  mono,
+}: {
+  label: string;
+  value?: string;
+  className?: string;
+  /** Set on the vehicle identifiers — a truck/trailer/plate/spot is data a truck
+   *  stop reads as data, so it belongs in the mono face, not Inter. */
+  mono?: boolean;
+}) {
   if (!value) return null;
   return (
     <div className="flex items-center justify-between border-b border-black/10 py-1 last:border-none">
       <span className="text-[var(--cream-foreground)]/60">{label}</span>
-      <span className={`font-medium text-[var(--cream-foreground)] ${className ?? ""}`}>{value}</span>
+      <span
+        className={`font-medium text-[var(--cream-foreground)] ${mono ? "font-mono tabular-nums" : ""} ${className ?? ""}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }

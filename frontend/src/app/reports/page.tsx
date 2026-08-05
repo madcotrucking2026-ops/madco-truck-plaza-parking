@@ -113,7 +113,9 @@ export default function ReportsPage() {
                   <tr key={`${t.truck_number}-${t.company_name}`} className="border-b border-black/5 last:border-none">
                     <td className="py-2 font-mono text-[var(--cream-foreground)]">{t.truck_number ?? "—"}</td>
                     <td className="py-2 text-[var(--cream-foreground)]/70">{t.company_name ?? "—"}</td>
-                    <td className="py-2 text-right font-mono text-[var(--cream-foreground)]">{t.visits} visit{t.visits === 1 ? "" : "s"}</td>
+                    <td className="py-2 text-right text-[var(--cream-foreground)]">
+                      <span className="font-mono tabular-nums">{t.visits}</span> visit{t.visits === 1 ? "" : "s"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
