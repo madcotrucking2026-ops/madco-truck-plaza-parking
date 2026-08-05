@@ -12,8 +12,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import log_audit
-from app.core.clock import business_now, business_today
+from app.core.clock import business_now
 from app.core.config import settings
+from app.core.pass_status import NOON
 from app.models import ParkingPass, Spot
 from app.models.enums import AuditAction, PassStatus, PassType
 
@@ -76,10 +77,21 @@ def _live_window_filter():
     inside its holding window (daily/weekly through expiry day, monthly through
     expiry + grace). Shared by holding_filter (has a spot) and the startup
     backfill (should have one but doesn't)."""
-    today = business_today()
+    now = business_now()
+    today = now.date()
     grace_cutoff = today - timedelta(days=settings.spot_grace_days)
+    # A daily pass vacates its spot at NOON on its expiry day (client checkout
+    # rule): before noon it still holds through today; from noon on, today's daily
+    # expiries have released. Weekly holds the whole expiry day (midnight); monthly
+    # holds through the grace window.
+    daily_holds = (
+        ParkingPass.expiration_date >= today
+        if now.time() < NOON
+        else ParkingPass.expiration_date > today
+    )
     return (ParkingPass.status != PassStatus.cancelled) & or_(
-        (ParkingPass.pass_type != PassType.monthly) & (ParkingPass.expiration_date >= today),
+        (ParkingPass.pass_type == PassType.daily) & daily_holds,
+        (ParkingPass.pass_type == PassType.weekly) & (ParkingPass.expiration_date >= today),
         (ParkingPass.pass_type == PassType.monthly) & (ParkingPass.expiration_date >= grace_cutoff),
     )
 

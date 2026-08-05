@@ -77,3 +77,40 @@ def test_picker_ignores_inactive_spots(db, monkeypatch):
     db.query(Spot).filter_by(number=1).one().active = False
     db.commit()
     assert pick_free_spot(db).number == 2
+
+
+def test_daily_spot_holds_before_noon_frees_at_noon(db, monkeypatch):
+    from datetime import datetime
+
+    import app.core.spots as spots_mod
+
+    monkeypatch.setattr(settings, "parking_capacity", 1)
+    ensure_spots(db)
+    p = _issue(db, "D1", ptype=PassType.daily, days=1)
+    db.commit()
+    exp = p.expiration_date  # a daily pass is good until NOON on this date
+
+    monkeypatch.setattr(spots_mod, "business_now", lambda: datetime(exp.year, exp.month, exp.day, 11, 0))
+    assert free_spot_count(db) == 0  # before noon: truck still parked
+
+    monkeypatch.setattr(spots_mod, "business_now", lambda: datetime(exp.year, exp.month, exp.day, 12, 0))
+    assert free_spot_count(db) == 1  # noon: spot freed for the afternoon
+
+
+def test_weekly_spot_not_freed_at_noon(db, monkeypatch):
+    from datetime import datetime, timedelta as _td
+
+    import app.core.spots as spots_mod
+
+    monkeypatch.setattr(settings, "parking_capacity", 1)
+    ensure_spots(db)
+    p = _issue(db, "W1", ptype=PassType.weekly, days=7)
+    db.commit()
+    exp = p.expiration_date
+
+    monkeypatch.setattr(spots_mod, "business_now", lambda: datetime(exp.year, exp.month, exp.day, 15, 0))
+    assert free_spot_count(db) == 0  # afternoon of expiry day: weekly still holds (not noon)
+
+    nxt = exp + _td(days=1)
+    monkeypatch.setattr(spots_mod, "business_now", lambda: datetime(nxt.year, nxt.month, nxt.day, 1, 0))
+    assert free_spot_count(db) == 1  # next day: released at midnight
