@@ -113,7 +113,15 @@ function LotCheckInner() {
                 value={result.is_monthly_customer ? `${result.pass_type} · monthly customer` : result.pass_type}
                 className="capitalize"
               />
-              <DetailRow label="Expiration" value={result.expiration_date} />
+              <DetailRow
+                label="Expiration"
+                value={
+                  result.expiration_date
+                    ? `${result.expiration_date}${result.pass_type === "daily" ? " · 12 PM" : ""}`
+                    : undefined
+                }
+                mono
+              />
               {result.notes && <DetailRow label="Notes" value={result.notes} />}
             </div>
           )}
