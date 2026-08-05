@@ -61,3 +61,51 @@ export function monthsBetween(start: string, end: string): number {
   if (e.getUTCDate() > s.getUTCDate()) months += 1;
   return Math.max(months, 1);
 }
+
+// --- Renewal helpers. These mirror backend/app/routers/passes.py exactly so the
+//     price the cashier sees is the price the backend records. ---
+
+const addMonthsISO = (iso: string, n: number): string => {
+  const d = parseISO(iso);
+  d.setUTCMonth(d.getUTCMonth() + n);
+  return formatISO(d);
+};
+
+/** COMPLETE calendar months (floors) — mirrors backend `_whole_months`. */
+function wholeMonths(start: string, end: string): number {
+  const s = parseISO(start);
+  const e = parseISO(end);
+  let m = (e.getUTCFullYear() - s.getUTCFullYear()) * 12 + (e.getUTCMonth() - s.getUTCMonth());
+  if (e.getUTCDate() < s.getUTCDate()) m -= 1;
+  return Math.max(m, 0);
+}
+
+/** Continue-mode pre-fill: the first period end strictly AFTER `today`, counted
+ *  from the old end date — enough whole periods to bring a lapsed customer
+ *  current (few days late -> 1 period; weeks late -> as many as it takes). */
+export function catchUpEnd(passType: PassType, oldEnd: string, today: string): string {
+  let end = defaultEndDate(passType, oldEnd);
+  while (end <= today) end = defaultEndDate(passType, end);
+  return end;
+}
+
+/** Close-out price — mirrors backend `_close_out_price`: whole periods at the
+ *  period rate + leftover days at the daily rate, the leftover capped at one
+ *  more period's rate so closing out never costs more than continuing. */
+export function closeOutPrice(
+  passType: PassType,
+  oldEnd: string,
+  end: string,
+  rates: { daily: number; weekly: number; monthly: number | null },
+): number | null {
+  if (passType === "daily") return rates.daily * Math.max(daysBetween(oldEnd, end), 1);
+  if (passType === "weekly") {
+    const total = daysBetween(oldEnd, end);
+    const leftover = Math.min((total % 7) * rates.daily, rates.weekly);
+    return Math.floor(total / 7) * rates.weekly + leftover;
+  }
+  if (rates.monthly == null) return null;
+  const whole = wholeMonths(oldEnd, end);
+  const leftover = Math.min(daysBetween(addMonthsISO(oldEnd, whole), end) * rates.daily, rates.monthly);
+  return whole * rates.monthly + leftover;
+}

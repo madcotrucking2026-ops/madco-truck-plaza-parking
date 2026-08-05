@@ -324,6 +324,9 @@ export type RenewPassRequest = {
   end_date: string;
   payment_method: PaymentMethod;
   check_number?: string;
+  /** "continue" keeps the plan going (whole periods); "close_out" settles a
+   *  departing customer for the time used and closes the account. */
+  mode?: "continue" | "close_out";
 };
 
 export type CreateIntentRequest = {
