@@ -14,7 +14,7 @@ from app.core.dates import add_months
 from app.core.pass_status import live_status
 from app.core.pass_token import make_pass_token
 from app.core.spots import pick_free_spot, release_reserved_spot
-from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Vehicle
+from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Spot, Vehicle
 from app.models.enums import (
     AuditAction,
     MonthlyCustomerStatus,
@@ -411,12 +411,28 @@ def apply_renewal(
         if monthly_customer is not None:
             monthly_customer.renewal_date = end_date
             if mode == "close_out":
-                # The customer is done: stop reminders, mark the account inactive
-                # so it drops off the "who renews next" lists, and release the
-                # truck's reserved spot back to the pool (the only thing that does).
-                monthly_customer.status = MonthlyCustomerStatus.inactive
-                monthly_customer.reminder_status = ReminderStatus.stopped
+                # Per-truck close-out: THIS truck leaves and its reserved spot goes
+                # back to the pool for anyone. A company with several trucks keeps
+                # its account and its other trucks' spots — only when the LAST
+                # monthly truck is closed out does the account go inactive. Every
+                # active monthly truck holds a reserved spot, so a reservation on
+                # ANY of the company's OTHER vehicles means it's still a going
+                # concern (SA Express drops truck 123; trucks 345/1266/983 stay).
                 release_reserved_spot(db, parking_pass.vehicle_id)
+                other_trucks_left = db.scalar(
+                    select(func.count())
+                    .select_from(Spot)
+                    .join(Vehicle, Spot.reserved_vehicle_id == Vehicle.id)
+                    .where(
+                        Vehicle.company_id == parking_pass.company_id,
+                        Vehicle.id != parking_pass.vehicle_id,
+                    )
+                )
+                if other_trucks_left:
+                    monthly_customer.reminder_status = ReminderStatus.pending
+                else:
+                    monthly_customer.status = MonthlyCustomerStatus.inactive
+                    monthly_customer.reminder_status = ReminderStatus.stopped
             else:
                 monthly_customer.reminder_status = ReminderStatus.pending
 
