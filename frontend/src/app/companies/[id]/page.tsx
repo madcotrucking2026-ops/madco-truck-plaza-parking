@@ -124,6 +124,14 @@ export default function CompanyProfilePage() {
                 <span className="flex-1 truncate font-mono text-sm text-[var(--cream-foreground)]">
                   {t.truck_number ?? t.license_plate ?? t.trailer_number ?? "—"}
                 </span>
+                {t.reserved_spot && (
+                  <span
+                    title="Reserved spot — held for this truck"
+                    className="shrink-0 rounded-md bg-[var(--forest-700)]/12 px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-[var(--cream-foreground)] ring-1 ring-inset ring-[var(--forest-700)]/25"
+                  >
+                    Spot {t.reserved_spot}
+                  </span>
+                )}
                 <span className="shrink-0 text-xs text-[var(--cream-foreground)]/55">
                   {t.visits} visit{t.visits === 1 ? "" : "s"} · last {fmtDate(t.last_seen)}
                 </span>

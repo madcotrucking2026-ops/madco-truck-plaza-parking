@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 // hover (title), and the full findable board lives at /availability.
 const STATE_BG: Record<SpotState["state"], string> = {
   free: "bg-[var(--success)]/25",
+  reserved: "bg-[var(--forest-700)]/30",
   occupied: "bg-[var(--forest-700)]",
   expiring: "bg-[var(--warning)]/80",
   grace: "bg-[var(--amber-500)]/55",
@@ -26,6 +27,7 @@ const LEGEND: { state: SpotState["state"]; label: string }[] = [
   { state: "occupied", label: "Occupied" },
   { state: "expiring", label: "Expiring" },
   { state: "grace", label: "Grace (monthly)" },
+  { state: "reserved", label: "Reserved (monthly)" },
   { state: "overstay", label: "Overstay" },
 ];
 

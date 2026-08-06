@@ -149,9 +149,11 @@ Restrained and orchestrated, never a fade on every element.
 
 ### Spot-state colours (lot map / availability)
 
-`free` success · `occupied` forest-700 · `expiring` warning · `grace` amber-500 ·
-`overstay` danger · `inactive` black/10. Colour = state; each swatch carries an
-inset ring so it reads on cream.
+`free` success · `reserved` forest-700/30 (a monthly's fixed spot, held but empty) ·
+`occupied` forest-700 · `expiring` warning · `grace` amber-500 · `overstay` danger ·
+`inactive` black/10. Colour = state; each swatch carries an inset ring so it reads
+on cream. Every colour is paired with a legend label — reserved and occupied share
+the forest hue (both monthly-owned) but read apart by fill weight.
 
 ---
 

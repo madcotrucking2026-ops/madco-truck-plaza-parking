@@ -46,6 +46,7 @@ class ProfileTruck(BaseModel):
     trailer_number: str | None
     visits: int
     last_seen: date | None
+    reserved_spot: str | None = None  # a monthly truck's fixed spot label, if any
 
 
 class ProfilePass(BaseModel):

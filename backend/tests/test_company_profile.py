@@ -60,6 +60,41 @@ def test_profile_monthly_fields(db):
     assert prof.renewal_date == today + timedelta(days=30)
 
 
+def test_profile_shows_each_monthly_trucks_reserved_spot(db, monkeypatch):
+    from app.core.config import settings
+    from app.core.spots import ensure_spots, spot_label
+
+    monkeypatch.setattr(settings, "parking_capacity", 4)
+    ensure_spots(db)
+    today = date.today()
+    p1 = _issue(db, company="Reserved Co", truck="M1", ptype=PassType.monthly,
+                issue_date=today, end_date=today + timedelta(days=30))
+    p2 = _issue(db, company="Reserved Co", truck="M2", ptype=PassType.monthly,
+                issue_date=today, end_date=today + timedelta(days=30))
+    db.commit()
+    cid = _find_company(db, "Reserved Co").id
+
+    prof = company_profile(cid, db)
+    spots = {t.truck_number: t.reserved_spot for t in prof.trucks}
+    assert spots["M1"] == spot_label(p1.spot.number)  # each truck's fixed spot label
+    assert spots["M2"] == spot_label(p2.spot.number)
+    assert spots["M1"] != spots["M2"]  # and they're different spots
+
+
+def test_profile_daily_truck_has_no_reserved_spot(db, monkeypatch):
+    from app.core.config import settings
+    from app.core.spots import ensure_spots
+
+    monkeypatch.setattr(settings, "parking_capacity", 4)
+    ensure_spots(db)
+    _issue(db, company="Daily Co", truck="D1", ptype=PassType.daily)
+    db.commit()
+    cid = _find_company(db, "Daily Co").id
+
+    prof = company_profile(cid, db)
+    assert prof.trucks[0].reserved_spot is None  # daily trucks are never reserved a spot
+
+
 def test_profile_404_for_unknown_company(db):
     with pytest.raises(HTTPException) as exc:
         company_profile(999999, db)

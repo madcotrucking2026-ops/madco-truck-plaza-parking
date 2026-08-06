@@ -9,7 +9,8 @@ from app.core.database import get_db
 from app.core.deps import get_current_user, require_manager
 from app.core.pass_status import live_status
 from app.core.rate_limit import lookup_limiter
-from app.models import Company, MonthlyCustomer, ParkingPass, Payment, User, Vehicle
+from app.core.spots import spot_label
+from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Spot, User, Vehicle
 from app.models.enums import PassStatus, PassType
 from app.schemas.company import (
     CompanyCreate,
@@ -159,6 +160,15 @@ def company_profile(
         row["visits"] += 1
         row["last"] = max(row["last"], p.issue_date)
 
+    # Each truck's fixed reserved spot (monthly only), so the owner sees where
+    # every truck lives on the lot without walking it.
+    reserved_by_vehicle = {
+        spot.reserved_vehicle_id: spot_label(spot.number)
+        for spot in db.scalars(
+            select(Spot).where(Spot.reserved_vehicle_id.in_(list(trucks_by_vehicle.keys())))
+        )
+    }
+
     loyalty_score = min(100, len(passes) * 4 + active_passes * 10)
 
     return CompanyProfile(
@@ -179,8 +189,9 @@ def company_profile(
             ProfileTruck(
                 truck_number=r["truck"], license_plate=r["plate"], trailer_number=r["trailer"],
                 visits=r["visits"], last_seen=r["last"],
+                reserved_spot=reserved_by_vehicle.get(vid),
             )
-            for r in trucks_by_vehicle.values()
+            for vid, r in trucks_by_vehicle.items()
         ],
         recent_passes=[
             ProfilePass(

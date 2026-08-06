@@ -123,6 +123,7 @@ export type ProfileTruck = {
   trailer_number: string | null;
   visits: number;
   last_seen: string | null;
+  reserved_spot: string | null;
 };
 
 export type ProfilePass = {
@@ -310,7 +311,7 @@ export type ReassignResult = {
 export type SpotState = {
   number: number;
   label: string;
-  state: "free" | "occupied" | "expiring" | "grace" | "overstay" | "inactive";
+  state: "free" | "reserved" | "occupied" | "expiring" | "grace" | "overstay" | "inactive";
   company_name: string | null;
   truck_number: string | null;
   pass_id: number | null;
