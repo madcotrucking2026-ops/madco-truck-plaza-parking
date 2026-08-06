@@ -15,6 +15,21 @@ from app.core.database import Base
 
 
 @pytest.fixture(autouse=True)
+def _pooled_lot_by_default(monkeypatch):
+    """Legacy spot tests predate lot zoning: they describe the single pooled lot
+    (the old "grab the longest-empty free spot for anyone") at small capacities,
+    where the production default (MONTHLY_ZONE_COUNT=1 -> spots 1..25 are the
+    monthly area) would swallow the whole test lot and starve daily/weekly of a
+    spot. Default the split OFF here so those tests still describe the pooled lot;
+    the reserved-spot suite opts back into the monthly/daily split via its own
+    monkeypatch (same monkeypatch instance, so it wins and teardown restores the
+    real default of 1). Production behaviour is unchanged."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "monthly_zone_count", 0)
+
+
+@pytest.fixture(autouse=True)
 def _reset_rate_limits():
     """The limiters are module-level singletons keyed by client IP, and every
     TestClient request comes from the same host — without this, one test's

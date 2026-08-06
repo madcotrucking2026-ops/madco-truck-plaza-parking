@@ -37,18 +37,23 @@ def test_cancelled_pass_frees_immediately(db, monkeypatch):
     assert free_spot_count(db) == 1
 
 
-def test_expired_monthly_holds_through_grace(db, monkeypatch):
+def test_reserved_monthly_spot_is_held_past_grace(db, monkeypatch):
+    """A monthly now OWNS its spot via the reservation, and the reservation
+    supersedes the SPOT_GRACE_DAYS auto-release (spec R3): even lapsed well past
+    grace the spot is NOT returned to the pool — only close-out releases it
+    (Task 3). The grace window still governs whether the *pass* reads as live."""
     monkeypatch.setattr(settings, "parking_capacity", 1)
     monkeypatch.setattr(settings, "spot_grace_days", 3)
     ensure_spots(db)
     p = _issue(db, "T1", ptype=PassType.monthly, days=30, price=250)
     db.commit()
-    p.expiration_date = business_today() - timedelta(days=2)  # 2 days overdue
+    assert p.spot.reserved_vehicle_id == p.vehicle_id  # it's theirs, reserved
+    p.expiration_date = business_today() - timedelta(days=2)  # 2 days overdue (in grace)
     db.commit()
-    assert free_spot_count(db) == 0  # inside grace: still theirs
-    p.expiration_date = business_today() - timedelta(days=4)  # 4 days overdue
+    assert free_spot_count(db) == 0  # held: live pass + reservation
+    p.expiration_date = business_today() - timedelta(days=4)  # 4 days overdue (past grace)
     db.commit()
-    assert free_spot_count(db) == 1  # grace over: back in the pool
+    assert free_spot_count(db) == 0  # STILL theirs — the reservation holds it, not grace
 
 
 def test_picker_prefers_longest_vacant(db, monkeypatch):
@@ -58,17 +63,17 @@ def test_picker_prefers_longest_vacant(db, monkeypatch):
     spots[1].last_vacated_at = business_now()                      # just vacated
     spots[2].last_vacated_at = business_now() - timedelta(days=9)  # long vacant
     db.commit()                                                    # 3: never occupied
-    assert pick_free_spot(db).number == 3   # NULLS FIRST wins
+    assert pick_free_spot(db, PassType.daily, None).number == 3   # NULLS FIRST wins
     spots[3].last_vacated_at = business_now()
     db.commit()
-    assert pick_free_spot(db).number == 2   # then oldest vacancy
+    assert pick_free_spot(db, PassType.daily, None).number == 2   # then oldest vacancy
 
 
 def test_picker_honors_preference_when_free(db, monkeypatch):
     monkeypatch.setattr(settings, "parking_capacity", 3)
     ensure_spots(db)
     preferred = db.query(Spot).filter_by(number=2).one()
-    assert pick_free_spot(db, prefer_spot_id=preferred.id).number == 2
+    assert pick_free_spot(db, PassType.daily, None, prefer_spot_id=preferred.id).number == 2
 
 
 def test_picker_ignores_inactive_spots(db, monkeypatch):
@@ -76,7 +81,7 @@ def test_picker_ignores_inactive_spots(db, monkeypatch):
     ensure_spots(db)
     db.query(Spot).filter_by(number=1).one().active = False
     db.commit()
-    assert pick_free_spot(db).number == 2
+    assert pick_free_spot(db, PassType.daily, None).number == 2
 
 
 def test_daily_spot_holds_before_noon_frees_at_noon(db, monkeypatch):

@@ -29,9 +29,9 @@ def test_overstay_flagged_spot_is_not_sellable(db, monkeypatch):
     db.commit()
 
     assert free_spot_count(db) == 1
-    assert pick_free_spot(db).number == 2
+    assert pick_free_spot(db, PassType.daily, None).number == 2
     # Even as an explicit monthly preference — a squatter is a squatter.
-    assert pick_free_spot(db, prefer_spot_id=flagged.id).number == 2
+    assert pick_free_spot(db, PassType.daily, None, prefer_spot_id=flagged.id).number == 2
 
 
 def test_clearing_the_flag_returns_the_spot_to_the_pool(db, monkeypatch):

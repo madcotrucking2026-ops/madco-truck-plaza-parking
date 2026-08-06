@@ -60,7 +60,7 @@ def report_occupied(token: str, db: Session = Depends(get_db)) -> ReassignResult
         raise HTTPException(status_code=404, detail="Pass not found.")
 
     old = db.get(Spot, parking_pass.spot_id)
-    replacement = pick_free_spot(db)
+    replacement = pick_free_spot(db, parking_pass.pass_type, parking_pass.vehicle_id)
     if replacement is None or replacement.id == old.id:
         raise HTTPException(status_code=409, detail="No other spots are open — please see the front desk.")
 

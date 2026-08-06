@@ -255,7 +255,7 @@ def _issue_pass_and_payment(
     # Full lot: never block a paid pass over space — spot stays NULL and the
     # dashboard surfaces it for staff (the kiosk pre-checks capacity, so this
     # is a rare race, not a normal flow).
-    spot = pick_free_spot(db, prefer_spot_id=prefer)
+    spot = pick_free_spot(db, pass_type, vehicle.id, prefer_spot_id=prefer)
 
     parking_pass = ParkingPass(
         company_id=company.id,
