@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import PaymentMethod
 
@@ -8,7 +8,10 @@ from app.models.enums import PaymentMethod
 class PaymentCreate(BaseModel):
     parking_pass_id: int | None = None
     monthly_customer_id: int | None = None
-    amount: float
+    # This endpoint is owner/manager only (the cashier can never reach it). A
+    # negative amount is a REFUND the owner records; the magnitude is bounded so a
+    # fat-fingered extra zero can't silently swing the day's revenue by millions.
+    amount: float = Field(ge=-100_000, le=100_000)
     method: PaymentMethod
     reference_number: str | None = None
     check_number: str | None = None

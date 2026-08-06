@@ -109,10 +109,14 @@ def test_hot_leads_always_rank_above_cold_ones(db):
     _issue_daily(db, "Regular Runner", 9)  # 9 visits -> hot, but only $180 spent
     # Big total, few visits -> cold. Under the old sort this outranked the hot one.
     _issue_daily(db, "Rare Big Spender", 3)
-    for _ in range(3):
+    # Three weekly passes on THREE different trucks (a small fleet paying big).
+    # Distinct trucks on purpose: the double-submit guard folds same-truck,
+    # same-day, same-type issues into one (they'd overlap, not stack), so faking a
+    # big total by re-issuing ONE truck would be deduped away.
+    for i in range(3):
         _issue_pass_and_payment(
             db, company_name="Rare Big Spender", phone="313-555-0100", vehicle_type=VehicleType.truck,
-            truck_number="BIG", trailer_number=None, license_plate=None, pass_type=PassType.weekly,
+            truck_number=f"BIG{i}", trailer_number=None, license_plate=None, pass_type=PassType.weekly,
             issue_date=date.today(), end_date=None, price_override=None,
             payment_method=PaymentMethod.cash, check_number=None,
         )

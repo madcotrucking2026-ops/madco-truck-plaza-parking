@@ -29,9 +29,11 @@ def _issue(db, *, company, truck, ptype=PassType.daily, issue_date=None, end_dat
 
 
 def test_profile_aggregates_visits_trucks_and_spend(db):
-    for truck, n in (("T1", 2), ("T2", 1)):
-        for _ in range(n):
-            _issue(db, company="Freight Co", truck=truck)  # daily, issued today -> active
+    # T1 visits on two DIFFERENT days (a real repeat visit is a new day; the
+    # double-submit guard folds same-truck, same-day re-issues into one), T2 once.
+    _issue(db, company="Freight Co", truck="T1", issue_date=date.today())
+    _issue(db, company="Freight Co", truck="T1", issue_date=date.today() - timedelta(days=1))
+    _issue(db, company="Freight Co", truck="T2", issue_date=date.today())
     db.commit()
     cid = _find_company(db, "Freight Co").id
 

@@ -230,6 +230,25 @@ def _issue_pass_and_payment(
         db, company.id, vehicle_type, truck_number, trailer_number, license_plate
     )
 
+    # Double-submit guard: a cashier double-click or a network retry must NEVER
+    # issue the same truck twice and charge twice. If this exact truck already got
+    # this same pass type today within the last few seconds, hand back that pass
+    # instead of creating a second one. (The retired Stripe path is deduped by its
+    # own unique intent-id constraint, so this only guards the manual desk issue.)
+    if stripe_payment_intent_id is None:
+        just_issued = db.scalar(
+            select(ParkingPass)
+            .where(
+                ParkingPass.vehicle_id == vehicle.id,
+                ParkingPass.pass_type == pass_type,
+                ParkingPass.issue_date == issue_date,
+                ParkingPass.created_at >= business_now() - timedelta(seconds=15),
+            )
+            .order_by(ParkingPass.id.desc())
+        )
+        if just_issued is not None:
+            return just_issued
+
     expiration_date = _expiration_for(pass_type, issue_date, end_date)
     if price_from_charge is not None:
         price = price_from_charge

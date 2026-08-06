@@ -29,13 +29,12 @@ def create_payment(payload: PaymentCreate, db: Session = Depends(get_db)) -> Pay
     db.add(payment)
     db.flush()
 
-    log_audit(
-        db,
-        AuditAction.created,
-        "payment",
-        f"Recorded {payload.method.value} payment of ${payload.amount:.2f}",
-        entity_id=payment.id,
-    )
+    # A negative amount is an owner-issued refund — say so plainly in the trail.
+    if payload.amount < 0:
+        summary = f"Refund of ${abs(payload.amount):.2f} ({payload.method.value})"
+    else:
+        summary = f"Recorded {payload.method.value} payment of ${payload.amount:.2f}"
+    log_audit(db, AuditAction.created, "payment", summary, entity_id=payment.id)
 
     db.commit()
     db.refresh(payment)
