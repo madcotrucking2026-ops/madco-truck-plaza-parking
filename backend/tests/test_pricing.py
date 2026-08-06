@@ -32,10 +32,15 @@ def test_monthly_uses_established_rate_times_months():
     assert price == 900 * 2
 
 
-def test_monthly_override_only_for_new_company():
-    # No existing rate -> the override seeds the first month's price.
+def test_monthly_price_is_per_truck_override_always_wins():
+    # Each truck is priced on its own — a typed price always wins, even when the
+    # company already has another truck on a different rate (SX Express: one truck
+    # $250, the next $210). No single company rate is forced onto every truck.
+    price = _price_for(PassType.monthly, date(2026, 7, 1), date(2026, 8, 1), override=210, existing_monthly_price=250)
+    assert price == 210
+    # No price typed for this truck -> fall back to the company's on-file rate.
+    price = _price_for(PassType.monthly, date(2026, 7, 1), date(2026, 8, 1), override=None, existing_monthly_price=250)
+    assert price == 250
+    # Brand-new company, price typed -> that price seeds the truck.
     price = _price_for(PassType.monthly, date(2026, 7, 1), date(2026, 8, 1), override=400, existing_monthly_price=None)
     assert price == 400
-    # Existing rate always beats the override.
-    price = _price_for(PassType.monthly, date(2026, 7, 1), date(2026, 8, 1), override=400, existing_monthly_price=250)
-    assert price == 250

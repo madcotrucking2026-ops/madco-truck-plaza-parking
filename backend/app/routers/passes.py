@@ -50,13 +50,15 @@ def _months_between(start: date, end: date) -> int:
 
 
 def _monthly_rate_for(existing_monthly_price: float | None, override: float | None) -> float:
-    """The established PER-MONTH rate — never multiplied by month count.
-    An existing company rate always wins; `override` only matters the first
-    time a brand-new monthly company is set up."""
-    if existing_monthly_price is not None:
-        return existing_monthly_price
+    """The PER-MONTH rate for THIS truck — never multiplied by month count. Each
+    truck of a company is priced on its OWN (SX Express: truck 1325 $250, 1236
+    $210, 1397 $200; the company pays the sum), so a price the cashier types
+    ALWAYS wins. The company's on-file rate is only a fallback when no price is
+    entered for the truck, and the global default is the last resort."""
     if override is not None:
         return override
+    if existing_monthly_price is not None:
+        return existing_monthly_price
     return settings.monthly_price
 
 
@@ -343,8 +345,10 @@ def renewal_quote(
 
     monthly_price = None
     if parking_pass.pass_type == PassType.monthly:
-        mc = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == parking_pass.company_id))
-        monthly_price = mc.monthly_price if mc else None
+        # Per-truck pricing: this truck renews at ITS OWN rate, taken from the pass
+        # being renewed (its price spread over its term), never a company-wide rate.
+        term_months = _months_between(parking_pass.issue_date, parking_pass.expiration_date)
+        monthly_price = float(parking_pass.price) / term_months
 
     if mode == "close_out":
         # A departing customer settles for the exact days used — any end date is
