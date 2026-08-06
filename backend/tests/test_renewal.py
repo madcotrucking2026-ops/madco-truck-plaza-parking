@@ -42,6 +42,30 @@ def test_renewal_quote_rejects_end_date_not_after_old_end(db):
         renewal_quote(db, p, old_end - timedelta(days=1))
 
 
+def test_monthly_continue_requires_whole_months(db):
+    today = date.today()
+    p = _issue(db, pass_type=PassType.monthly, issue_date=today, end_date=add_months(today, 1))
+    old_end = p.expiration_date
+    # a partial month is rejected on continue (close the truck out to settle partial)
+    with pytest.raises(HTTPException):
+        renewal_quote(db, p, old_end + timedelta(days=10), mode="continue")
+    # whole months (1 and 2 out) are fine
+    start, _ = renewal_quote(db, p, add_months(old_end, 1), mode="continue")
+    assert start == old_end
+    renewal_quote(db, p, add_months(old_end, 2), mode="continue")
+
+
+def test_monthly_continue_accepts_clamped_month_end(db):
+    # Old end on the 31st: a 1-month renewal clamps to Feb 28, which must still be
+    # accepted as a whole month (probe-forward, not a raw day diff).
+    p = _issue(db, pass_type=PassType.monthly, issue_date=date(2026, 12, 31), end_date=date(2027, 1, 31))
+    old_end = p.expiration_date  # 2027-01-31
+    target = add_months(old_end, 1)  # -> 2027-02-28
+    assert target == date(2027, 2, 28)
+    start, _ = renewal_quote(db, p, target, mode="continue")
+    assert start == old_end
+
+
 def test_renewal_quote_continues_from_old_end_when_paid_late(db):
     # Client rule: a late-paying customer's renewal starts from the old end date,
     # never from today — no free gap, they pay from where they left off.

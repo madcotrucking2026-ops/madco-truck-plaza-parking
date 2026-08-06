@@ -383,6 +383,21 @@ def renewal_quote(
                 status_code=400,
                 detail=f"Weekly renewals must be whole weeks ({renewal_start.isoformat()} → {end_date.isoformat()} is {span} days).",
             )
+    # continue: a monthly renewal lands on a whole number of months from the old
+    # end. Month arithmetic clamps (Jan 31 -> Feb 28 still counts as one month), so
+    # probe forward instead of diffing days. Without this, a partial-month end date
+    # is billed rounded UP (46 days -> 2 months) while granting only ~1.5.
+    if parking_pass.pass_type == PassType.monthly:
+        k = 1
+        while k < 120 and add_months(renewal_start, k) < end_date:
+            k += 1
+        if add_months(renewal_start, k) != end_date:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Monthly renewals must run in whole months from {renewal_start.isoformat()} "
+                f"(e.g. {add_months(renewal_start, 1).isoformat()} or {add_months(renewal_start, 2).isoformat()}). "
+                "To settle a partial month, close the truck out instead.",
+            )
     price = _price_for(parking_pass.pass_type, renewal_start, end_date, None, monthly_price)
     return renewal_start, price
 
