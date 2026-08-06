@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class SpotState(BaseModel):
     number: int
     label: str
-    state: str  # free | occupied | expiring | grace | overstay | inactive
+    state: str  # free | reserved | occupied | expiring | grace | overstay | inactive
     company_name: str | None = None
     truck_number: str | None = None
     pass_id: int | None = None
