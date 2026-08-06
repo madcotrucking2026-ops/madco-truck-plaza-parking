@@ -38,7 +38,8 @@ class Settings(BaseSettings):
 
     # Lot organization: the first N zones are the MONTHLY area — each monthly truck
     # gets a fixed spot reserved there; the rest is the daily/weekly pool. 1 -> Zone
-    # A (spots 1..spots_per_zone). 0 disables the split (everything pooled).
+    # A (spots 1..spots_per_zone). 0 -> no dedicated monthly zone: monthlies still
+    # reserve a fixed spot, just taken from anywhere in the pool (lowest free).
     # Override with MONTHLY_ZONE_COUNT.
     monthly_zone_count: int = 1
 

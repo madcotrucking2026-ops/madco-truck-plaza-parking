@@ -61,7 +61,15 @@ def report_occupied(token: str, db: Session = Depends(get_db)) -> ReassignResult
 
     old = db.get(Spot, parking_pass.spot_id)
     replacement = pick_free_spot(db, parking_pass.pass_type, parking_pass.vehicle_id)
-    if replacement is None or replacement.id == old.id:
+    if replacement is not None and replacement.id == old.id:
+        # A monthly's assigner hands back its OWN reserved spot — a truck can't be
+        # self-reassigned off the spot that's reserved for it. A squatter on a
+        # reserved spot is a front-desk matter, not a self-service move.
+        raise HTTPException(
+            status_code=409,
+            detail="This is your reserved spot — please see the front desk to clear the blockage.",
+        )
+    if replacement is None:
         raise HTTPException(status_code=409, detail="No other spots are open — please see the front desk.")
 
     old.overstay_reported = True

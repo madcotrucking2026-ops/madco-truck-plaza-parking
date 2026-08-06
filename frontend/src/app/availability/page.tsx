@@ -11,7 +11,7 @@ import { LoadError } from "@/components/common/load-error";
 // Same palette as the dashboard grid, so a spot reads identically everywhere.
 const STATE_CLASS: Record<SpotState["state"], string> = {
   free: "bg-[var(--success)]/20 text-[var(--cream-foreground)]/70",
-  reserved: "bg-[var(--forest-700)]/25 text-[var(--forest-950)]",
+  reserved: "bg-[var(--forest-700)]/30 text-[var(--forest-950)]",
   occupied: "bg-[var(--forest-700)] text-[var(--ivory-100)]",
   expiring: "bg-[var(--warning)]/70 text-[var(--forest-950)]",
   grace: "bg-[var(--amber-500)]/45 text-[var(--forest-950)]",

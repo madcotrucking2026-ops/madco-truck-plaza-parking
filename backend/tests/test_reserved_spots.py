@@ -18,7 +18,7 @@ from app.core.spots import (
     move_pass_to_spot,
 )
 from app.models import Spot
-from app.models.enums import PassType, PaymentMethod, VehicleType
+from app.models.enums import PassStatus, PassType, PaymentMethod, VehicleType
 from app.routers.passes import _issue_pass_and_payment
 
 import pytest
@@ -44,6 +44,26 @@ def _zoned(monkeypatch, *, per_zone, monthly_zones, capacity):
 
 def _spot_of(db, parking_pass) -> Spot:
     return db.get(Spot, parking_pass.spot_id)
+
+
+def test_new_monthly_ignores_prior_daily_spot_and_takes_zone_a(db, monkeypatch):
+    """Regression: a company's sticky "last spot" must NOT drag a new monthly into
+    the daily area. A monthly always takes its lowest Zone-A reserved spot, even
+    when the company has an old, now-free DAILY spot on record (the prefer-hint
+    used to override zoning and reserve a daily spot for a monthly)."""
+    _zoned(monkeypatch, per_zone=5, monthly_zones=1, capacity=10)  # monthly 1..5, daily 6..10
+    ensure_spots(db)
+    # ABC parks a daily truck (lands in the daily pool), then it frees up.
+    daily = _issue(db, "D1", company="ABC", ptype=PassType.daily, days=1)
+    db.commit()
+    assert daily.spot.number > monthly_spot_limit()  # in the daily area
+    daily.status = PassStatus.cancelled  # its spot is now free + unreserved
+    db.commit()
+    # ABC now buys its FIRST monthly truck — must land in Zone A, not D1's old spot.
+    monthly = _issue(db, "M1", company="ABC", ptype=PassType.monthly, days=30, price=250)
+    db.commit()
+    assert monthly.spot.number <= monthly_spot_limit()  # Zone A, not the daily spot
+    assert monthly.spot.reserved_vehicle_id == monthly.vehicle_id
 
 
 def test_monthly_auto_assigns_lowest_free_monthly_spot_and_reserves_it(db, monkeypatch):

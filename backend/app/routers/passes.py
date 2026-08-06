@@ -243,19 +243,13 @@ def _issue_pass_and_payment(
 
     # Assign the physical spot in the SAME transaction that records the money —
     # the pass is the source of truth for space exactly as it is for payment.
-    # Monthly customers are sticky: their previous spot is preferred if free.
-    prefer = None
-    if pass_type == PassType.monthly:
-        prefer = db.scalar(
-            select(ParkingPass.spot_id)
-            .where(ParkingPass.company_id == company.id, ParkingPass.spot_id.is_not(None))
-            .order_by(ParkingPass.id.desc())
-            .limit(1)
-        )
+    # A monthly's stickiness (same spot every renewal) now comes from its spot
+    # RESERVATION inside pick_free_spot, so no "prefer my last spot" hint is passed
+    # here. Passing one would let a monthly's old, now-free DAILY spot win over its
+    # Zone-A reserved spot — quietly dropping a monthly into the daily pool.
     # Full lot: never block a paid pass over space — spot stays NULL and the
-    # dashboard surfaces it for staff (the kiosk pre-checks capacity, so this
-    # is a rare race, not a normal flow).
-    spot = pick_free_spot(db, pass_type, vehicle.id, prefer_spot_id=prefer)
+    # dashboard surfaces it for staff (a rare race, not a normal flow).
+    spot = pick_free_spot(db, pass_type, vehicle.id)
 
     parking_pass = ParkingPass(
         company_id=company.id,
