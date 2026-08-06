@@ -81,6 +81,30 @@ def test_profile_shows_each_monthly_trucks_reserved_spot(db, monkeypatch):
     assert spots["M1"] != spots["M2"]  # and they're different spots
 
 
+def test_profile_shows_per_truck_price_and_company_monthly_total(db, monkeypatch):
+    """Each monthly truck shows ITS OWN rate and the profile totals them — what
+    the cashier collects from the company (SX Express: 250 + 210 + 200 = 660)."""
+    from app.core.config import settings
+    from app.core.spots import ensure_spots
+    from app.routers.passes import _issue_pass_and_payment
+
+    monkeypatch.setattr(settings, "parking_capacity", 10)
+    ensure_spots(db)
+    for truck, price in (("1325", 250), ("1236", 210), ("1397", 200)):
+        _issue_pass_and_payment(
+            db, company_name="SX Express", phone="313-555-0100", vehicle_type=VehicleType.truck,
+            truck_number=truck, trailer_number=None, license_plate=None, pass_type=PassType.monthly,
+            issue_date=date.today(), end_date=date.today() + timedelta(days=30),
+            price_override=price, payment_method=PaymentMethod.cash, check_number=None,
+        )
+    db.commit()
+    cid = _find_company(db, "SX Express").id
+
+    prof = company_profile(cid, db)
+    assert {t.truck_number: t.monthly_price for t in prof.trucks} == {"1325": 250, "1236": 210, "1397": 200}
+    assert prof.monthly_total == 660  # cashier charges the company the sum
+
+
 def test_profile_daily_truck_has_no_reserved_spot(db, monkeypatch):
     from app.core.config import settings
     from app.core.spots import ensure_spots

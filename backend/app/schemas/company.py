@@ -47,6 +47,7 @@ class ProfileTruck(BaseModel):
     visits: int
     last_seen: date | None
     reserved_spot: str | None = None  # a monthly truck's fixed spot label, if any
+    monthly_price: float | None = None  # this truck's own per-month rate, if monthly
 
 
 class ProfilePass(BaseModel):
@@ -71,6 +72,7 @@ class CompanyProfile(BaseModel):
     phone: str | None
     is_monthly: bool
     monthly_price: float | None
+    monthly_total: float | None = None  # sum of the company's per-truck monthly rates
     renewal_date: date | None
     outstanding_balance: float
     total_visits: int

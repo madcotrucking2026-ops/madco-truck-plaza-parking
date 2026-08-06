@@ -124,6 +124,7 @@ export type ProfileTruck = {
   visits: number;
   last_seen: string | null;
   reserved_spot: string | null;
+  monthly_price: number | null;
 };
 
 export type ProfilePass = {
@@ -148,6 +149,7 @@ export type CompanyProfile = {
   phone: string | null;
   is_monthly: boolean;
   monthly_price: number | null;
+  monthly_total: number | null;
   renewal_date: string | null;
   outstanding_balance: number;
   total_visits: number;

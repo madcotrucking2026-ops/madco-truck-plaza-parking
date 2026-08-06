@@ -81,7 +81,7 @@ export default function CompanyProfilePage() {
               )}
               {p.is_monthly && (
                 <span className="rounded-full bg-[var(--forest-700)]/12 px-2 py-0.5 text-xs font-semibold text-[var(--forest-700)]">
-                  Monthly · {p.monthly_price != null ? money(p.monthly_price) : "—"}/mo
+                  Monthly · {p.monthly_total != null ? `${money(p.monthly_total)}/mo total` : "—"}
                 </span>
               )}
             </div>
@@ -124,6 +124,11 @@ export default function CompanyProfilePage() {
                 <span className="flex-1 truncate font-mono text-sm text-[var(--cream-foreground)]">
                   {t.truck_number ?? t.license_plate ?? t.trailer_number ?? "—"}
                 </span>
+                {t.monthly_price != null && (
+                  <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-[var(--cream-foreground)]/80">
+                    {money(t.monthly_price)}/mo
+                  </span>
+                )}
                 {t.reserved_spot && (
                   <span
                     title="Reserved spot — held for this truck"

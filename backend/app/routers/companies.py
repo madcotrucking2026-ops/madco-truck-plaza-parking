@@ -155,10 +155,14 @@ def company_profile(
         row = trucks_by_vehicle.setdefault(
             v.id,
             {"truck": v.truck_number, "plate": v.license_plate, "trailer": v.trailer_number,
-             "visits": 0, "last": p.issue_date},
+             "visits": 0, "last": p.issue_date, "monthly_price": None},
         )
         row["visits"] += 1
         row["last"] = max(row["last"], p.issue_date)
+        # Passes are newest-first, so the first monthly pass seen per truck is its
+        # current per-truck rate (each truck is priced on its own).
+        if p.pass_type == PassType.monthly and row["monthly_price"] is None:
+            row["monthly_price"] = float(p.price)
 
     # Each truck's fixed reserved spot (monthly only), so the owner sees where
     # every truck lives on the lot without walking it.
@@ -169,6 +173,15 @@ def company_profile(
         )
     }
 
+    # What the cashier collects from this company each month = the sum of the
+    # per-truck rates for the trucks currently holding a spot. Each truck is priced
+    # on its own; there is no single company rate.
+    monthly_total = sum(
+        row["monthly_price"]
+        for vid, row in trucks_by_vehicle.items()
+        if vid in reserved_by_vehicle and row["monthly_price"] is not None
+    ) or None
+
     loyalty_score = min(100, len(passes) * 4 + active_passes * 10)
 
     return CompanyProfile(
@@ -177,6 +190,7 @@ def company_profile(
         phone=company.phone,
         is_monthly=monthly_customer is not None,
         monthly_price=float(monthly_customer.monthly_price) if monthly_customer else None,
+        monthly_total=monthly_total,
         renewal_date=monthly_customer.renewal_date if monthly_customer else None,
         outstanding_balance=float(monthly_customer.current_balance) if monthly_customer else 0.0,
         total_visits=len(passes),
@@ -190,6 +204,7 @@ def company_profile(
                 truck_number=r["truck"], license_plate=r["plate"], trailer_number=r["trailer"],
                 visits=r["visits"], last_seen=r["last"],
                 reserved_spot=reserved_by_vehicle.get(vid),
+                monthly_price=r["monthly_price"],
             )
             for vid, r in trucks_by_vehicle.items()
         ],
