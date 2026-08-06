@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -21,3 +21,9 @@ class Spot(Base):
     last_vacated_at: Mapped[datetime | None] = mapped_column(DateTime)
     overstay_reported: Mapped[bool] = mapped_column(Boolean, default=False)
     overstay_reported_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # A monthly customer's truck OWNS this spot: it is held for them even while the
+    # truck is out and the spot is empty, and it is out of the daily pool. NULL =
+    # not reserved. Cleared only when the customer is closed out (core/spots.py).
+    reserved_vehicle_id: Mapped[int | None] = mapped_column(
+        ForeignKey("vehicles.id"), nullable=True, index=True
+    )

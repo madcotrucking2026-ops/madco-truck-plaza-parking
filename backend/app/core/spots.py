@@ -34,6 +34,18 @@ def spot_label(number: int) -> str:
     return f"{chr(ord('A') + zone_index)}{within}"
 
 
+def monthly_spot_limit() -> int:
+    """Highest spot number in the MONTHLY area (Zone A by default). 0 when the
+    split is off (monthly_zone_count or spots_per_zone is 0) — then nothing is a
+    monthly-reserved spot and every spot is in the pooled daily area."""
+    return settings.monthly_zone_count * settings.spots_per_zone
+
+
+def is_monthly_spot(number: int) -> bool:
+    """True if this spot number falls in the monthly (reserved) area."""
+    return 1 <= number <= monthly_spot_limit()
+
+
 def ensure_spots(db: Session) -> None:
     """Idempotent: rows exist for 1..capacity, and exactly those are active.
     Shrinking capacity deactivates (never deletes — spots carry history)."""

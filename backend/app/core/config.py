@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     # Override with SPOTS_PER_ZONE.
     spots_per_zone: int = 25
 
+    # Lot organization: the first N zones are the MONTHLY area — each monthly truck
+    # gets a fixed spot reserved there; the rest is the daily/weekly pool. 1 -> Zone
+    # A (spots 1..spots_per_zone). 0 disables the split (everything pooled).
+    # Override with MONTHLY_ZONE_COUNT.
+    monthly_zone_count: int = 1
+
     # The plaza's own timezone. Every "today" — pass expiry, today's revenue, the
     # daily report — is decided in THIS zone, never the server's. A cloud VM runs
     # on UTC, and without this the business day would roll over at 8pm Michigan
