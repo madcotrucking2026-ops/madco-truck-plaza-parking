@@ -23,10 +23,11 @@ from fastapi import HTTPException, Request, status
 
 
 def _client_key(request: Request) -> str:
-    # request.client.host is the peer address. X-Forwarded-For is NOT trusted
-    # here on purpose: it is client-supplied and trivially spoofed unless a
-    # proxy we control is guaranteed to overwrite it. When this deploys behind
-    # nginx, set the real IP there and revisit.
+    # request.client.host is the peer address. In production uvicorn runs with
+    # --proxy-headers --forwarded-allow-ips (the backend has NO published host
+    # port, so only nginx can reach it), which rewrites request.client.host to the
+    # real client IP from nginx's X-Forwarded-For. So this keys per client, not per
+    # proxy — without this code ever trusting a client-supplied header directly.
     return request.client.host if request.client else "unknown"
 
 

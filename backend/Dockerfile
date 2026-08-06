@@ -29,4 +29,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
 # ONE worker, on purpose: the rate limiters and the reminder scheduler are
 # in-process. A truck stop's traffic is a rounding error for one uvicorn worker;
 # scaling out means moving rate limiting to Redis/nginx first (see DEPLOY.md).
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# --proxy-headers + --forwarded-allow-ips: the backend sits behind nginx with NO
+# published host port, so uvicorn safely trusts nginx's X-Forwarded-For and
+# request.client.host becomes the REAL client IP — which the per-client rate
+# limiters key on. Without it every request looks like the one nginx container.
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "*"]
