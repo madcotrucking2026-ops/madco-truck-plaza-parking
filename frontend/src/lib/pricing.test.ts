@@ -102,3 +102,18 @@ describe("closeOutPrice (must mirror the backend _close_out_price)", () => {
     expect(closeOutPrice("weekly", "2026-08-01", "2026-08-11", rates)).toBe(160);
   });
 });
+
+describe("month-end month arithmetic clamps like the backend add_months", () => {
+  const rates = { daily: 20, weekly: 100, monthly: 250 };
+  it("defaultEndDate monthly clamps instead of overflowing forward", () => {
+    expect(defaultEndDate("monthly", "2026-08-31")).toBe("2026-09-30"); // not Oct 1
+    expect(defaultEndDate("monthly", "2026-01-31")).toBe("2026-02-28"); // not Mar 3
+  });
+  it("catchUpEnd on a month-end monthly stays one month (no doubled charge)", () => {
+    expect(catchUpEnd("monthly", "2026-08-31", "2026-08-05")).toBe("2026-09-30");
+  });
+  it("closeOutPrice month-end anchor matches the backend (no till mismatch)", () => {
+    // Jan 31 old end, leaves Mar 10: 1 whole month (clamps to Feb 28) + 10 days
+    expect(closeOutPrice("monthly", "2026-01-31", "2026-03-10", rates)).toBe(250 + 10 * 20);
+  });
+});

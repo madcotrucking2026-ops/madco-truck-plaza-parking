@@ -134,3 +134,13 @@ def test_close_out_marks_monthly_customer_inactive_and_stops_reminders(db):
     mc = db.scalar(select(MonthlyCustomer).where(MonthlyCustomer.company_id == p.company_id))
     assert mc.status == MonthlyCustomerStatus.inactive
     assert mc.reminder_status == ReminderStatus.stopped
+
+
+def test_close_out_monthly_clamps_month_end_anchor(db):
+    # Jan 31 old end, close out Mar 10 — the month anchor must CLAMP to Feb 28,
+    # so it's 1 whole month + 10 days (must match the frontend's clamped mirror).
+    p = _issue(db, pass_type=PassType.monthly, issue_date=date(2025, 12, 31))
+    p.expiration_date = date(2026, 1, 31)
+    db.commit()
+    _, price = renewal_quote(db, p, date(2026, 3, 10), mode="close_out")
+    assert price == settings.monthly_price + 10 * settings.daily_price

@@ -40,12 +40,24 @@ export function addDaysISO(iso: string, days: number): string {
   return formatISO(d);
 }
 
-export function defaultEndDate(passType: PassType, startDate: string): string {
-  const d = parseISO(startDate);
-  if (passType === "daily") d.setUTCDate(d.getUTCDate() + 1);
-  else if (passType === "weekly") d.setUTCDate(d.getUTCDate() + 7);
-  else d.setUTCMonth(d.getUTCMonth() + 1);
+/** Add whole months, CLAMPING the day to the last valid day of the target month
+ *  — mirrors backend add_months (Jan 31 + 1mo -> Feb 28, NOT Mar 3). Plain
+ *  setUTCMonth overflows forward, which silently added an extra billing month for
+ *  any month-end-anchored monthly customer. */
+function addMonthsISO(iso: string, n: number): string {
+  const d = parseISO(iso);
+  const day = d.getUTCDate();
+  d.setUTCDate(1); // avoid the overflow while shifting the month
+  d.setUTCMonth(d.getUTCMonth() + n);
+  const lastDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(day, lastDay));
   return formatISO(d);
+}
+
+export function defaultEndDate(passType: PassType, startDate: string): string {
+  if (passType === "daily") return addDaysISO(startDate, 1);
+  if (passType === "weekly") return addDaysISO(startDate, 7);
+  return addMonthsISO(startDate, 1);
 }
 
 export function daysBetween(start: string, end: string): number {
@@ -64,12 +76,6 @@ export function monthsBetween(start: string, end: string): number {
 
 // --- Renewal helpers. These mirror backend/app/routers/passes.py exactly so the
 //     price the cashier sees is the price the backend records. ---
-
-const addMonthsISO = (iso: string, n: number): string => {
-  const d = parseISO(iso);
-  d.setUTCMonth(d.getUTCMonth() + n);
-  return formatISO(d);
-};
 
 /** COMPLETE calendar months (floors) — mirrors backend `_whole_months`. */
 function wholeMonths(start: string, end: string): number {
