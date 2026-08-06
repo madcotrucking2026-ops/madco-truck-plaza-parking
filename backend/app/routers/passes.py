@@ -13,7 +13,7 @@ from app.core.deps import require_manager
 from app.core.dates import add_months
 from app.core.pass_status import live_status
 from app.core.pass_token import make_pass_token
-from app.core.spots import pick_free_spot
+from app.core.spots import pick_free_spot, release_reserved_spot
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Vehicle
 from app.models.enums import (
     AuditAction,
@@ -417,10 +417,12 @@ def apply_renewal(
         if monthly_customer is not None:
             monthly_customer.renewal_date = end_date
             if mode == "close_out":
-                # The customer is done: stop reminders and mark the account
-                # inactive so it drops off the "who renews next" lists.
+                # The customer is done: stop reminders, mark the account inactive
+                # so it drops off the "who renews next" lists, and release the
+                # truck's reserved spot back to the pool (the only thing that does).
                 monthly_customer.status = MonthlyCustomerStatus.inactive
                 monthly_customer.reminder_status = ReminderStatus.stopped
+                release_reserved_spot(db, parking_pass.vehicle_id)
             else:
                 monthly_customer.reminder_status = ReminderStatus.pending
 

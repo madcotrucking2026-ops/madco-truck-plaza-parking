@@ -46,6 +46,14 @@ def is_monthly_spot(number: int) -> bool:
     return 1 <= number <= monthly_spot_limit()
 
 
+def release_reserved_spot(db: Session, vehicle_id: int) -> None:
+    """Free a monthly truck's reserved spot(s) back to the pool. Called on
+    close-out (the truck is leaving for good) — the ONLY thing that releases a
+    reservation; a pass expiring on its own never does."""
+    for spot in db.scalars(select(Spot).where(Spot.reserved_vehicle_id == vehicle_id)):
+        spot.reserved_vehicle_id = None
+
+
 def ensure_spots(db: Session) -> None:
     """Idempotent: rows exist for 1..capacity, and exactly those are active.
     Shrinking capacity deactivates (never deletes — spots carry history)."""
@@ -80,6 +88,21 @@ def ensure_spots(db: Session) -> None:
         # made and hands EVERY stray the same spot (live bug: 10 passes on
         # spot 1). Flush publishes each assignment before the next pick.
         db.flush()
+
+    # Reserve the spot each LIVE monthly pass currently sits on, so monthly
+    # customers that predate this feature keep their spot under the reservation
+    # rules. Idempotent (skips spots already reserved); only touches monthlies
+    # still holding a spot — a long-lapsed one is already back in the pool.
+    for monthly_pass in db.scalars(
+        select(ParkingPass).where(
+            ParkingPass.pass_type == PassType.monthly,
+            ParkingPass.spot_id.is_not(None),
+            _live_window_filter(),
+        )
+    ):
+        spot = db.get(Spot, monthly_pass.spot_id)
+        if spot is not None and spot.reserved_vehicle_id is None:
+            spot.reserved_vehicle_id = monthly_pass.vehicle_id
 
     db.commit()
 
