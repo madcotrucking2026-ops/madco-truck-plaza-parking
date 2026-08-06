@@ -1,4 +1,3 @@
-import { QRCodeSVG } from "qrcode.react";
 import type { PassRead } from "@/lib/api";
 
 export function PassTicket({
@@ -47,10 +46,6 @@ export function PassTicket({
         <Row label="Price" value={`$${pass.price.toFixed(2)}`} />
         <Row label="Receipt #" value={pass.receipt_number ?? "—"} />
       </dl>
-
-      <div className="mt-5 flex items-center justify-center gap-4 border-t border-dashed border-black/15 pt-5">
-        {pass.qr_code && <QRCodeSVG value={pass.qr_code} size={104} />}
-      </div>
     </div>
   );
 }

@@ -24,7 +24,6 @@ from app.routers import (
     reports,
     search,
     spots,
-    verify,
 )
 
 configure_logging()
@@ -102,7 +101,6 @@ app.include_router(audit_log.router, dependencies=_require_admin)
 app.include_router(search.router, dependencies=_require_manager)
 app.include_router(spots.router, dependencies=_require_login)  # attendants walk the lot
 app.include_router(reports.router, dependencies=_require_manager)
-app.include_router(verify.router)  # public — no login (guard scans a pass QR)
 # Customer self-service (the Stripe kiosk and pay-by-QR links) was retired
 # 2026-08: the plaza went staff-only, and the cashier records card payments on
 # their own terminal. The stripe_payments + payment_requests routers and their

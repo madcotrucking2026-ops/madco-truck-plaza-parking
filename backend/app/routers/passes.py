@@ -12,7 +12,6 @@ from app.core.database import get_db
 from app.core.deps import require_manager
 from app.core.dates import add_months
 from app.core.pass_status import live_status
-from app.core.pass_token import make_pass_token
 from app.core.spots import pick_free_spot, release_reserved_spot
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Spot, Vehicle
 from app.models.enums import (
@@ -287,10 +286,6 @@ def _issue_pass_and_payment(
     db.add(parking_pass)
     db.flush()
 
-    # QR encodes a signed verify URL (needs the id, so set after flush). A
-    # guard scans it with any phone camera and lands on a live status page.
-    parking_pass.qr_code = f"{settings.public_base_url}/verify/{make_pass_token(parking_pass.id)}"
-
     payment = Payment(
         parking_pass_id=parking_pass.id,
         amount=price,
@@ -530,7 +525,6 @@ def list_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
             issue_date=p.issue_date,
             expiration_date=p.expiration_date,
             receipt_number=p.receipt_number,
-            qr_code=p.qr_code,
             spot_number=p.spot_number,
             spot_label=p.spot_label,
             company_name=p.company.name if p.company else None,

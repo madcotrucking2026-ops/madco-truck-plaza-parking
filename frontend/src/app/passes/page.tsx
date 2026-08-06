@@ -215,7 +215,7 @@ export default function PassesPage() {
         <Dialog open onOpenChange={(open) => !open && setViewingPass(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Pass &amp; QR Code</DialogTitle>
+              <DialogTitle>Pass</DialogTitle>
             </DialogHeader>
             <PassTicket
               pass={{
@@ -228,16 +228,12 @@ export default function PassesPage() {
                 issue_date: viewingPass.issue_date,
                 expiration_date: viewingPass.expiration_date,
                 receipt_number: viewingPass.receipt_number,
-                qr_code: viewingPass.qr_code,
                 barcode: null,
                 company_name: viewingPass.company_name ?? "—",
                 truck_number:
                   viewingPass.truck_number ?? viewingPass.trailer_number ?? viewingPass.license_plate ?? undefined,
               }}
             />
-            <p className="text-center text-xs text-muted-foreground">
-              Scan this QR any time to check the pass status (paid / expired) live.
-            </p>
             <Button
               className="btn-embossed w-full bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]"
               onClick={() => window.print()}

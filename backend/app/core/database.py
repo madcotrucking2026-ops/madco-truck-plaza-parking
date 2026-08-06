@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, inspect, select, text
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import settings
@@ -73,33 +73,3 @@ def run_startup_migrations() -> None:
             has_lock = conn.execute(text("SELECT 1 FROM setup_lock WHERE id = 1")).first() is not None
             if has_user and not has_lock:
                 conn.execute(text("INSERT INTO setup_lock (id) VALUES (1)"))
-
-    _backfill_pass_qr_codes(table_names)
-
-
-def _backfill_pass_qr_codes(table_names: list[str]) -> None:
-    """Passes issued before the signed-QR system stored their plaintext receipt
-    number in `qr_code`; those fail scan verification. Rewrite any non-URL
-    qr_code to a proper signed verify URL so every pass is scannable. Also
-    self-heals when PUBLIC_BASE_URL changes at deploy time (any qr_code not
-    matching the current base is regenerated). Lazy imports avoid a circular
-    import (models depend on this module's Base).
-    """
-    if "parking_passes" not in table_names:
-        return
-
-    from app.core.config import settings
-    from app.core.pass_token import make_pass_token
-    from app.models import ParkingPass
-
-    with SessionLocal() as db:
-        prefix = f"{settings.public_base_url}/verify/"
-        stale = db.scalars(
-            select(ParkingPass).where(
-                (ParkingPass.qr_code.is_(None)) | (ParkingPass.qr_code.notlike(f"{prefix}%"))
-            )
-        ).all()
-        for p in stale:
-            p.qr_code = f"{prefix}{make_pass_token(p.id)}"
-        if stale:
-            db.commit()

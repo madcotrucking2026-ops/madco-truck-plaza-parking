@@ -289,26 +289,6 @@ export type SweepResult = {
   skipped: number;
 };
 
-export type PassVerifyResult = {
-  valid: boolean;
-  status: "active" | "expiring_soon" | "expired" | "cancelled" | null;
-  company_name: string | null;
-  truck_number: string | null;
-  trailer_number: string | null;
-  license_plate: string | null;
-  pass_type: PassType | null;
-  issue_date: string | null;
-  expiration_date: string | null;
-  price: number | null;
-  receipt_number: string | null;
-  spot_number: number | null;
-  spot_label: string | null;
-};
-
-export type ReassignResult = {
-  spot_number: number;
-};
-
 /** One cell of the lot grid — state is derived server-side from live passes. */
 export type SpotState = {
   number: number;
@@ -377,7 +357,6 @@ export type PassRead = {
   issue_date: string;
   expiration_date: string;
   receipt_number: string | null;
-  qr_code: string | null;
   barcode: string | null;
   spot_number: number | null;
   spot_label: string | null;
@@ -391,7 +370,6 @@ export type PassListItem = {
   issue_date: string;
   expiration_date: string;
   receipt_number: string | null;
-  qr_code: string | null;
   spot_number: number | null;
   spot_label: string | null;
   company_name: string | null;

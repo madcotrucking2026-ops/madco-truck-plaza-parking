@@ -64,7 +64,6 @@ class PassRead(BaseModel):
     issue_date: date
     expiration_date: date
     receipt_number: str | None
-    qr_code: str | None
     barcode: str | None
     spot_number: int | None = None
     spot_label: str | None = None
@@ -78,7 +77,6 @@ class PassListItem(BaseModel):
     issue_date: date
     expiration_date: date
     receipt_number: str | None
-    qr_code: str | None
     spot_number: int | None = None
     spot_label: str | None = None
     company_name: str | None

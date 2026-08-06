@@ -8,13 +8,13 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { CommandPalette } from "@/components/command-palette";
 
-// /login and the public /verify page (a guard scanning a pass QR) are bare
-// experiences with no manager nav and no auth requirement — everything else is
-// the staff app and requires a signed-in session. (The customer kiosk /book and
-// pay-links were retired when the plaza went staff-only.)
+// /login is the only bare experience — no manager nav, no auth requirement.
+// Everything else is the staff app and requires a signed-in session. (The
+// customer kiosk, pay-links, and pass-QR verify page were all retired when the
+// plaza went staff-only.)
 function isPublicPath(pathname: string | null): boolean {
   if (!pathname) return false;
-  return pathname === "/login" || pathname.startsWith("/verify/");
+  return pathname === "/login";
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
