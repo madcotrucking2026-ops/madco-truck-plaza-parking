@@ -41,7 +41,13 @@ async def lifespan(app: FastAPI):
         task.cancel()
 
 
-app = FastAPI(title="Madco Truck Plaza Parking Management System", lifespan=lifespan)
+app = FastAPI(
+    title="Madco Truck Plaza Parking Management System",
+    lifespan=lifespan,
+    docs_url="/docs" if settings.docs_enabled else None,
+    redoc_url="/redoc" if settings.docs_enabled else None,
+    openapi_url="/openapi.json" if settings.docs_enabled else None,
+)
 
 # Alembic is the ONE schema mechanism — dev SQLite and prod Postgres run the same
 # migrations. A pre-Alembic dev database is detected and stamped (see core/migrate.py).

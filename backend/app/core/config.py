@@ -51,6 +51,11 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
+    # Interactive API docs (/docs, /redoc) + the OpenAPI schema. On in dev for
+    # convenience; set DOCS_ENABLED=false in prod so the schema/UI is never served
+    # even if the routing topology ever changes to expose a non-/api path.
+    docs_enabled: bool = True
+
     # Base URL the customer-facing app is reachable at — used to build the
     # QR-code verify link printed on each pass (a guard scans it with a phone).
     # Point at the real domain in production.
