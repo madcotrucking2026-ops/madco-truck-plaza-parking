@@ -151,7 +151,6 @@ export type CompanyProfile = {
   monthly_price: number | null;
   monthly_total: number | null;
   renewal_date: string | null;
-  outstanding_balance: number;
   total_visits: number;
   total_spent: number;
   active_passes: number;
@@ -388,5 +387,4 @@ export type ReportsSummary = {
   top_companies: { company_name: string; company_id: number | null; visits: number; total_paid: number }[];
   payment_methods: { method: string; count: number; total: number }[];
   frequent_trucks: { truck_number: string | null; company_name: string | null; visits: number }[];
-  outstanding_balances: { company_name: string; balance: number }[];
 };

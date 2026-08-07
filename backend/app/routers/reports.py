@@ -6,10 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import business_today
 from app.core.database import get_db
-from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Vehicle
+from app.models import Company, ParkingPass, Payment, Vehicle
 from app.schemas.reports import (
     CompanyStat,
-    OutstandingBalance,
     PaymentMethodStat,
     ReportsSummary,
     RevenuePoint,
@@ -83,16 +82,6 @@ def reports_summary(db: Session = Depends(get_db)) -> ReportsSummary:
         for truck_number, company_name, visits in truck_rows
     ]
 
-    balance_rows = db.execute(
-        select(Company.name, MonthlyCustomer.current_balance)
-        .join(Company, MonthlyCustomer.company_id == Company.id)
-        .where(MonthlyCustomer.current_balance > 0)
-        .order_by(MonthlyCustomer.current_balance.desc())
-    ).all()
-    outstanding_balances = [
-        OutstandingBalance(company_name=name, balance=float(balance)) for name, balance in balance_rows
-    ]
-
     return ReportsSummary(
         revenue_series=revenue_series,
         revenue_30d=revenue_30d,
@@ -102,5 +91,4 @@ def reports_summary(db: Session = Depends(get_db)) -> ReportsSummary:
         top_companies=top_companies,
         payment_methods=payment_methods,
         frequent_trucks=frequent_trucks,
-        outstanding_balances=outstanding_balances,
     )

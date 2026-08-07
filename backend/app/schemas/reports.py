@@ -25,11 +25,6 @@ class TruckStat(BaseModel):
     visits: int
 
 
-class OutstandingBalance(BaseModel):
-    company_name: str
-    balance: float
-
-
 class ReportsSummary(BaseModel):
     revenue_series: list[RevenuePoint]
     revenue_30d: float
@@ -39,4 +34,3 @@ class ReportsSummary(BaseModel):
     top_companies: list[CompanyStat]
     payment_methods: list[PaymentMethodStat]
     frequent_trucks: list[TruckStat]
-    outstanding_balances: list[OutstandingBalance]

@@ -162,25 +162,6 @@ export default function ReportsPage() {
         )}
       </section>
 
-      {data.outstanding_balances.length > 0 && (
-        <section className="card-paper overflow-hidden rounded-2xl">
-          <h2 className="p-5 pb-0 text-sm font-semibold uppercase tracking-wide text-[var(--danger-ink)]">
-            Outstanding Balances
-          </h2>
-          <div className="overflow-x-auto p-5">
-            <table className="w-full text-sm">
-              <tbody>
-                {data.outstanding_balances.map((b) => (
-                  <tr key={b.company_name} className="border-b border-black/5 text-[var(--cream-foreground)] last:border-none">
-                    <td className="py-2">{b.company_name}</td>
-                    <td className="py-2 text-right font-mono text-[var(--danger-ink)]">{currency(b.balance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
     </div>
   );
 }

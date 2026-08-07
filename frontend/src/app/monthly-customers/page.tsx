@@ -25,7 +25,6 @@ type MonthlyCustomer = {
   renewal_date: string;
   status: string;
   reminder_status: string;
-  current_balance: number;
 };
 
 const currency = (n: number) =>
@@ -114,7 +113,6 @@ export default function MonthlyCustomersPage() {
                       </InfoTip>
                     </span>
                   </th>
-                  <th className="px-4 py-3 font-medium">Balance</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,7 +136,6 @@ export default function MonthlyCustomersPage() {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-4 py-3 font-mono">{currency(c.current_balance)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -74,7 +74,6 @@ class CompanyProfile(BaseModel):
     monthly_price: float | None
     monthly_total: float | None = None  # sum of the company's per-truck monthly rates
     renewal_date: date | None
-    outstanding_balance: float
     total_visits: int
     total_spent: float
     active_passes: int

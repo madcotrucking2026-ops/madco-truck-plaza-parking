@@ -30,7 +30,6 @@ class MonthlyCustomerRead(BaseModel):
     renewal_date: date
     status: MonthlyCustomerStatus
     reminder_status: ReminderStatus
-    current_balance: float
     notes: str | None
 
 

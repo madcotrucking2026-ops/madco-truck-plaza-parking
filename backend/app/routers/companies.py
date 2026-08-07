@@ -192,7 +192,6 @@ def company_profile(
         monthly_price=float(monthly_customer.monthly_price) if monthly_customer else None,
         monthly_total=monthly_total,
         renewal_date=monthly_customer.renewal_date if monthly_customer else None,
-        outstanding_balance=float(monthly_customer.current_balance) if monthly_customer else 0.0,
         total_visits=len(passes),
         total_spent=total_spent,
         active_passes=active_passes,

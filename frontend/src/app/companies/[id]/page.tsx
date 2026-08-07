@@ -99,11 +99,6 @@ export default function CompanyProfilePage() {
             <p className="text-xs text-[var(--cream-foreground)]/55">loyalty</p>
           </div>
         </div>
-        {p.outstanding_balance > 0 && (
-          <p className="mt-3 rounded-lg bg-[var(--danger)]/10 p-2 text-sm text-[var(--danger-ink)]">
-            Outstanding balance: {money2(p.outstanding_balance)}
-          </p>
-        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
