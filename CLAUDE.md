@@ -259,6 +259,11 @@ Expiration
 
 Custom days
 
+Expires at NOON (12pm) on the end date — the spot frees at noon for the afternoon.
+
+Renewals continue from the OLD end date (a late customer pays from where they
+left off — no free gap). Close-out settles the exact time used instead.
+
 Examples
 
 7/3/2026
@@ -291,11 +296,12 @@ Fixed
 
 Default
 
-$250
+$250 per truck
 
-BUT
+PER-TRUCK pricing (NOT one company rate)
 
-Owner can override price
+Each truck is priced on its OWN rate — the owner can override each truck's price.
+The company pays the SUM of its trucks; the cashier charges the total.
 
 Examples
 
@@ -303,15 +309,16 @@ Company A
 
 4 Trucks
 
-$900
+$250 + $210 + $200 + $240 = $900 total
 
 Company B
 
 12 Trucks
 
-$2500
+each truck its own rate, summed at the register
 
-etc.
+Every monthly truck also holds its own fixed reserved spot in Zone A,
+released only on close-out.
 
 ---
 
@@ -423,7 +430,7 @@ Renewal Rate
 
 Payment History
 
-Outstanding Balance
+Monthly Total (sum of the company's per-truck rates)
 
 Last Reminder
 
@@ -500,8 +507,6 @@ Expires Today
 Expires Tomorrow
 
 Monthly Customer
-
-Outstanding Balance
 
 Company
 
