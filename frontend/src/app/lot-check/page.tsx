@@ -102,7 +102,7 @@ function LotCheckInner() {
 
           {result.found && (
             <div className="card-paper space-y-2 rounded-2xl p-5 text-sm">
-              <DetailRow label="Spot" value={result.spot_number != null ? `#${result.spot_number}` : undefined} mono />
+              <DetailRow label="Spot" value={result.spot_number != null ? (result.spot_label ?? `#${result.spot_number}`) : undefined} mono />
               <DetailRow label="Company" value={result.company_name} />
               <DetailRow label="Phone" value={result.phone} mono />
               <DetailRow label="Truck Number" value={result.truck_number} mono />

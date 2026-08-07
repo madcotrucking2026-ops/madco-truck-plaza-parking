@@ -32,7 +32,7 @@ export function PassTicket({
             Park in spot
           </p>
           <p className="font-mono text-5xl font-bold tabular-nums text-[var(--ivory-100)]">
-            {pass.spot_number}
+            {pass.spot_label ?? pass.spot_number}
           </p>
         </div>
       )}
