@@ -95,7 +95,7 @@ _require_admin = [Depends(require_admin)]
 app.include_router(auth.router)
 app.include_router(companies.router)
 app.include_router(passes.router, dependencies=_require_login)
-app.include_router(lot_check.router, dependencies=_require_manager)
+app.include_router(lot_check.router, dependencies=_require_login)  # cashier walks the lot — needs the truck lookup
 app.include_router(dashboard.router, dependencies=_require_manager)
 app.include_router(insights.router, dependencies=_require_manager)
 app.include_router(monthly_customers.router, dependencies=_require_manager)

@@ -46,7 +46,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Companies", href: "/companies", icon: Building2, minRole: "manager" },
   // "Find a Truck": type a truck / trailer / plate, get the PAID / expiry card.
   // Same name on the dashboard tile and the page's own heading — one page, one verb.
-  { label: "Find a Truck", href: "/lot-check", icon: ScanSearch, minRole: "manager" },
+  { label: "Find a Truck", href: "/lot-check", icon: ScanSearch, minRole: "attendant" },
   // The cashier's live open-spots board — front-desk tool, so attendant-visible.
   { label: "Open Spots", href: "/availability", icon: Grid3x3, minRole: "attendant" },
   { label: "Payments", href: "/payments", icon: CreditCard, minRole: "manager" },

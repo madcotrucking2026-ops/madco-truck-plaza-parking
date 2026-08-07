@@ -1,6 +1,6 @@
 """Role tiers, enforced at the API — not just hidden in the sidebar.
 
-Cashier (attendant) = issue passes, see the lot, move a truck. THAT'S IT.
+Cashier (attendant) = issue passes, see the lot, move a truck, find a truck. THAT'S IT.
 Manager+ = everything the cashier does, plus the money and the accounts.
 Admin    = the owner (staff accounts, password resets, the audit trail).
 
@@ -57,11 +57,13 @@ def test_cashier_can_only_issue_passes_and_manage_spots(client):
     assert _get(client, "/api/spots", cashier).status_code == 200
     assert client.post("/api/spots/move", json={"pass_id": 999999, "to_number": 1}, headers=H).status_code == 404
 
+    # CAN: find a truck — the cashier walks the lot, so the truck lookup is theirs.
+    assert _get(client, "/api/lot-check?q=G1", cashier).status_code == 200
+
     # CANNOT (403, not 401 — they ARE logged in): everything else, including
     # other endpoints inside routers the cashier can partially reach.
     for path in (
         "/api/passes",                 # the LIST — issuing is fine, browsing is not
-        "/api/lot-check?q=7834",
         "/api/reminders",
         "/api/monthly-customers",
         "/api/companies",
