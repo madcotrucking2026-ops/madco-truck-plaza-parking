@@ -129,6 +129,16 @@ function IssuePassForm() {
   const companyLookupDone = companyQuery !== "" && lookup.query === companyQuery;
   const companyMatch = companyLookupDone ? lookup.result : null;
 
+  // Per-truck pricing: when the company already has a rate on file, pre-fill the
+  // rate box with it as a starting point — the cashier changes it if this truck is
+  // priced differently. Only fills an empty box, so it never stomps a typed value.
+  useEffect(() => {
+    if (form.pass_type === "monthly" && companyMatch?.monthly_price != null && form.new_company_monthly_rate === "") {
+      set("new_company_monthly_rate", String(companyMatch.monthly_price));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyMatch?.monthly_price, form.pass_type]);
+
   const heading = form.pass_type === "monthly" ? "Add Monthly Customer" : "Issue New Pass";
   const subheading =
     form.pass_type === "monthly"
@@ -146,13 +156,15 @@ function IssuePassForm() {
   const months = monthsBetween(form.start_date, form.end_date);
   const weeklyInvalid = form.pass_type === "weekly" && days !== 7;
   const isNewMonthlyCompany = form.pass_type === "monthly" && companyLookupDone && !companyMatch;
+  // Per-truck pricing: EVERY monthly truck sets its own rate. The box shows once
+  // the company is known; for an existing company it's pre-filled with their rate
+  // (see the effect above) but stays editable — each truck is priced on its own.
+  const showMonthlyRate = form.pass_type === "monthly" && companyLookupDone;
 
   const monthlyRate =
-    companyMatch?.monthly_price != null
-      ? companyMatch.monthly_price
-      : form.new_company_monthly_rate
-        ? Number(form.new_company_monthly_rate)
-        : null;
+    form.new_company_monthly_rate !== ""
+      ? Number(form.new_company_monthly_rate)
+      : companyMatch?.monthly_price ?? null;
 
   const finalPrice =
     form.pass_type === "daily"
@@ -179,14 +191,14 @@ function IssuePassForm() {
       );
       return;
     }
-    if (isNewMonthlyCompany && !form.new_company_monthly_rate) {
-      toast.error(`${form.company_name} is a new monthly customer — set their monthly rate first.`);
+    if (form.pass_type === "monthly" && companyLookupDone && !form.new_company_monthly_rate) {
+      toast.error("Set this truck's monthly rate first.");
       return;
     }
 
     setSubmitting(true);
     try {
-      const priceOverride = isNewMonthlyCompany ? Number(form.new_company_monthly_rate) : undefined;
+      const priceOverride = form.pass_type === "monthly" ? Number(form.new_company_monthly_rate) : undefined;
 
       const payload: IssuePassRequest = {
         company_name: form.company_name,
@@ -282,8 +294,7 @@ function IssuePassForm() {
             {form.pass_type === "monthly" && companyMatch && companyMatch.trucks.length > 0 && (
               <div className="mt-2 rounded-lg bg-[var(--forest-700)]/8 p-3 text-xs">
                 <p className="font-semibold">
-                  {form.company_name} already has {companyMatch.trucks.length} truck{companyMatch.trucks.length === 1 ? "" : "s"} on the monthly plan
-                  {companyMatch.monthly_price != null ? ` at ${currency(companyMatch.monthly_price)}/truck` : ""}:
+                  {form.company_name} already has {companyMatch.trucks.length} truck{companyMatch.trucks.length === 1 ? "" : "s"} on the monthly plan:
                 </p>
                 <ul className="mt-1 space-y-0.5 font-mono">
                   {companyMatch.trucks.map((t) => (
@@ -294,9 +305,9 @@ function IssuePassForm() {
                 </ul>
               </div>
             )}
-            {isNewMonthlyCompany && (
+            {showMonthlyRate && (
               <div className="mt-2 rounded-lg bg-[var(--amber-500)]/10 p-3">
-                <Field label={`Set Monthly Rate for ${form.company_name}`} required className="mb-0">
+                <Field label="Monthly rate for this truck" required className="mb-0">
                   <Input
                     type="number"
                     min={0}
@@ -307,7 +318,9 @@ function IssuePassForm() {
                   />
                 </Field>
                 <p className="mt-1.5 text-xs text-[var(--cream-foreground)]/60">
-                  New monthly customer — this rate will apply to every truck {form.company_name} parks with us going forward.
+                  {isNewMonthlyCompany
+                    ? "New monthly customer — this is this truck's own rate."
+                    : `Pre-filled from ${form.company_name}'s rate — change it if this truck is priced differently. Each truck is priced on its own.`}
                 </p>
               </div>
             )}
