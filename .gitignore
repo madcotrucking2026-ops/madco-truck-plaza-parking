@@ -42,6 +42,10 @@ Thumbs.db
 backups/
 *.db.bak
 
+# === gstack (local tooling artifacts) ===
+# QA and security reports are local-only — they should never be committed.
+.gstack/
+
 # === graphify ===
 # The graph itself is committed; the cache and resolved absolute paths are machine-local.
 graphify-out/cache/
