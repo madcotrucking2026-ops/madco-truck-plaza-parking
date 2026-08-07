@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Madco Truck Plaza">
   <rect width="100" height="100" rx="20" fill="#173F35"/>
-  <polyline points="26,71 26,31 50,57 74,31 74,71" fill="none" stroke="#D6862B" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- box-truck silhouette (cargo box + cab with sloped hood) -->
+  <path d="M18 38 h38 v9 h9 l11 10 v9 H18 Z" fill="#D6862B"/>
+  <!-- wheels: amber tire with a forest hub -->
+  <circle cx="35" cy="70" r="8" fill="#D6862B"/>
+  <circle cx="35" cy="70" r="3.5" fill="#173F35"/>
+  <circle cx="69" cy="70" r="8" fill="#D6862B"/>
+  <circle cx="69" cy="70" r="3.5" fill="#173F35"/>
 </svg>
