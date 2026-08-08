@@ -25,6 +25,7 @@ from app.routers import (
     search,
     spots,
 )
+from app.routers import settings as settings_router  # aliased: `settings` is the config object
 
 configure_logging()
 log = get_logger(__name__)
@@ -58,6 +59,9 @@ from app.core.database import SessionLocal  # noqa: E402
 from app.core.spots import ensure_spots  # noqa: E402
 
 with SessionLocal() as _seed_db:
+    from app.core.app_settings import load_overrides  # noqa: E402
+
+    load_overrides(_seed_db)  # saved config overrides win over env before seeding
     ensure_spots(_seed_db)
 log.info("Application starting — DB at head, migrations applied.")
 
@@ -107,6 +111,7 @@ app.include_router(audit_log.router, dependencies=_require_admin)
 app.include_router(search.router, dependencies=_require_manager)
 app.include_router(spots.router, dependencies=_require_login)  # attendants walk the lot
 app.include_router(reports.router, dependencies=_require_manager)
+app.include_router(settings_router.router, dependencies=_require_login)  # GET: any staff (issue-form prices); PUT: admin-only (route dep)
 # Customer self-service (the Stripe kiosk and pay-by-QR links) was retired
 # 2026-08: the plaza went staff-only, and the cashier records card payments on
 # their own terminal. The stripe_payments + payment_requests routers and their

@@ -45,6 +45,15 @@ export const api = {
     request<T>(path, { method: "POST", body: JSON.stringify(data) }),
   patch: <T>(path: string, data: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(data) }),
+  put: <T>(path: string, data: unknown) =>
+    request<T>(path, { method: "PUT", body: JSON.stringify(data) }),
+};
+
+export type AppSettings = {
+  parking_capacity: number;
+  daily_price: number;
+  weekly_price: number;
+  monthly_price: number;
 };
 
 export type AuthStatus = {

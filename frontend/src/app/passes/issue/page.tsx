@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { api, ApiError, type CompanyLookupResult, type IssuePassRequest, type PassRead, type PassType, type VehicleType, type PaymentMethod } from "@/lib/api";
+import { api, ApiError, type AppSettings, type CompanyLookupResult, type IssuePassRequest, type PassRead, type PassType, type VehicleType, type PaymentMethod } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/common/field";
@@ -85,6 +85,15 @@ function IssuePassForm() {
     query: "",
     result: null,
   });
+
+  // Live base prices from Settings (an admin can change them). Fall back to the
+  // built-in defaults until the fetch lands, so the price preview is never blank.
+  const [rates, setRates] = useState({ daily: DAILY_RATE, weekly: WEEKLY_RATE });
+  useEffect(() => {
+    api.get<AppSettings>("/api/settings")
+      .then((s) => setRates({ daily: s.daily_price, weekly: s.weekly_price }))
+      .catch(() => {});
+  }, []);
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -168,9 +177,9 @@ function IssuePassForm() {
 
   const finalPrice =
     form.pass_type === "daily"
-      ? DAILY_RATE * Math.max(days, 1)
+      ? rates.daily * Math.max(days, 1)
       : form.pass_type === "weekly"
-        ? (weeklyInvalid ? null : WEEKLY_RATE)
+        ? (weeklyInvalid ? null : rates.weekly)
         : monthlyRate != null
           ? monthlyRate * months
           : null;
@@ -353,7 +362,7 @@ function IssuePassForm() {
               {finalPrice !== null
                 ? `${currency(finalPrice)}${
                     form.pass_type === "daily"
-                      ? ` (${days} day${days === 1 ? "" : "s"} × $${DAILY_RATE})`
+                      ? ` (${days} day${days === 1 ? "" : "s"} × $${rates.daily})`
                       : form.pass_type === "monthly" && monthlyRate != null
                         ? ` (${months} month${months === 1 ? "" : "s"} × ${currency(monthlyRate)})`
                         : ""

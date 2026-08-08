@@ -1,3 +1,4 @@
+from app.models.app_setting import AppSetting
 from app.models.audit_log import AuditLog
 from app.models.company import Company
 from app.models.monthly_customer import MonthlyCustomer
@@ -11,6 +12,7 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 
 __all__ = [
+    "AppSetting",
     "AuditLog",
     "Company",
     "MonthlyCustomer",
