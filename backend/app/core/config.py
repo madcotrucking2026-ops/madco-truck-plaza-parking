@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.jwt_secret import load_or_create_jwt_secret
@@ -93,6 +93,18 @@ class Settings(BaseSettings):
     # A truck stop has no ops team watching a log file — if payments break at
     # 2am, this is how anyone finds out before an angry driver tells them.
     alert_webhook_url: str = ""
+
+    @field_validator("database_url")
+    @classmethod
+    def _normalize_db_url(cls, v: str) -> str:
+        # Managed Postgres hosts (Neon, Render, Supabase, Heroku) hand out a bare
+        # `postgres://` or `postgresql://` URL. SQLAlchemy needs the driver named,
+        # and we use psycopg 3 — so normalize to `postgresql+psycopg://`. This lets
+        # you paste Neon's connection string straight into DATABASE_URL as-is.
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                return "postgresql+psycopg://" + v[len(prefix):]
+        return v
 
 
 settings = Settings()

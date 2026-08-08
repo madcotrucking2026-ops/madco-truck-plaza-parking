@@ -1,0 +1,42 @@
+# Render Blueprint — free backend (FastAPI) web service for MTPMS.
+#
+# Deploy: Render dashboard -> New + -> Blueprint -> pick this GitHub repo.
+# Render reads this file and creates the service. You paste 3 values in the
+# dashboard afterward (DATABASE_URL from Neon, PUBLIC_BASE_URL + CORS_ORIGINS
+# from your Vercel URL) — see DEPLOY-FREE.md.
+#
+# Free plan note: the service sleeps after ~15 min idle; the first request after
+# a nap takes ~30-60s to wake, then it's fast. Data lives in Neon, so a sleep or
+# restart never loses anything.
+services:
+  - type: web
+    name: mtpms-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # Render provides $PORT; --proxy-headers makes the rate limiters see the real
+    # client IP behind Render's edge (same reason we set it behind nginx).
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips=*
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # Paste the Neon connection string here in the dashboard (Environment tab).
+      - key: DATABASE_URL
+        sync: false
+      # Your Vercel site URL, e.g. https://mtpms.vercel.app  (no trailing slash).
+      - key: PUBLIC_BASE_URL
+        sync: false
+      # Same URL as a JSON array, e.g. ["https://mtpms.vercel.app"]
+      - key: CORS_ORIGINS
+        sync: false
+      # Render generates these once and keeps them stable across deploys.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SCHEDULER_TOKEN
+        generateValue: true
+      - key: DOCS_ENABLED
+        value: "false"
+      - key: TIMEZONE
+        value: America/Detroit
