@@ -17,6 +17,13 @@ class CompanyCreate(CompanyBase):
     pass
 
 
+class CompanyUpdate(BaseModel):
+    """Partial edit — only the fields actually sent are changed. Used to fix a
+    company after issue, most often to add a name a cashier left blank."""
+    name: str | None = None
+    phone: str | None = None
+
+
 class CompanyRead(CompanyBase):
     model_config = ConfigDict(from_attributes=True)
 

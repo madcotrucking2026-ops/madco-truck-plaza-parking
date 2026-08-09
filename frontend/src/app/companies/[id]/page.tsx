@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, Star, Truck } from "lucide-react";
+import { ArrowLeft, Pencil, Phone, Star, Truck } from "lucide-react";
 import { api, ApiError, type CompanyProfile } from "@/lib/api";
 import { StatusBadge } from "@/components/passes/status-badge";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { InfoTip } from "@/components/common/info-tip";
+import { EditCompanyDialog } from "@/components/companies/edit-company-dialog";
 
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -27,6 +28,7 @@ export default function CompanyProfilePage() {
   const [p, setP] = useState<CompanyProfile | null>(null);
   const [err, setErr] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   // A network failure is NOT "company not found" — that would tell the manager a
   // real customer doesn't exist just because the API is down.
@@ -85,6 +87,13 @@ export default function CompanyProfilePage() {
                 </span>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-md text-xs font-semibold text-[var(--forest-700)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--amber-500)] sm:min-h-0"
+            >
+              <Pencil className="h-3.5 w-3.5" /> Edit name / phone
+            </button>
           </div>
           <div className="shrink-0 text-right">
             <div className="inline-flex items-center gap-1 text-[var(--amber-ink)]">
@@ -161,6 +170,16 @@ export default function CompanyProfilePage() {
           </ul>
         )}
       </Section>
+
+      {editing && (
+        <EditCompanyDialog
+          companyId={id!}
+          initialName={p.name}
+          initialPhone={p.phone}
+          onOpenChange={(open) => !open && setEditing(false)}
+          onSaved={load}
+        />
+      )}
 
       <Section title="Recent Payments">
         {p.recent_payments.length === 0 ? (

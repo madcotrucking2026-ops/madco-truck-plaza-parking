@@ -6,18 +6,20 @@ from datetime import date
 
 from app.core.clock import business_now, business_today
 from app.core.database import get_db
+from app.core.audit import log_audit
 from app.core.deps import get_current_user, require_manager
 from app.core.pass_status import live_status
 from app.core.rate_limit import lookup_limiter
 from app.core.spots import spot_label
 from app.models import Company, MonthlyCustomer, ParkingPass, Payment, Spot, User, Vehicle
-from app.models.enums import PassStatus, PassType
+from app.models.enums import AuditAction, PassStatus, PassType
 from app.schemas.company import (
     CompanyCreate,
     CompanyLookupResult,
     CompanyMonthlyTruck,
     CompanyProfile,
     CompanyRead,
+    CompanyUpdate,
     ProfilePass,
     ProfilePayment,
     ProfileTruck,
@@ -42,6 +44,41 @@ def create_company(
 ) -> Company:
     company = Company(**payload.model_dump())
     db.add(company)
+    db.commit()
+    db.refresh(company)
+    return company
+
+
+@router.patch("/{company_id}", response_model=CompanyRead)
+def update_company(
+    company_id: int,
+    payload: CompanyUpdate,
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_manager),
+) -> Company:
+    """Fix a company's details after the fact — most often to add the name a
+    cashier left blank when issuing a pass. Passes and monthly plans link to the
+    company by id, so renaming here corrects the name on every one of them."""
+    company = db.get(Company, company_id)
+    if company is None:
+        raise HTTPException(status_code=404, detail="Company not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data:
+        cleaned = " ".join((data["name"] or "").split())
+        if not cleaned:
+            raise HTTPException(status_code=400, detail="Company name can't be blank.")
+        data["name"] = cleaned
+    before = company.name
+    for field, value in data.items():
+        setattr(company, field, value)
+    log_audit(
+        db,
+        AuditAction.edited,
+        "company",
+        f"Company #{company.id} edited (name {before!r} → {company.name!r})",
+        entity_id=company.id,
+        employee_name=_user.name,
+    )
     db.commit()
     db.refresh(company)
     return company
