@@ -13,6 +13,7 @@ from app.routers import (
     auth,
     companies,
     dashboard,
+    export,
     insights,
     lot_check,
     monthly_customers,
@@ -99,6 +100,7 @@ app.include_router(monthly_customers.router, dependencies=_require_manager)
 app.include_router(reminders.router, dependencies=_require_manager)
 app.include_router(payments.router, dependencies=_require_manager)
 app.include_router(audit_log.router, dependencies=_require_admin)
+app.include_router(export.router, dependencies=_require_admin)  # owner downloads a full CSV backup
 app.include_router(search.router, dependencies=_require_manager)
 app.include_router(spots.router, dependencies=_require_login)  # attendants walk the lot
 app.include_router(reports.router, dependencies=_require_manager)

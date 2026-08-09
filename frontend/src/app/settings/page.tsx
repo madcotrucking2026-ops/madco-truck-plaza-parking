@@ -1,6 +1,7 @@
 import { AddStaffCard } from "@/components/settings/add-staff-card";
 import { StaffListCard } from "@/components/settings/staff-list-card";
 import { PlazaSettingsCard } from "@/components/settings/plaza-settings-card";
+import { BackupCard } from "@/components/settings/backup-card";
 
 export default function SettingsPage() {
   return (
@@ -12,6 +13,7 @@ export default function SettingsPage() {
       <PlazaSettingsCard />
       <StaffListCard />
       <AddStaffCard />
+      <BackupCard />
     </div>
   );
 }

@@ -39,6 +39,34 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Fetch a file from an authenticated endpoint and save it to disk. A plain
+ *  <a href> can't send the Authorization header, so we fetch with the token,
+ *  then trigger a download from the blob. Used for the full-data backup. */
+async function download(path: string, filename: string): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    if (res.status === 401 && token && typeof window !== "undefined") {
+      clearToken();
+      window.location.href = "/login";
+    }
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new ApiError(body.detail ?? "Download failed", res.status);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, data: unknown) =>
@@ -47,6 +75,7 @@ export const api = {
     request<T>(path, { method: "PATCH", body: JSON.stringify(data) }),
   put: <T>(path: string, data: unknown) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(data) }),
+  download,
 };
 
 export type AppSettings = {
