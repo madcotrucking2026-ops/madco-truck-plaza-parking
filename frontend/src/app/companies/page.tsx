@@ -7,6 +7,7 @@ import { api, type CompanySummary } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
+import { SubTabs, COMPANY_TABS } from "@/components/common/sub-tabs";
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<CompanySummary[] | null>(null);
@@ -27,6 +28,7 @@ export default function CompaniesPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      <SubTabs items={COMPANY_TABS} />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Companies</h1>
         <p className="text-sm text-muted-foreground">

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { InfoTip } from "@/components/common/info-tip";
+import { SubTabs, COMPANY_TABS } from "@/components/common/sub-tabs";
 import {
   Select,
   SelectContent,
@@ -64,6 +65,7 @@ export default function MonthlyCustomersPage() {
 
   return (
     <div className="space-y-6">
+      <SubTabs items={COMPANY_TABS} />
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Monthly Customers</h1>

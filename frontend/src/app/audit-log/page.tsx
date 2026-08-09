@@ -5,6 +5,7 @@ import { History } from "lucide-react";
 import { api, type AuditLogEntry } from "@/lib/api";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
+import { SubTabs, SETTINGS_TABS } from "@/components/common/sub-tabs";
 
 const ACTION_STYLE: Record<string, { label: string; className: string }> = {
   created: { label: "Created", className: "bg-[var(--success)]/15 text-[var(--success-ink)]" },
@@ -41,6 +42,7 @@ export default function AuditLogPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      <SubTabs items={SETTINGS_TABS} />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Activity Log</h1>
         <p className="text-sm text-muted-foreground">

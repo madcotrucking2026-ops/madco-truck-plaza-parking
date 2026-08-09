@@ -10,6 +10,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { cn } from "@/lib/utils";
+import { SubTabs, MONEY_TABS } from "@/components/common/sub-tabs";
 
 type Payment = {
   id: number;
@@ -126,6 +127,7 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-6">
+      <SubTabs items={MONEY_TABS} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Payments</h1>

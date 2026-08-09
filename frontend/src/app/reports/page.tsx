@@ -8,6 +8,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { RevenueChart } from "@/components/reports/revenue-chart";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
+import { SubTabs, MONEY_TABS } from "@/components/common/sub-tabs";
 
 const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -52,6 +53,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-8">
+      <SubTabs items={MONEY_TABS} />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Reports</h1>
         <p className="text-sm text-muted-foreground">Revenue, companies, and vehicle trends — last 30 days.</p>
