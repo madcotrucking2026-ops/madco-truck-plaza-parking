@@ -10,7 +10,7 @@ Design constraints, in order:
     short timeout, every exception swallowed.
   * NEVER melt the webhook when something fails in a loop: one alert per
     cooldown window, the rest counted and summarised in the next one.
-  * No new dependency — requests is already installed (Twilio pulls it in).
+  * requests is a direct dependency (see requirements.txt), kept small and sync.
 """
 
 import logging
@@ -18,6 +18,8 @@ import threading
 import time
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 COOLDOWN_SECONDS = 60
 
@@ -45,7 +47,10 @@ class WebhookAlertHandler(logging.Handler):
                 text += f"\n(+{suppressed} more error(s) in the last minute, see logs)"
             threading.Thread(target=self._post, args=(text,), daemon=True).start()
         except Exception:  # noqa: BLE001 — alerting must never break the app
-            pass
+            # handleError never re-raises (respects logging.raiseExceptions) and
+            # writes the traceback to stderr, so a broken alert path is visible
+            # without taking down the request that logged the original error.
+            self.handleError(record)
 
     def _post(self, text: str) -> None:
         try:
@@ -53,4 +58,6 @@ class WebhookAlertHandler(logging.Handler):
             # ntfy takes a raw body. Send a superset — all three accept it.
             requests.post(self.url, json={"text": text, "content": text}, timeout=5)
         except Exception:  # noqa: BLE001
-            pass
+            # Runs in a daemon thread; a failed webhook post must not raise.
+            # DEBUG so it never re-enters this ERROR-level handler (no recursion).
+            logger.debug("MTPMS alert webhook post failed", exc_info=True)

@@ -67,28 +67,6 @@ class Settings(BaseSettings):
     stripe_publishable_key: str = ""
     stripe_webhook_secret: str = ""
 
-    # Twilio SMS for monthly renewal reminders. Empty until the owner adds
-    # real credentials — reminders are recorded either way (and can be shown /
-    # read to the customer), but an actual text is only sent when these are set.
-    twilio_account_sid: str = ""
-    twilio_auth_token: str = ""
-    twilio_from_number: str = ""
-    # A2P 10DLC best practice: send through the registered Messaging Service
-    # (MG...) rather than the raw number, so carrier campaign association is
-    # applied correctly. Falls back to the from-number if unset.
-    twilio_messaging_service_sid: str = ""
-
-    # Automatic daily renewal-reminder sweep (texts monthly customers 7/3/1
-    # days before, then daily once overdue, until they renew). On by default;
-    # SMS only actually sends once Twilio creds above are set.
-    auto_reminders_enabled: bool = True
-
-    # Shared secret that lets an external cron (the compose `cron` service, a
-    # systemd timer, Task Scheduler) trigger the reminder sweep without a JWT.
-    # The in-process scheduler only runs while the app is up; the external
-    # trigger is the belt-and-braces that survives restarts. Empty = disabled.
-    scheduler_token: str = ""
-
     # POSTed to on every ERROR-level log line (Slack/Discord/ntfy-style webhook).
     # A truck stop has no ops team watching a log file — if payments break at
     # 2am, this is how anyone finds out before an angry driver tells them.

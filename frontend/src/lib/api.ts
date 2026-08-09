@@ -278,23 +278,10 @@ export type ReminderCustomer = {
   last_reminder_at: string | null;
 };
 
+// Read-only "renewals due" feed for the dashboard + morning report. The plaza
+// went text-free, so nothing is sent — this is just who renews when.
 export type RemindersOverview = {
-  sms_configured: boolean;
-  auto_enabled: boolean;
   customers: ReminderCustomer[];
-};
-
-export type SendReminderResult = {
-  sent: boolean;
-  message: string;
-  reminder_status: string;
-};
-
-export type SweepResult = {
-  enabled: boolean;
-  checked: number;
-  sent: number;
-  skipped: number;
 };
 
 /** One cell of the lot grid — state is derived server-side from live passes. */

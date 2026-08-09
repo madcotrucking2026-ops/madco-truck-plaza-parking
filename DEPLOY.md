@@ -10,7 +10,7 @@ git clone <this repo> && cd madco-truck-plaza-parking
 cp .env.prod.example .env.prod
 # Fill in .env.prod:
 #   python -c "import secrets; print(secrets.token_hex(32))"   # JWT_SECRET
-#   python -c "import secrets; print(secrets.token_hex(16))"   # POSTGRES_PASSWORD, SCHEDULER_TOKEN
+#   python -c "import secrets; print(secrets.token_hex(16))"   # POSTGRES_PASSWORD
 #   PUBLIC_BASE_URL = the address customers will use
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
@@ -23,7 +23,7 @@ What you get:
 - **backend** — FastAPI; runs its own Alembic migrations at every start
 - **frontend** — Next.js
 - **nginx** — the ONLY published port (80); routes `/api` → backend, rest → frontend
-- **cron** — daily reminder sweep + nightly `pg_dump` into `./backups/` (14 kept)
+- **cron** — nightly `pg_dump` into `./backups/` (14 kept)
 
 ## Go-live checklist (in order)
 
@@ -54,11 +54,9 @@ What you get:
    cash/credit/debit/check at the desk (card swiped on the plaza's own terminal).
    So there are **no Stripe steps**: no keys, no webhook, no payment-method
    domain. The `STRIPE_*` env vars are ignored and can stay blank.
-2. **Twilio** — creds into `.env.prod`; texts start delivering the moment the
-   A2P campaign shows Approved. No code change.
-3. **Alerting** — put a Slack/Discord/ntfy webhook in `ALERT_WEBHOOK_URL`;
+2. **Alerting** — put a Slack/Discord/ntfy webhook in `ALERT_WEBHOOK_URL`;
    every application ERROR pings it (rate-limited to 1/min).
-4. **Wipe the demo data** —
+3. **Wipe the demo data** —
    `docker compose -f docker-compose.prod.yml exec backend python -m scripts.purge_demo --yes`
    (keeps logins, empties the books).
 
@@ -79,8 +77,8 @@ only survives mistakes, not hardware.
 
 ## Architecture notes (for whoever maintains this)
 
-- **One backend worker, on purpose.** Rate limiting and the reminder scheduler
-  are in-process. One uvicorn worker handles a truck stop's traffic with ease;
+- **One backend worker, on purpose.** Rate limiting is in-process. One uvicorn
+  worker handles a truck stop's traffic with ease;
   before scaling out, move rate limiting to nginx/Redis.
 - **Spot inventory is config.** `PARKING_CAPACITY` sizes the painted lot (spot
   rows are added/deactivated idempotently at startup — a 300-spot client is an
@@ -90,13 +88,13 @@ only survives mistakes, not hardware.
   shown on the /availability board and on passes); set 0 to show bare numbers.
   Free/occupied is DERIVED from live passes — no status column, no midnight job.
 - **The plaza's timezone is config** (`TIMEZONE`, default America/Detroit).
-  Every "today" — revenue, expiry, reminders — is computed in it, never the
+  Every "today" — revenue, expiry, renewals — is computed in it, never the
   host's. On Postgres the session timezone is pinned to it too.
 - **Schema = Alembic only.** New change → new revision:
   `docker compose exec backend alembic revision --autogenerate -m "..."`.
   The backend upgrades itself to head at startup; pre-Alembic databases are
   detected and stamped once.
-- **Roles**: attendant = front desk (passes, lot check, reminders);
+- **Roles**: attendant = front desk (passes, lot check, find a truck);
   manager = + money (dashboard, payments, reports, insights);
   admin = + staff accounts and the audit log. Enforced at the API, mirrored in
   the sidebar.

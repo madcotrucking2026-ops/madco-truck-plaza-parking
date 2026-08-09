@@ -31,10 +31,8 @@ services:
       # Same URL as a JSON array, e.g. ["https://mtpms.vercel.app"]
       - key: CORS_ORIGINS
         sync: false
-      # Render generates these once and keeps them stable across deploys.
+      # Render generates this once and keeps it stable across deploys.
       - key: JWT_SECRET
-        generateValue: true
-      - key: SCHEDULER_TOKEN
         generateValue: true
       - key: DOCS_ENABLED
         value: "false"

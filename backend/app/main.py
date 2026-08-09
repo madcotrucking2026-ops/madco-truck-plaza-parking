@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
@@ -9,7 +8,6 @@ from app.core.config import settings
 from app.core.deps import get_current_user, require_admin, require_manager
 from app.core.logging_config import configure_logging, get_logger
 from app.core.migrate import upgrade_database
-from app.core.scheduler import reminder_scheduler_loop
 from app.routers import (
     audit_log,
     auth,
@@ -33,13 +31,8 @@ log = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start the automatic renewal-reminder sweep in the background for the life
-    # of the app; cancel it cleanly on shutdown.
-    task = asyncio.create_task(reminder_scheduler_loop())
-    try:
-        yield
-    finally:
-        task.cancel()
+    # No background tasks — the renewal-reminder sweep was removed with texting.
+    yield
 
 
 app = FastAPI(
@@ -104,8 +97,6 @@ app.include_router(dashboard.router, dependencies=_require_manager)
 app.include_router(insights.router, dependencies=_require_manager)
 app.include_router(monthly_customers.router, dependencies=_require_manager)
 app.include_router(reminders.router, dependencies=_require_manager)
-# /api/reminders/cron authenticates itself with the scheduler token, not a JWT.
-app.include_router(reminders.cron_router)
 app.include_router(payments.router, dependencies=_require_manager)
 app.include_router(audit_log.router, dependencies=_require_admin)
 app.include_router(search.router, dependencies=_require_manager)

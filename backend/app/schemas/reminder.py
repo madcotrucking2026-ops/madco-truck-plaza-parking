@@ -15,19 +15,4 @@ class ReminderCustomer(BaseModel):
 
 
 class RemindersOverview(BaseModel):
-    sms_configured: bool
-    auto_enabled: bool
     customers: list[ReminderCustomer]
-
-
-class SendReminderResult(BaseModel):
-    sent: bool  # True if an SMS actually went out; False if only recorded (SMS not configured)
-    message: str
-    reminder_status: str
-
-
-class SweepResult(BaseModel):
-    enabled: bool
-    checked: int = 0
-    sent: int = 0
-    skipped: int = 0

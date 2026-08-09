@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   DollarSign,
@@ -11,7 +11,6 @@ import {
   UserPlus,
   ClipboardList,
   AlarmClock,
-  Send,
   RefreshCcw,
   CheckCircle2,
   AlertTriangle,
@@ -22,9 +21,7 @@ import {
   type DashboardStats,
   type PassListItem,
   type RemindersOverview,
-  type SendReminderResult,
 } from "@/lib/api";
-import { toast } from "sonner";
 import { LotGrid } from "@/components/dashboard/lot-grid";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { StatusBadge } from "@/components/passes/status-badge";
@@ -65,9 +62,6 @@ export default function DashboardPage() {
 
 
   const [renewingPass, setRenewingPass] = useState<PassListItem | null>(null);
-  const [sendingId, setSendingId] = useState<number | null>(null);
-  const [confirmingId, setConfirmingId] = useState<number | null>(null);
-  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Clearing the expiring-passes list is this screen's whole job, so it can be
   // done in one pass instead of one dialog per truck.
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -97,7 +91,6 @@ export default function DashboardPage() {
     api.get<ConversionLeads>("/api/insights/conversion-leads").then(setLeads).catch(() => setLeadsErr(true));
   }
   useEffect(loadAll, []);
-  useEffect(() => () => clearTimeout(confirmTimer.current ?? undefined), []);
 
   const today = todayISO();
   const tomorrow = relativeDayISO(1);
@@ -116,27 +109,6 @@ export default function DashboardPage() {
   const upcomingRenewals = (reminders?.customers ?? [])
     .filter((c) => c.days_until_renewal <= 10)
     .slice(0, 6);
-
-  // Texting a customer can't be undone, so it takes two taps: the first arms the
-  // button, the second sends. Inline (no modal), auto-disarms after 4s.
-  function armConfirm(id: number) {
-    setConfirmingId(id);
-    clearTimeout(confirmTimer.current ?? undefined);
-    confirmTimer.current = setTimeout(() => setConfirmingId(null), 4000);
-  }
-
-  async function sendReminder(id: number, company: string) {
-    setConfirmingId(null);
-    setSendingId(id);
-    try {
-      const res = await api.post<SendReminderResult>(`/api/reminders/${id}/send`, {});
-      toast.success(res.sent ? `Text sent to ${company}.` : `Reminder recorded for ${company}.`);
-    } catch {
-      toast.error(`Couldn't send the reminder to ${company}.`);
-    } finally {
-      setSendingId(null);
-    }
-  }
 
   // Never render a number we don't have — a placeholder $0 reads as "no revenue".
   const money = (v: number | undefined) => (stats ? currency(v ?? 0) : "—");
@@ -355,11 +327,8 @@ export default function DashboardPage() {
           </section>
 
           <section className="card-paper rounded-2xl p-5">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3">
               <h2 className={SUBHEAD}>Renewals due soon</h2>
-              <Link href="/reminders" className={`text-xs text-[var(--amber-ink)] ${LINK}`}>
-                View all
-              </Link>
             </div>
             {remindersErr ? (
               <LoadError what="renewals" onRetry={loadAll} />
@@ -369,56 +338,27 @@ export default function DashboardPage() {
               <p className="text-sm text-[var(--cream-foreground)]/60">No monthly renewals in the next 10 days.</p>
             ) : (
               <div className="space-y-2">
-                {upcomingRenewals.map((c) => {
-                  const arming = confirmingId === c.monthly_customer_id;
-                  const sending = sendingId === c.monthly_customer_id;
-                  return (
-                    <div key={c.monthly_customer_id} className={ROW}>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-[var(--cream-foreground)]">{c.company_name}</p>
-                        <p className="truncate text-xs text-[var(--cream-foreground)]/60">
-                          {c.days_until_renewal < 0
-                            ? `${Math.abs(c.days_until_renewal)}d overdue`
-                            : c.days_until_renewal === 0
-                              ? "renews today"
-                              : `in ${c.days_until_renewal}d`}
-                          {" · "}
-                          {c.renewal_date}
-                        </p>
-                      </div>
-                      <Button
-                        variant={arming ? "default" : "outline"}
-                        size="sm"
-                        className={`min-h-11 shrink-0 ${arming ? "btn-embossed bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]" : ""}`}
-                        disabled={sending || !c.phone}
-                        title={!c.phone ? "No phone on file" : undefined}
-                        aria-label={
-                          !c.phone
-                            ? `No phone on file for ${c.company_name}`
-                            : arming
-                              ? `Confirm sending a renewal text to ${c.company_name}`
-                              : `Text a renewal reminder to ${c.company_name}`
-                        }
-                        onClick={() =>
-                          arming
-                            ? sendReminder(c.monthly_customer_id, c.company_name)
-                            : armConfirm(c.monthly_customer_id)
-                        }
-                      >
-                        {sending ? (
-                          "Sending…"
-                        ) : arming ? (
-                          "Send text?"
-                        ) : (
-                          <>
-                            <Send className="h-3.5 w-3.5" />
-                            Remind
-                          </>
-                        )}
-                      </Button>
+                {upcomingRenewals.map((c) => (
+                  <div key={c.monthly_customer_id} className={ROW}>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[var(--cream-foreground)]">{c.company_name}</p>
+                      <p className="truncate text-xs text-[var(--cream-foreground)]/60">
+                        {c.days_until_renewal < 0
+                          ? `${Math.abs(c.days_until_renewal)}d overdue`
+                          : c.days_until_renewal === 0
+                            ? "renews today"
+                            : `in ${c.days_until_renewal}d`}
+                        {" · "}
+                        {c.renewal_date}
+                      </p>
                     </div>
-                  );
-                })}
+                    {c.days_until_renewal <= 0 && (
+                      <span className="shrink-0 rounded-full bg-[var(--danger-strong)] px-2 py-0.5 text-xs font-semibold text-white">
+                        due
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </section>

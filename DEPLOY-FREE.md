@@ -76,7 +76,7 @@ That's it. The app builds its own tables automatically the first time it starts.
 4. Render redeploys. When it shows **Live** (green), copy the service URL at the top,
    e.g. `https://mtpms-backend.onrender.com` — you'll need it in Step 4.
 
-> `JWT_SECRET` and `SCHEDULER_TOKEN` are generated automatically — leave them alone.
+> `JWT_SECRET` is generated automatically — leave it alone.
 > Leave `PUBLIC_BASE_URL` and `CORS_ORIGINS` for now; you set them in Step 5.
 
 ---
@@ -131,11 +131,6 @@ Done. The website and engine are now connected.
 - **Changed an env var but nothing changed** → you must redeploy the service after
   changing its environment (Render redeploys on Save; on Vercel, go to Deployments →
   redeploy).
-
-## Text reminders (optional)
-Renewal **reminders are recorded** in the app either way. To also send real SMS texts,
-add your Twilio details on Render (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`,
-`TWILIO_FROM_NUMBER`) later. Skip it for now — not needed to try the app.
 
 ## Costs & limits (free tier)
 - **$0/month.** Neon free = 0.5 GB (you'll use a tiny fraction). Render free = one

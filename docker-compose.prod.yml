@@ -4,7 +4,7 @@
 #   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 #
 # Five services: postgres, backend (migrates itself at startup), frontend,
-# nginx (the only published port), cron (daily reminder sweep + nightly backup).
+# nginx (the only published port), cron (nightly database backup).
 
 services:
   postgres:
@@ -40,11 +40,6 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
-      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
-      TWILIO_MESSAGING_SERVICE_SID: ${TWILIO_MESSAGING_SERVICE_SID:-}
-      SCHEDULER_TOKEN: ${SCHEDULER_TOKEN:?set SCHEDULER_TOKEN in .env.prod}
       ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
       PARKING_CAPACITY: ${PARKING_CAPACITY:-150}
     volumes:
@@ -102,10 +97,9 @@ services:
         done
 
   # One tiny always-on loop instead of host cron — it survives reboots with the
-  # stack and needs zero setup on the host OS. Two jobs:
-  #   * daily reminder sweep (belt-and-braces behind the in-process scheduler)
-  #   * nightly pg_dump, kept 14 days, into the ./backups bind mount so the
-  #     files are on the HOST disk, not inside a container that can be removed.
+  # stack and needs zero setup on the host OS. Nightly pg_dump, kept 14 days,
+  # into the ./backups bind mount so the files are on the HOST disk, not inside
+  # a container that can be removed.
   cron:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -114,18 +108,14 @@ services:
         condition: service_healthy
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
-      SCHEDULER_TOKEN: ${SCHEDULER_TOKEN}
     volumes:
       - ./backups:/backups
     entrypoint: /bin/sh
     command:
       - -c
       - |
-        apk add --no-cache curl >/dev/null 2>&1 || true
-        echo "cron: sweeping reminders + nightly backup, keeping 14 days"
+        echo "cron: nightly backup, keeping 14 days"
         while true; do
-          curl -sf -X POST -H "X-Scheduler-Token: $$SCHEDULER_TOKEN" http://backend:8000/api/reminders/cron \
-            && echo "cron: reminder sweep ok $$(date)" || echo "cron: reminder sweep FAILED $$(date)"
           pg_dump -h postgres -U mtpms mtpms | gzip > "/backups/mtpms-$$(date +%Y%m%d-%H%M).sql.gz" \
             && echo "cron: backup ok $$(date)" || echo "cron: backup FAILED $$(date)"
           ls -1t /backups/mtpms-*.sql.gz 2>/dev/null | tail -n +15 | xargs -r rm --

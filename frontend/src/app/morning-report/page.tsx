@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
-import { Phone, Printer, Sun, CheckCircle2, Send } from "lucide-react";
-import { api, type CallItem, type MorningReport, type SendReminderResult } from "@/lib/api";
+import { Phone, Printer, Sun, CheckCircle2 } from "lucide-react";
+import { api, type CallItem, type MorningReport } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
@@ -25,7 +24,6 @@ const GROUPS: { key: CallItem["priority"]; title: string; blurb: string }[] = [
 export default function MorningReportPage() {
   const [report, setReport] = useState<MorningReport | null>(null);
   const [err, setErr] = useState(false);
-  const [sendingId, setSendingId] = useState<number | null>(null);
 
   function load() {
     setErr(false);
@@ -33,19 +31,6 @@ export default function MorningReportPage() {
     api.get<MorningReport>("/api/insights/morning-report").then(setReport).catch(() => setErr(true));
   }
   useEffect(load, []);
-
-  async function sendReminder(item: CallItem) {
-    if (item.monthly_customer_id === null) return;
-    setSendingId(item.monthly_customer_id);
-    try {
-      const res = await api.post<SendReminderResult>(`/api/reminders/${item.monthly_customer_id}/send`, {});
-      toast.success(res.sent ? `Text sent to ${item.company_name}.` : `Reminder recorded for ${item.company_name}.`);
-    } catch {
-      toast.error(`Couldn't send the reminder to ${item.company_name}.`);
-    } finally {
-      setSendingId(null);
-    }
-  }
 
   const dayLabel = report
     ? new Date(`${report.generated_for}T00:00:00`).toLocaleDateString("en-US", {
@@ -153,18 +138,6 @@ export default function MorningReportPage() {
                             <span className="text-xs text-[var(--cream-foreground)]/45">no phone on file</span>
                           )}
 
-                          {item.monthly_customer_id !== null && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="shrink-0 print:hidden"
-                              disabled={sendingId === item.monthly_customer_id}
-                              onClick={() => sendReminder(item)}
-                            >
-                              <Send className="h-3.5 w-3.5" />
-                              {sendingId === item.monthly_customer_id ? "Sending…" : "Text"}
-                            </Button>
-                          )}
                           {/* nativeButton={false} is required when a Base UI button renders as an anchor. */}
                           {item.pass_id !== null && (
                             <Button

@@ -10,7 +10,6 @@ import {
   Grid3x3,
   CreditCard,
   BarChart3,
-  BellRing,
   History,
   Settings,
 } from "lucide-react";
@@ -51,7 +50,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Open Spots", href: "/availability", icon: Grid3x3, minRole: "attendant" },
   { label: "Payments", href: "/payments", icon: CreditCard, minRole: "manager" },
   { label: "Reports", href: "/reports", icon: BarChart3, minRole: "manager" },
-  { label: "Reminders", href: "/reminders", icon: BellRing, minRole: "manager" },
   { label: "Activity Log", href: "/audit-log", icon: History, minRole: "admin" },
   { label: "Settings", href: "/settings", icon: Settings, minRole: "admin" },
 ];
