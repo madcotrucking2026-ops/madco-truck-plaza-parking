@@ -38,3 +38,7 @@ services:
         value: "false"
       - key: TIMEZONE
         value: America/Detroit
+      # 40 spots per lettered zone (A1..A40, B1..B40 … F1..F40). Owner sets the
+      # total (PARKING_CAPACITY) in Settings — 6 full zones of 40 = 240.
+      - key: SPOTS_PER_ZONE
+        value: "40"
