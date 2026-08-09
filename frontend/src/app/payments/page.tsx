@@ -2,14 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Search, X, Banknote, CreditCard, FileCheck2, Wallet } from "lucide-react";
-import { api } from "@/lib/api";
+import { Search, X, Banknote, CreditCard, FileCheck2, Wallet, Ban } from "lucide-react";
+import { api, ApiError } from "@/lib/api";
+import { toast } from "sonner";
 import { addDaysISO, todayISO } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SubTabs } from "@/components/common/sub-tabs";
 import { MONEY_TABS } from "@/components/common/tab-groups";
 
@@ -25,6 +35,7 @@ type Payment = {
   employee_name: string | null;
   notes: string | null;
   paid_at: string;
+  reversal_of_payment_id: number | null;
 };
 
 const currency = (n: number) =>
@@ -87,6 +98,8 @@ export default function PaymentsPage() {
   const [err, setErr] = useState(false);
   const [query, setQuery] = useState("");
   const [period, setPeriod] = useState<Period>("today");
+  const [voiding, setVoiding] = useState<Payment | null>(null);
+  const [busy, setBusy] = useState(false);
 
   function load() {
     setErr(false);
@@ -94,6 +107,26 @@ export default function PaymentsPage() {
     api.get<Payment[]>("/api/payments").then(setPayments).catch(() => setErr(true));
   }
   useEffect(load, []);
+
+  // Ids of payments that have a reversal pointing at them = the voided originals.
+  const voidedIds = new Set(
+    (payments ?? []).map((p) => p.reversal_of_payment_id).filter((x): x is number => x != null),
+  );
+
+  async function confirmVoid() {
+    if (!voiding) return;
+    setBusy(true);
+    try {
+      await api.post(`/api/payments/${voiding.id}/void`, {});
+      toast.success("Payment voided — a correction was recorded.");
+      setVoiding(null);
+      load();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Couldn't void — try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const filtered = useMemo(() => {
     if (!payments) return null;
@@ -221,15 +254,21 @@ export default function PaymentsPage() {
                   <th className="px-5 py-3 text-right font-medium">Amount</th>
                   <th className="px-5 py-3 font-medium">Method</th>
                   <th className="px-5 py-3 font-medium">Receipt #</th>
+                  <th className="px-5 py-3 text-right font-medium"></th>
                 </tr>
               </thead>
               <tbody>
                 {(filtered ?? []).map((p) => {
                   const dt = new Date(p.paid_at);
+                  const isReversal = p.reversal_of_payment_id != null;
+                  const isVoided = voidedIds.has(p.id);
                   return (
                     <tr
                       key={p.id}
-                      className="border-b border-black/5 text-[var(--cream-foreground)] transition-colors last:border-none hover:bg-black/[0.02]"
+                      className={cn(
+                        "border-b border-black/5 text-[var(--cream-foreground)] transition-colors last:border-none hover:bg-black/[0.02]",
+                        (isVoided || isReversal) && "text-[var(--cream-foreground)]/50",
+                      )}
                     >
                       <td className="whitespace-nowrap px-5 py-3 font-mono text-xs">
                         {p.paid_at.slice(0, 10)}
@@ -243,11 +282,35 @@ export default function PaymentsPage() {
                         {p.truck_number ?? "—"}
                         {p.pass_type ? <span className="text-[var(--cream-foreground)]/40"> · {p.pass_type}</span> : ""}
                       </td>
-                      <td className="px-5 py-3 text-right font-mono text-base font-bold">{currency(p.amount)}</td>
+                      <td
+                        className={cn(
+                          "px-5 py-3 text-right font-mono text-base font-bold",
+                          isVoided && "line-through",
+                          isReversal && "text-[var(--danger-ink)]",
+                        )}
+                      >
+                        {currency(p.amount)}
+                      </td>
                       <td className="px-5 py-3">
                         <MethodBadge method={p.method} checkNumber={p.check_number} />
                       </td>
                       <td className="px-5 py-3 font-mono text-xs text-[var(--cream-foreground)]/60">{p.receipt_number ?? "—"}</td>
+                      <td className="px-5 py-3 text-right">
+                        {isReversal ? (
+                          <span className="whitespace-nowrap rounded-full bg-black/5 px-2 py-0.5 text-xs font-semibold text-[var(--cream-foreground)]/60">
+                            Reversal
+                          </span>
+                        ) : isVoided ? (
+                          <span className="whitespace-nowrap rounded-full bg-[var(--danger)]/12 px-2 py-0.5 text-xs font-semibold text-[var(--danger-ink)]">
+                            Voided
+                          </span>
+                        ) : p.amount > 0 ? (
+                          <Button variant="outline" size="sm" className="min-h-9" onClick={() => setVoiding(p)}>
+                            <Ban className="h-3.5 w-3.5" />
+                            Void
+                          </Button>
+                        ) : null}
+                      </td>
                     </tr>
                   );
                 })}
@@ -256,6 +319,41 @@ export default function PaymentsPage() {
           </div>
         )}
       </section>
+
+      {voiding && (
+        <Dialog open onOpenChange={(o) => !o && setVoiding(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Void this payment?</DialogTitle>
+              <DialogDescription>
+                Backs {currency(voiding.amount)} out of revenue by recording a matching correction. The original
+                stays on the books for the audit trail. Use this only for a payment entered by mistake — not a real
+                no-refund cancellation, where the money is earned.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-xl bg-black/[0.03] p-3">
+              <p className="text-sm font-semibold text-[var(--cream-foreground)]">
+                {voiding.company_name ?? "—"} · {currency(voiding.amount)}
+              </p>
+              <p className="font-mono text-xs text-[var(--cream-foreground)]/60">
+                {voiding.truck_number ?? "—"} · {voiding.receipt_number ?? "—"}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setVoiding(null)}>
+                Cancel
+              </Button>
+              <Button
+                className="btn-embossed bg-[var(--danger)] text-white hover:bg-[var(--danger-strong)]"
+                disabled={busy}
+                onClick={confirmVoid}
+              >
+                {busy ? "Voiding…" : `Void ${currency(voiding.amount)}`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

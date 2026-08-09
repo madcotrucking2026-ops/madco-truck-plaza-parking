@@ -27,6 +27,11 @@ class Payment(Base):
     # Unique so the same PaymentIntent can never be used to issue two passes.
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
 
+    # When set, this row is the negative REVERSAL that voids the payment with this
+    # id — recorded instead of deleting the original (payments are permanent).
+    # Its presence on another row is also how we know the original was voided.
+    reversal_of_payment_id: Mapped[int | None] = mapped_column(ForeignKey("payments.id"))
+
     # Stamped in the PLAZA's timezone, not the database's. This column is bucketed
     # by calendar day for "today's revenue" and the daily report, and the database's
     # own now() is UTC: in Michigan that put every payment taken after 8pm on

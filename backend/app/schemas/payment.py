@@ -34,3 +34,6 @@ class PaymentRead(BaseModel):
     employee_name: str | None
     notes: str | None
     paid_at: datetime
+    # Set on a reversal row — points at the payment it voids. Lets the UI mark the
+    # original as voided and show the reversal as a correction.
+    reversal_of_payment_id: int | None = None
