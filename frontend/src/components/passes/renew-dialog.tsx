@@ -45,18 +45,22 @@ import {
 
 // The cashier/manager records how the renewal was paid at the desk. Card/debit
 // go through the plaza's own terminal; the system records the method only.
-type PayChoice = "cash" | "credit_card" | "debit_card" | "check";
+type PayChoice = "cash" | "credit_card" | "debit_card" | "check" | "tender_card" | "house_account";
 const PAY_CHOICES: { value: PayChoice; label: string }[] = [
   { value: "cash", label: "Cash" },
   { value: "credit_card", label: "Credit Card" },
   { value: "debit_card", label: "Debit Card" },
   { value: "check", label: "Check" },
+  { value: "tender_card", label: "Tender Card" },
+  { value: "house_account", label: "House Account" },
 ];
 const METHOD_LABEL: Record<PayChoice, string> = {
   cash: "Cash",
   credit_card: "Credit Card",
   debit_card: "Debit Card",
   check: "Check",
+  tender_card: "Tender Card",
+  house_account: "House Account",
 };
 
 export function RenewDialog({

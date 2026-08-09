@@ -136,6 +136,8 @@ const PAYMENT_LABEL: Record<string, string> = {
   check: "Check",
   credit_card: "Card",
   debit_card: "Debit",
+  tender_card: "Tender Card",
+  house_account: "House Account",
   phone_payment: "Card by phone",
 };
 

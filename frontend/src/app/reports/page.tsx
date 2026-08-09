@@ -20,6 +20,8 @@ const METHOD_LABEL: Record<string, string> = {
   debit_card: "Debit Card",
   check: "Check",
   phone: "Card over Phone",
+  tender_card: "Tender Card",
+  house_account: "House Account",
 };
 
 export default function ReportsPage() {

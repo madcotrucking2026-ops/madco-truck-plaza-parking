@@ -29,6 +29,8 @@ class PaymentMethod(str, enum.Enum):
     debit_card = "debit_card"
     check = "check"
     phone = "phone"
+    tender_card = "tender_card"
+    house_account = "house_account"
 
 
 class MonthlyCustomerStatus(str, enum.Enum):

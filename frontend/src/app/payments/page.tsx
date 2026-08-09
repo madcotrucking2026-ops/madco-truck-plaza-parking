@@ -47,6 +47,8 @@ const METHOD_STYLE: Record<string, { label: string; className: string; Icon: Luc
   debit_card: { label: "Debit Card", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]", Icon: CreditCard },
   phone: { label: "Card / Phone", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]", Icon: CreditCard },
   check: { label: "Check", className: "bg-[var(--forest-600)]/15 text-[var(--forest-600)]", Icon: FileCheck2 },
+  tender_card: { label: "Tender Card", className: "bg-[var(--amber-500)]/15 text-[var(--amber-ink)]", Icon: CreditCard },
+  house_account: { label: "House Account", className: "bg-black/5 text-[var(--cream-foreground)]/70", Icon: Wallet },
 };
 
 function MethodBadge({ method, checkNumber }: { method: string; checkNumber: string | null }) {
@@ -64,7 +66,7 @@ function MethodBadge({ method, checkNumber }: { method: string; checkNumber: str
 function bucketOf(method: string): "cash" | "card" | "check" | "other" {
   if (method === "cash") return "cash";
   if (method === "check") return "check";
-  if (method === "credit_card" || method === "debit_card" || method === "phone") return "card";
+  if (method === "credit_card" || method === "debit_card" || method === "phone" || method === "tender_card") return "card";
   return "other";
 }
 

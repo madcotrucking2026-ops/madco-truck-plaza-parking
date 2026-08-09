@@ -37,12 +37,14 @@ const PASS_TYPES: { value: PassType; label: string; hint: string }[] = [
 // The cashier records how the customer paid at the desk. Card/debit are swiped
 // on the plaza's own terminal; the system just records the method (there is no
 // online processing — customer self-service was retired).
-type PayChoice = "cash" | "credit_card" | "debit_card" | "check";
+type PayChoice = "cash" | "credit_card" | "debit_card" | "check" | "tender_card" | "house_account";
 const PAY_CHOICES: { value: PayChoice; label: string }[] = [
   { value: "cash", label: "Cash" },
   { value: "credit_card", label: "Credit Card" },
   { value: "debit_card", label: "Debit Card" },
   { value: "check", label: "Check" },
+  { value: "tender_card", label: "Tender Card" },
+  { value: "house_account", label: "House Account" },
 ];
 
 export default function IssuePassPage() {
