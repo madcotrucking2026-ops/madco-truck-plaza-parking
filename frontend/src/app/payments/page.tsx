@@ -10,7 +10,8 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { cn } from "@/lib/utils";
-import { SubTabs, MONEY_TABS } from "@/components/common/sub-tabs";
+import { SubTabs } from "@/components/common/sub-tabs";
+import { MONEY_TABS } from "@/components/common/tab-groups";
 
 type Payment = {
   id: number;

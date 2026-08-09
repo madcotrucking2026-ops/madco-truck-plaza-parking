@@ -5,7 +5,8 @@ import { History } from "lucide-react";
 import { api, type AuditLogEntry } from "@/lib/api";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
-import { SubTabs, SETTINGS_TABS } from "@/components/common/sub-tabs";
+import { SubTabs } from "@/components/common/sub-tabs";
+import { SETTINGS_TABS } from "@/components/common/tab-groups";
 
 const ACTION_STYLE: Record<string, { label: string; className: string }> = {
   created: { label: "Created", className: "bg-[var(--success)]/15 text-[var(--success-ink)]" },

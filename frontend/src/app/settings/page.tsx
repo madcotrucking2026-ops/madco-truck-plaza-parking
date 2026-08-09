@@ -2,7 +2,8 @@ import { AddStaffCard } from "@/components/settings/add-staff-card";
 import { StaffListCard } from "@/components/settings/staff-list-card";
 import { PlazaSettingsCard } from "@/components/settings/plaza-settings-card";
 import { BackupCard } from "@/components/settings/backup-card";
-import { SubTabs, SETTINGS_TABS } from "@/components/common/sub-tabs";
+import { SubTabs } from "@/components/common/sub-tabs";
+import { SETTINGS_TABS } from "@/components/common/tab-groups";
 
 export default function SettingsPage() {
   return (

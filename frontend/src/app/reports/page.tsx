@@ -8,7 +8,8 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { RevenueChart } from "@/components/reports/revenue-chart";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
-import { SubTabs, MONEY_TABS } from "@/components/common/sub-tabs";
+import { SubTabs } from "@/components/common/sub-tabs";
+import { MONEY_TABS } from "@/components/common/tab-groups";
 
 const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD" });

@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-export type SubTab = { label: string; href: string };
+import type { SubTab } from "@/components/common/tab-groups";
 
 /** Segmented links that group related screens under a single menu entry, so the
  *  sidebar stays short without hiding anything. The active tab is the one whose
  *  href matches the current path. 44px tall on phones (the desk taps in gloves),
  *  snapping to the tighter desktop rhythm at sm — same control as the payments
- *  period switcher. */
+ *  period switcher. The tab sets live in ./tab-groups. */
 export function SubTabs({ items }: { items: SubTab[] }) {
   const pathname = usePathname();
   return (
@@ -35,18 +34,3 @@ export function SubTabs({ items }: { items: SubTab[] }) {
     </nav>
   );
 }
-
-// The groupings that fold four old menu items into two parents. Kept here so the
-// two pages in each group can never drift out of sync.
-export const MONEY_TABS: SubTab[] = [
-  { label: "Payments", href: "/payments" },
-  { label: "Reports", href: "/reports" },
-];
-export const COMPANY_TABS: SubTab[] = [
-  { label: "Companies", href: "/companies" },
-  { label: "Monthly", href: "/monthly-customers" },
-];
-export const SETTINGS_TABS: SubTab[] = [
-  { label: "Settings", href: "/settings" },
-  { label: "Activity log", href: "/audit-log" },
-];

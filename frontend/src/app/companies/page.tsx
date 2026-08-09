@@ -7,7 +7,8 @@ import { api, type CompanySummary } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
-import { SubTabs, COMPANY_TABS } from "@/components/common/sub-tabs";
+import { SubTabs } from "@/components/common/sub-tabs";
+import { COMPANY_TABS } from "@/components/common/tab-groups";
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<CompanySummary[] | null>(null);

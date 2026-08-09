@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { InfoTip } from "@/components/common/info-tip";
-import { SubTabs, COMPANY_TABS } from "@/components/common/sub-tabs";
+import { SubTabs } from "@/components/common/sub-tabs";
+import { COMPANY_TABS } from "@/components/common/tab-groups";
 import {
   Select,
   SelectContent,
