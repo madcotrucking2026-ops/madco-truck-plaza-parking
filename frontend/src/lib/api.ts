@@ -236,6 +236,11 @@ export type IssuePassRequest = {
   end_date?: string;
   payment_method: PaymentMethod;
   check_number?: string;
+  // false = register the pass/customer but record NO payment (onboarding a
+  // customer who already paid outside the system, so revenue isn't inflated).
+  record_payment?: boolean;
+  // backdate a recorded payment to a real past receipt date (YYYY-MM-DD).
+  paid_on?: string;
 };
 
 export type CreatePaymentRequest = {

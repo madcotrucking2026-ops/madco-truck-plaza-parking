@@ -35,6 +35,14 @@ class IssuePassRequest(BaseModel):
     payment_method: PaymentMethod
     check_number: str | None = Field(default=None, max_length=IDENT_MAX)
 
+    # False when onboarding a customer who already paid outside the system: the
+    # pass + customer are registered but NO payment is recorded, so back-entry
+    # doesn't inflate this month's revenue. Default True = normal desk sale.
+    record_payment: bool = True
+    # Backdate a recorded payment to the day it was actually taken (a real prior
+    # receipt). Ignored when record_payment is False; must not be in the future.
+    paid_on: date | None = None
+
     @model_validator(mode="after")
     def _sane_span(self):
         if self.end_date is not None:

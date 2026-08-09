@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
@@ -205,6 +205,8 @@ def _issue_pass_and_payment(
     check_number: str | None,
     stripe_payment_intent_id: str | None = None,
     price_from_charge: float | None = None,
+    record_payment: bool = True,
+    paid_on: date | None = None,
 ) -> ParkingPass:
     """Shared by the normal Issue Pass endpoint and the Stripe finalize/webhook
     endpoints — every code path that actually creates a pass + payment record
@@ -286,15 +288,20 @@ def _issue_pass_and_payment(
     db.add(parking_pass)
     db.flush()
 
-    payment = Payment(
-        parking_pass_id=parking_pass.id,
-        amount=price,
-        method=payment_method,
-        check_number=check_number,
-        stripe_payment_intent_id=stripe_payment_intent_id,
-        receipt_number=generate_receipt_number("PMT", issue_date),
-    )
-    db.add(payment)
+    # Onboarding an already-paid customer records the pass but NOT the money, so
+    # back-entry never lands in this month's revenue. A real sale (the default)
+    # records the payment, optionally backdated to the day it was actually taken.
+    if record_payment:
+        payment = Payment(
+            parking_pass_id=parking_pass.id,
+            amount=price,
+            method=payment_method,
+            check_number=check_number,
+            stripe_payment_intent_id=stripe_payment_intent_id,
+            receipt_number=generate_receipt_number("PMT", issue_date),
+            paid_at=datetime(paid_on.year, paid_on.month, paid_on.day, 12, 0) if paid_on else business_now(),
+        )
+        db.add(payment)
 
     if pass_type == PassType.monthly:
         if monthly_customer is None:
@@ -308,11 +315,12 @@ def _issue_pass_and_payment(
         else:
             monthly_customer.renewal_date = expiration_date
 
+    charge_note = "" if record_payment else " — no charge recorded (already paid)"
     log_audit(
         db,
         AuditAction.created,
         "parking_pass",
-        f"Issued {pass_type.value} pass for {company.name} (truck {truck_number or '—'})",
+        f"Issued {pass_type.value} pass for {company.name} (truck {truck_number or '—'}){charge_note}",
         entity_id=parking_pass.id,
     )
 
@@ -324,6 +332,8 @@ def _issue_pass_and_payment(
 @router.post("", response_model=PassRead)
 def issue_pass(payload: IssuePassRequest, db: Session = Depends(get_db)) -> ParkingPass:
     _validate_weekly_span(payload.pass_type, payload.issue_date, payload.end_date)
+    if payload.paid_on is not None and payload.paid_on > business_today():
+        raise HTTPException(status_code=400, detail="Payment date can't be in the future.")
     return _issue_pass_and_payment(
         db,
         company_name=payload.company_name,
@@ -338,6 +348,8 @@ def issue_pass(payload: IssuePassRequest, db: Session = Depends(get_db)) -> Park
         price_override=payload.price,
         payment_method=payload.payment_method,
         check_number=payload.check_number,
+        record_payment=payload.record_payment,
+        paid_on=payload.paid_on,
     )
 
 

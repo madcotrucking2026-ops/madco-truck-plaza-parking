@@ -74,6 +74,8 @@ function IssuePassForm() {
       new_company_monthly_rate: "",
       pay_choice: "cash" as PayChoice,
       check_number: "",
+      record_payment: true,
+      paid_on: "",
     };
   });
   const [submitting, setSubmitting] = useState(false);
@@ -224,6 +226,8 @@ function IssuePassForm() {
         end_date: form.end_date || undefined,
         payment_method: form.pay_choice as PaymentMethod,
         check_number: form.pay_choice === "check" ? form.check_number || undefined : undefined,
+        record_payment: form.record_payment,
+        paid_on: form.record_payment && form.paid_on ? form.paid_on : undefined,
       };
       const pass = await api.post<PassRead>("/api/passes", payload);
       setIssued({ ...pass, company_name: form.company_name, truck_number: form.truck_number });
@@ -395,25 +399,50 @@ function IssuePassForm() {
         <CardHeader>
           <CardTitle className="text-[var(--cream-foreground)]">Payment</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Payment Method">
-            <Select value={form.pay_choice} onValueChange={(v) => set("pay_choice", v as PayChoice)}>
-              <SelectTrigger className="w-full">
-                <SelectValue>{(v: PayChoice) => PAY_CHOICES.find((p) => p.value === v)?.label ?? v}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {PAY_CHOICES.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          {form.pay_choice === "check" && (
-            <Field label="Check Number">
-              <Input value={form.check_number} onChange={(e) => set("check_number", e.target.value)} />
-            </Field>
+        <CardContent className="space-y-4">
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <input
+              type="checkbox"
+              checked={!form.record_payment}
+              onChange={(e) => set("record_payment", !e.target.checked)}
+              className="h-5 w-5 shrink-0 cursor-pointer accent-[var(--forest-700)]"
+            />
+            <span className="text-sm text-[var(--cream-foreground)]">
+              Already paid &mdash; don&rsquo;t record a payment (existing customer)
+            </span>
+          </label>
+
+          {form.record_payment ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Payment Method">
+                <Select value={form.pay_choice} onValueChange={(v) => set("pay_choice", v as PayChoice)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>{(v: PayChoice) => PAY_CHOICES.find((p) => p.value === v)?.label ?? v}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAY_CHOICES.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              {form.pay_choice === "check" && (
+                <Field label="Check Number">
+                  <Input value={form.check_number} onChange={(e) => set("check_number", e.target.value)} />
+                </Field>
+              )}
+              <Field label="Payment Date">
+                <Input type="date" value={form.paid_on} onChange={(e) => set("paid_on", e.target.value)} />
+                <p className="mt-1.5 text-xs text-muted-foreground">Leave blank for today &mdash; set only to log a past receipt.</p>
+              </Field>
+            </div>
+          ) : (
+            <p className="text-xs text-[var(--cream-foreground)]/60">
+              No charge recorded. The pass and customer are registered with the dates above; this month&rsquo;s
+              revenue stays untouched. Use for a customer who already paid outside the system.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -425,7 +454,9 @@ function IssuePassForm() {
       >
         {submitting
           ? "Working…"
-          : `Issue Pass & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`}
+          : form.record_payment
+            ? `Issue Pass & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`
+            : "Register — No Charge"}
       </Button>
     </form>
   );
