@@ -73,9 +73,11 @@ def _price_for(
         return settings.daily_price * days
     if pass_type == PassType.weekly:
         # Per whole week — a single-week renewal (the common case) is unchanged;
-        # a multi-week catch-up on a lapsed weekly bills each week.
+        # a multi-week catch-up on a lapsed weekly bills each week. An override is
+        # the custom per-week rate the cashier types (some customers negotiate one).
         weeks = max((expiration_date - issue_date).days // 7, 1)
-        return settings.weekly_price * weeks
+        rate = override if override is not None else settings.weekly_price
+        return rate * weeks
     # Monthly: customers sometimes pay for several months at once (2, 3+) —
     # the total is the per-month rate times how many months this pass spans.
     rate = _monthly_rate_for(existing_monthly_price, override)
@@ -510,6 +512,10 @@ def cancel_pass(pass_id: int, db: Session = Depends(get_db)) -> ParkingPass:
         raise HTTPException(status_code=404, detail="Pass not found")
 
     parking_pass.status = PassStatus.cancelled
+    # Give the reserved spot back — a cancelled monthly (often a mistaken entry)
+    # must not keep its Zone A spot held forever. No-op for a pass that holds no
+    # reservation (daily/weekly).
+    release_reserved_spot(db, parking_pass.vehicle_id)
 
     log_audit(
         db,

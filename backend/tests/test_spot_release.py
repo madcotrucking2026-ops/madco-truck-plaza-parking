@@ -48,6 +48,21 @@ def test_close_out_releases_the_reserved_spot(db, monkeypatch):
     assert db.get(Spot, p.spot_id).reserved_vehicle_id is None  # released to the pool
 
 
+def test_cancel_releases_the_reserved_spot(db, monkeypatch):
+    """Cancelling a monthly (often a mistaken entry) frees its Zone A spot — the
+    reservation must not outlive the pass."""
+    from app.routers.passes import cancel_pass
+
+    monkeypatch.setattr(settings, "parking_capacity", 2)
+    ensure_spots(db)
+    p = _issue_monthly(db, "M1")
+    db.commit()
+    assert db.get(Spot, p.spot_id).reserved_vehicle_id == p.vehicle_id
+    cancel_pass(p.id, db=db)
+    db.commit()
+    assert db.get(Spot, p.spot_id).reserved_vehicle_id is None  # freed on cancel
+
+
 def test_continue_renewal_keeps_the_reservation(db, monkeypatch):
     monkeypatch.setattr(settings, "parking_capacity", 2)
     ensure_spots(db)

@@ -74,6 +74,7 @@ function IssuePassForm() {
       new_company_monthly_rate: "",
       pay_choice: "cash" as PayChoice,
       check_number: "",
+      weekly_rate: "",
       record_payment: true,
       paid_on: "",
     };
@@ -183,7 +184,7 @@ function IssuePassForm() {
     form.pass_type === "daily"
       ? rates.daily * Math.max(days, 1)
       : form.pass_type === "weekly"
-        ? (weeklyInvalid ? null : rates.weekly)
+        ? (weeklyInvalid ? null : form.weekly_rate !== "" ? Number(form.weekly_rate) : rates.weekly)
         : monthlyRate != null
           ? monthlyRate * months
           : null;
@@ -192,10 +193,6 @@ function IssuePassForm() {
     e.preventDefault();
     if (!form.company_name || !form.phone) {
       toast.error("Company name and phone are required.");
-      return;
-    }
-    if (!form[identifierField.key]) {
-      toast.error(`${identifierField.label} is required.`);
       return;
     }
     if (weeklyInvalid) {
@@ -211,7 +208,12 @@ function IssuePassForm() {
 
     setSubmitting(true);
     try {
-      const priceOverride = form.pass_type === "monthly" ? Number(form.new_company_monthly_rate) : undefined;
+      const priceOverride =
+        form.pass_type === "monthly"
+          ? Number(form.new_company_monthly_rate)
+          : form.pass_type === "weekly" && form.weekly_rate !== ""
+            ? Number(form.weekly_rate)
+            : undefined;
 
       const payload: IssuePassRequest = {
         company_name: form.company_name,
@@ -298,7 +300,7 @@ function IssuePassForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label={identifierField.label} required>
+          <Field label={`${identifierField.label} (optional)`}>
             <Input
               value={form[identifierField.key]}
               onChange={(e) => set(identifierField.key, e.target.value)}
@@ -364,17 +366,33 @@ function IssuePassForm() {
             </Select>
           </Field>
           <Field label="Price">
-            <div className="flex h-11 items-center rounded-lg border border-input bg-transparent px-2.5 font-mono text-sm sm:h-8">
-              {finalPrice !== null
-                ? `${currency(finalPrice)}${
-                    form.pass_type === "daily"
-                      ? ` (${days} day${days === 1 ? "" : "s"} × $${rates.daily})`
-                      : form.pass_type === "monthly" && monthlyRate != null
-                        ? ` (${months} month${months === 1 ? "" : "s"} × ${currency(monthlyRate)})`
-                        : ""
-                  }`
-                : "—"}
-            </div>
+            {form.pass_type === "weekly" ? (
+              <>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.weekly_rate}
+                  onChange={(e) => set("weekly_rate", e.target.value)}
+                  placeholder={String(rates.weekly)}
+                />
+                <p className="mt-1.5 text-xs text-[var(--cream-foreground)]/60">
+                  Per week. Leave blank for the default ${rates.weekly}; set a custom rate for a negotiated price.
+                </p>
+              </>
+            ) : (
+              <div className="flex h-11 items-center rounded-lg border border-input bg-transparent px-2.5 font-mono text-sm sm:h-8">
+                {finalPrice !== null
+                  ? `${currency(finalPrice)}${
+                      form.pass_type === "daily"
+                        ? ` (${days} day${days === 1 ? "" : "s"} × $${rates.daily})`
+                        : form.pass_type === "monthly" && monthlyRate != null
+                          ? ` (${months} month${months === 1 ? "" : "s"} × ${currency(monthlyRate)})`
+                          : ""
+                    }`
+                  : "—"}
+              </div>
+            )}
           </Field>
           <Field label="Start Date">
             <Input type="date" value={form.start_date} onChange={(e) => setStartDate(e.target.value)} />

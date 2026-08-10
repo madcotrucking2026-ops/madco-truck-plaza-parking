@@ -26,9 +26,9 @@ class IssuePassRequest(BaseModel):
 
     pass_type: PassType
     price: float | None = Field(default=None, ge=0, le=PRICE_MAX)
-    """Only meaningful when setting a monthly rate for a brand-new company —
-    ignored for daily/weekly (always computed) and for existing monthly
-    customers (their established rate is looked up automatically)."""
+    """A custom per-period rate the cashier types. Monthly: this truck's own
+    per-month rate. Weekly: a negotiated per-week rate. Ignored for daily (always
+    computed). For an existing monthly customer it overrides the looked-up rate."""
     issue_date: date
     end_date: date | None = None
 
