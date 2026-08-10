@@ -202,13 +202,14 @@ export type CompanyProfile = {
 
 export type LotCheckResult = {
   found: boolean;
+  pass_id?: number | null;
   status?: "active" | "expiring_soon" | "expired" | "cancelled";
   company_name?: string;
   phone?: string;
   truck_number?: string;
   trailer_number?: string;
   license_plate?: string;
-  pass_type?: "daily" | "weekly" | "monthly";
+  pass_type?: PassType;
   expiration_date?: string;
   notes?: string;
   amount_paid?: number | null;

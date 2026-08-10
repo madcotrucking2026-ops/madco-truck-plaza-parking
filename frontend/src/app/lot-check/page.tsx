@@ -2,11 +2,12 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
-import { api, type LotCheckResult } from "@/lib/api";
+import { Search, RefreshCcw } from "lucide-react";
+import { api, type LotCheckResult, type PassListItem } from "@/lib/api";
 import { currency, daysBetween, todayISO } from "@/lib/pricing";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RenewDialog } from "@/components/passes/renew-dialog";
 
 // Per-status text colour: the amber "expiring" band is light, so white text on
 // it fails contrast (~1.7:1) — it wears dark forest ink instead. The dark bands
@@ -30,6 +31,7 @@ function LotCheckInner() {
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [result, setResult] = useState<LotCheckResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [renewing, setRenewing] = useState(false);
 
   const runSearch = useCallback(async (value: string) => {
     if (!value.trim()) return;
@@ -54,6 +56,28 @@ function LotCheckInner() {
   }
 
   const style = result?.found && result.status ? STATUS_STYLE[result.status] : { bg: "bg-[var(--stone-500)]", fg: "text-white", label: "NOT FOUND" };
+
+  // The shape RenewDialog needs — lets the cashier renew or close out the truck
+  // they just looked up (their route to ANY pass, since they have no full list).
+  const renewPass: PassListItem | null =
+    result?.found && result.pass_id != null && result.pass_type && result.status && result.expiration_date
+      ? {
+          id: result.pass_id,
+          pass_type: result.pass_type,
+          status: result.status,
+          price: 0,
+          issue_date: result.expiration_date,
+          expiration_date: result.expiration_date,
+          receipt_number: null,
+          spot_number: result.spot_number ?? null,
+          spot_label: result.spot_label ?? null,
+          company_name: result.company_name ?? null,
+          company_id: null,
+          truck_number: result.truck_number ?? null,
+          trailer_number: result.trailer_number ?? null,
+          license_plate: result.license_plate ?? null,
+        }
+      : null;
 
   return (
     <div className="max-w-xl space-y-6">
@@ -125,7 +149,28 @@ function LotCheckInner() {
               {result.notes && <DetailRow label="Notes" value={result.notes} />}
             </div>
           )}
+
+          {renewPass && renewPass.status !== "cancelled" && (
+            <Button
+              className="btn-embossed w-full bg-[var(--forest-700)] text-[var(--ivory-100)] hover:bg-[var(--forest-600)]"
+              onClick={() => setRenewing(true)}
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Renew / Close out
+            </Button>
+          )}
         </div>
+      )}
+
+      {renewing && renewPass && (
+        <RenewDialog
+          pass={renewPass}
+          onOpenChange={(o) => !o && setRenewing(false)}
+          onRenewed={() => {
+            setRenewing(false);
+            runSearch(query);
+          }}
+        />
       )}
     </div>
   );

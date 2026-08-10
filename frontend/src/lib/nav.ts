@@ -8,6 +8,7 @@ import {
   ScanSearch,
   Grid3x3,
   CreditCard,
+  CalendarClock,
   Settings,
 } from "lucide-react";
 
@@ -44,6 +45,9 @@ export const NAV_ITEMS: NavItem[] = [
   // "Find a Truck": type a truck / trailer / plate, get the PAID / expiry card.
   // Same name on the dashboard tile and the page's own heading — one page, one verb.
   { label: "Find a Truck", href: "/lot-check", icon: ScanSearch, minRole: "attendant" },
+  // The cashier's renewal screen — expiring today/tomorrow + Renew inline, the
+  // front-desk version of the dashboard's "Needs attention" card.
+  { label: "Renewals", href: "/renewals", icon: CalendarClock, minRole: "attendant" },
   // The cashier's live open-spots board — front-desk tool, so attendant-visible.
   { label: "Open Spots", href: "/availability", icon: Grid3x3, minRole: "attendant" },
   // Money holds two tabs: the Payments ledger and the Reports charts.

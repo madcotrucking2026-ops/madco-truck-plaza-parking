@@ -96,6 +96,9 @@ class PassListItem(BaseModel):
 
 class LotCheckResult(BaseModel):
     found: bool
+    # The pass id — lets the front desk renew / close out the truck right from the
+    # lookup (the cashier's path to any pass, since they have no full passes list).
+    pass_id: int | None = None
     status: PassStatus | None = None
     company_name: str | None = None
     phone: str | None = None

@@ -7,7 +7,7 @@ Admin    = the owner (staff accounts, password resets, the audit trail).
 A cashier login must not be able to read the plaza's revenue, browse accounts,
 or renew/cancel passes by calling the API directly, no matter what the UI hides.
 """
-from datetime import date
+from datetime import date, timedelta
 
 
 def _admin_token(client) -> str:
@@ -59,6 +59,8 @@ def test_cashier_can_only_issue_passes_and_manage_spots(client):
 
     # CAN: find a truck — the cashier walks the lot, so the truck lookup is theirs.
     assert _get(client, "/api/lot-check?q=G1", cashier).status_code == 200
+    # CAN: see what's expiring today/tomorrow — the cashier's renewal screen.
+    assert _get(client, "/api/passes/expiring", cashier).status_code == 200
 
     # CANNOT (403, not 401 — they ARE logged in): everything else, including
     # other endpoints inside routers the cashier can partially reach.
@@ -76,11 +78,13 @@ def test_cashier_can_only_issue_passes_and_manage_spots(client):
     ):
         assert _get(client, path, cashier).status_code == 403, path
 
-    # CANNOT: renew, cancel, clear a spot's overstay — manager actions that live
-    # in routers the cashier CAN otherwise reach.
+    # CAN: renew — the cashier renews at the desk, same money-taking as issuing.
+    renew_end = (date.today() + timedelta(days=2)).isoformat()
     assert client.post(
-        f"/api/passes/{pass_id}/renew", json={"end_date": today, "payment_method": "cash"}, headers=H
-    ).status_code == 403
+        f"/api/passes/{pass_id}/renew", json={"end_date": renew_end, "payment_method": "cash"}, headers=H
+    ).status_code == 200, "cashier must be able to renew"
+
+    # CANNOT: cancel or clear a spot's overstay — manager money/override actions.
     assert client.post(f"/api/passes/{pass_id}/cancel", headers=H).status_code == 403
     assert client.post("/api/spots/1/clear-overstay", headers=H).status_code == 403
 

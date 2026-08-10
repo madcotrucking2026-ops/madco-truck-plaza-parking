@@ -510,8 +510,10 @@ def apply_renewal(
     return parking_pass
 
 
-@router.post("/{pass_id}/renew", response_model=PassRead, dependencies=[Depends(require_manager)])
+@router.post("/{pass_id}/renew", response_model=PassRead)
 def renew_pass(pass_id: int, payload: RenewPassRequest, db: Session = Depends(get_db)) -> ParkingPass:
+    # Any logged-in role can renew (the cashier renews at the desk, same as they
+    # issue) — cancel/void stay manager-only.
     parking_pass = db.get(ParkingPass, pass_id)
     if parking_pass is None:
         raise HTTPException(status_code=404, detail="Pass not found")
@@ -549,6 +551,45 @@ def cancel_pass(pass_id: int, db: Session = Depends(get_db)) -> ParkingPass:
 def list_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
     now = business_now()
     stmt = select(ParkingPass).order_by(ParkingPass.issue_date.desc(), ParkingPass.id.desc())
+    return [
+        PassListItem(
+            id=p.id,
+            pass_type=p.pass_type,
+            status=live_status(p.pass_type, p.expiration_date, now, p.status),
+            price=p.price,
+            issue_date=p.issue_date,
+            expiration_date=p.expiration_date,
+            receipt_number=p.receipt_number,
+            spot_number=p.spot_number,
+            spot_label=p.spot_label,
+            company_name=p.company.name if p.company else None,
+            company_id=p.company_id,
+            truck_number=p.vehicle.truck_number,
+            trailer_number=p.vehicle.trailer_number,
+            license_plate=p.vehicle.license_plate,
+        )
+        for p in db.scalars(stmt)
+    ]
+
+
+@router.get("/expiring", response_model=list[PassListItem])
+def list_expiring_passes(db: Session = Depends(get_db)) -> list[PassListItem]:
+    """The front-desk renewal list: passes expiring today or tomorrow (not
+    cancelled). Attendant-visible — unlike the full passes list — so the cashier
+    sees what to renew without the manager's dashboard or whole-passes screens.
+    Defined BEFORE /{pass_id} so the literal path wins over the id param route."""
+    now = business_now()
+    today = business_today()
+    tomorrow = today + timedelta(days=1)
+    stmt = (
+        select(ParkingPass)
+        .where(
+            ParkingPass.status != PassStatus.cancelled,
+            ParkingPass.expiration_date >= today,
+            ParkingPass.expiration_date <= tomorrow,
+        )
+        .order_by(ParkingPass.expiration_date.asc(), ParkingPass.id.desc())
+    )
     return [
         PassListItem(
             id=p.id,

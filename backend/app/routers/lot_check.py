@@ -59,6 +59,7 @@ def lot_check(q: str = Query(..., min_length=1), db: Session = Depends(get_db)) 
 
     return LotCheckResult(
         found=True,
+        pass_id=parking_pass.id,
         status=live_status(parking_pass.pass_type, parking_pass.expiration_date, business_now(), parking_pass.status),
         company_name=parking_pass.company.name if parking_pass.company else None,
         phone=parking_pass.company.phone if parking_pass.company else None,
