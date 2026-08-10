@@ -43,7 +43,7 @@ export default function CompaniesPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search company or phone…"
-          className="pl-9"
+          className="pl-9 sm:pl-9"
         />
       </div>
 

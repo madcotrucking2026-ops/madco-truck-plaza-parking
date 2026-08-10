@@ -104,7 +104,7 @@ export default function PassesPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search truck number, company, or receipt…"
-          className="h-11 pl-9 sm:h-10"
+          className="h-11 pl-9 sm:h-10 sm:pl-9"
         />
         {query && (
           <button

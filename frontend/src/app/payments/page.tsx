@@ -215,7 +215,7 @@ export default function PaymentsPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search company, truck, receipt, check #…"
-              className="h-11 pl-9 sm:h-9"
+              className="h-11 pl-9 sm:h-9 sm:pl-9"
             />
             {query && (
               <button
