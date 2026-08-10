@@ -46,6 +46,11 @@ def is_monthly_spot(number: int) -> bool:
     return 1 <= number <= monthly_spot_limit()
 
 
+# Pass types that hold a RESERVED spot in the monthly zone (released only on
+# close-out or cancel): monthly and yearly. Daily/weekly are pooled.
+_RESERVED_TYPES = (PassType.monthly, PassType.yearly)
+
+
 def release_reserved_spot(db: Session, vehicle_id: int) -> None:
     """Free a monthly truck's reserved spot(s) back to the pool. Called on
     close-out (the truck is leaving for good) — the ONLY thing that releases a
@@ -95,7 +100,7 @@ def ensure_spots(db: Session) -> None:
     # still holding a spot — a long-lapsed one is already back in the pool.
     for monthly_pass in db.scalars(
         select(ParkingPass).where(
-            ParkingPass.pass_type == PassType.monthly,
+            ParkingPass.pass_type.in_(_RESERVED_TYPES),
             ParkingPass.spot_id.is_not(None),
             _live_window_filter(),
         )
@@ -127,7 +132,7 @@ def _live_window_filter():
     return (ParkingPass.status != PassStatus.cancelled) & or_(
         (ParkingPass.pass_type == PassType.daily) & daily_holds,
         (ParkingPass.pass_type == PassType.weekly) & (ParkingPass.expiration_date >= today),
-        (ParkingPass.pass_type == PassType.monthly) & (ParkingPass.expiration_date >= grace_cutoff),
+        ParkingPass.pass_type.in_(_RESERVED_TYPES) & (ParkingPass.expiration_date >= grace_cutoff),
     )
 
 
@@ -240,7 +245,7 @@ def pick_free_spot(
     in_monthly_area = Spot.number <= limit
     in_daily_area = Spot.number > limit
 
-    if pass_type == PassType.monthly:
+    if pass_type in _RESERVED_TYPES:
         # 1. Reuse: their own spot is theirs — no lock/re-verify, it can't be sold
         #    out from under them (sellable excludes reserved spots).
         if vehicle_id is not None:
@@ -316,7 +321,7 @@ def move_pass_to_spot(db: Session, pass_id: int, to_number: int) -> ParkingPass:
 
     # A monthly truck's fixed spot follows the move: release the old spot back to
     # the pool and reserve the target to them. Daily/weekly carry no reservation.
-    if parking_pass.pass_type == PassType.monthly:
+    if parking_pass.pass_type in _RESERVED_TYPES:
         if old is not None:
             old.reserved_vehicle_id = None
         target.reserved_vehicle_id = parking_pass.vehicle_id

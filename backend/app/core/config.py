@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     daily_price: float = 20.0
     weekly_price: float = 100.0
     monthly_price: float = 250.0
+    # Fallback annual rate for a yearly pass. Each yearly customer negotiates their
+    # own price (typed at issue), so this is only used when none is entered.
+    yearly_price: float = 2000.0
 
     # Total parking spots on the lot — sizes the spot inventory (rows are
     # seeded/deactivated idempotently at startup) and the occupancy readout.

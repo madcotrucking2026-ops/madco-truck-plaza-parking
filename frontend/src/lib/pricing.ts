@@ -57,6 +57,7 @@ function addMonthsISO(iso: string, n: number): string {
 export function defaultEndDate(passType: PassType, startDate: string): string {
   if (passType === "daily") return addDaysISO(startDate, 1);
   if (passType === "weekly") return addDaysISO(startDate, 7);
+  if (passType === "yearly") return addMonthsISO(startDate, 12);
   return addMonthsISO(startDate, 1);
 }
 

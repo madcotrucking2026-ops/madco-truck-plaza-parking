@@ -220,7 +220,7 @@ export type LotCheckResult = {
 };
 
 export type VehicleType = "truck" | "trailer" | "bobtail" | "flatbed" | "car" | "other";
-export type PassType = "daily" | "weekly" | "monthly";
+export type PassType = "daily" | "weekly" | "monthly" | "yearly";
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "check" | "phone" | "tender_card" | "house_account";
 
 export type IssuePassRequest = {

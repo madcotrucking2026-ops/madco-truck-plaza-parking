@@ -33,6 +33,7 @@ const PASS_TYPES: { value: PassType; label: string; hint: string }[] = [
   { value: "daily", label: "Daily", hint: "$20/day" },
   { value: "weekly", label: "Weekly", hint: "$100 flat" },
   { value: "monthly", label: "Monthly", hint: "custom per company" },
+  { value: "yearly", label: "Yearly", hint: "custom per customer" },
 ];
 // The cashier records how the customer paid at the desk. Card/debit are swiped
 // on the plaza's own terminal; the system just records the method (there is no
@@ -75,6 +76,7 @@ function IssuePassForm() {
       pay_choice: "cash" as PayChoice,
       check_number: "",
       weekly_rate: "",
+      yearly_rate: "",
       record_payment: true,
       paid_on: "",
     };
@@ -185,9 +187,11 @@ function IssuePassForm() {
       ? rates.daily * Math.max(days, 1)
       : form.pass_type === "weekly"
         ? (weeklyInvalid ? null : form.weekly_rate !== "" ? Number(form.weekly_rate) : rates.weekly)
-        : monthlyRate != null
-          ? monthlyRate * months
-          : null;
+        : form.pass_type === "yearly"
+          ? (form.yearly_rate !== "" ? Number(form.yearly_rate) : null)
+          : monthlyRate != null
+            ? monthlyRate * months
+            : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -205,6 +209,10 @@ function IssuePassForm() {
       toast.error("Set this truck's monthly rate first.");
       return;
     }
+    if (form.pass_type === "yearly" && !form.yearly_rate) {
+      toast.error("Set the annual price for this customer.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -213,7 +221,9 @@ function IssuePassForm() {
           ? Number(form.new_company_monthly_rate)
           : form.pass_type === "weekly" && form.weekly_rate !== ""
             ? Number(form.weekly_rate)
-            : undefined;
+            : form.pass_type === "yearly" && form.yearly_rate !== ""
+              ? Number(form.yearly_rate)
+              : undefined;
 
       const payload: IssuePassRequest = {
         company_name: form.company_name,
@@ -378,6 +388,20 @@ function IssuePassForm() {
                 />
                 <p className="mt-1.5 text-xs text-[var(--cream-foreground)]/60">
                   Per week. Leave blank for the default ${rates.weekly}; set a custom rate for a negotiated price.
+                </p>
+              </>
+            ) : form.pass_type === "yearly" ? (
+              <>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.yearly_rate}
+                  onChange={(e) => set("yearly_rate", e.target.value)}
+                  placeholder="e.g. 2000"
+                />
+                <p className="mt-1.5 text-xs text-[var(--cream-foreground)]/60">
+                  Custom annual price for this customer. They get a reserved spot in the monthly zone for the year.
                 </p>
               </>
             ) : (

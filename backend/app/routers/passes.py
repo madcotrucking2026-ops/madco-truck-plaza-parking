@@ -35,6 +35,8 @@ def _expiration_for(pass_type: PassType, issue_date: date, end_date: date | None
         return issue_date + timedelta(days=1)
     if pass_type == PassType.weekly:
         return issue_date + timedelta(days=7)
+    if pass_type == PassType.yearly:
+        return add_months(issue_date, 12)
     return add_months(issue_date, 1)
 
 
@@ -78,6 +80,10 @@ def _price_for(
         weeks = max((expiration_date - issue_date).days // 7, 1)
         rate = override if override is not None else settings.weekly_price
         return rate * weeks
+    if pass_type == PassType.yearly:
+        # Flat annual price the cashier sets per customer (each yearly customer
+        # negotiates their own); the default is only a fallback (e.g. a renewal).
+        return override if override is not None else settings.yearly_price
     # Monthly: customers sometimes pay for several months at once (2, 3+) —
     # the total is the per-month rate times how many months this pass spans.
     rate = _monthly_rate_for(existing_monthly_price, override)
@@ -98,6 +104,10 @@ def _close_out_price(pass_type: PassType, start: date, end: date, existing_month
     """A departing customer pays for time ACTUALLY used: whole periods at the
     period rate + leftover days at the daily rate. The leftover is capped at one
     more period's rate, so closing out never costs more than just continuing."""
+    if pass_type == PassType.yearly:
+        # Rare: a yearly leaving mid-term settles at the daily rate for days used,
+        # never above the annual price. (No refunds — this only ever adds.)
+        return min(float(settings.daily_price) * max((end - start).days, 1), float(settings.yearly_price))
     if pass_type == PassType.daily:
         return float(settings.daily_price) * max((end - start).days, 1)
     if pass_type == PassType.weekly:
@@ -450,6 +460,11 @@ def apply_renewal(
             receipt_number=generate_receipt_number("PMT", business_today()),
         )
     )
+
+    if parking_pass.pass_type == PassType.yearly and mode == "close_out":
+        # Yearly holds a reserved spot in the monthly zone too — free it when the
+        # customer leaves (a continuing yearly renewal keeps its spot).
+        release_reserved_spot(db, parking_pass.vehicle_id)
 
     if parking_pass.pass_type == PassType.monthly:
         monthly_customer = db.scalar(
