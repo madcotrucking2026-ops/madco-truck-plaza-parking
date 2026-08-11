@@ -270,16 +270,41 @@ function IssuePassForm() {
     }));
   }
 
+  function nextCustomer() {
+    setIssued(null);
+    // Full reset for a DIFFERENT customer: clear who/what/price, keep the pass
+    // type + payment method + dates so a run of same-type sales stays fast. This
+    // is what removes the need to refresh the page between customers.
+    setForm((f) => ({
+      ...f,
+      company_name: "",
+      phone: "",
+      truck_number: "",
+      trailer_number: "",
+      license_plate: "",
+      new_company_monthly_rate: "",
+      weekly_rate: "",
+      yearly_rate: "",
+      check_number: "",
+      paid_on: "",
+    }));
+  }
+
   if (issued) {
     return (
       <div className="mx-auto max-w-md space-y-4">
         <PassTicket pass={issued} />
-        <div className="flex gap-2 print:hidden">
+        <div className="flex flex-wrap gap-2 print:hidden">
           <Button className="btn-embossed flex-1 bg-[var(--amber-500)] text-[var(--forest-950)] hover:bg-[var(--amber-600)]" onClick={() => window.print()}>
             Print Pass
           </Button>
-          <Button variant="outline" className="flex-1" onClick={addAnother}>
-            {form.pass_type === "monthly" ? `Add Another Truck for ${form.company_name}` : "Issue Another"}
+          {form.pass_type === "monthly" && (
+            <Button variant="outline" className="flex-1" onClick={addAnother}>
+              Add Truck for {form.company_name}
+            </Button>
+          )}
+          <Button variant="outline" className="flex-1" onClick={nextCustomer}>
+            {form.pass_type === "monthly" ? "New Customer" : "Issue Another"}
           </Button>
         </div>
       </div>

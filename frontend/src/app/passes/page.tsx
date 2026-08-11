@@ -21,6 +21,7 @@ export default function PassesPage() {
   const [passes, setPasses] = useState<PassListItem[] | null>(null);
   const [err, setErr] = useState(false);
   const [query, setQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [renewingPass, setRenewingPass] = useState<PassListItem | null>(null);
   const [viewingPass, setViewingPass] = useState<PassListItem | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
@@ -30,12 +31,21 @@ export default function PassesPage() {
   const q = query.trim().toLowerCase();
   const filtered = !passes
     ? null
-    : !q
-      ? passes
-      : passes.filter((p) =>
-          [p.truck_number, p.trailer_number, p.license_plate, p.company_name, p.receipt_number]
-            .some((v) => v?.toLowerCase().includes(q)),
-        );
+    : passes.filter((p) => {
+        // "Issued on" — the day the pass was issued (what the client wants to
+        // review, day by day). Combined with the text search.
+        if (dateFilter && p.issue_date !== dateFilter) return false;
+        if (
+          q &&
+          ![p.truck_number, p.trailer_number, p.license_plate, p.company_name, p.receipt_number].some((v) =>
+            v?.toLowerCase().includes(q),
+          )
+        )
+          return false;
+        return true;
+      });
+  // Quick daily tally: total price of the passes issued on the chosen day.
+  const dayTotal = (dateFilter && filtered ? filtered : []).reduce((s, p) => s + p.price, 0);
 
   // Deliberately does NOT null out `passes` — this also runs on window focus, and
   // blanking the list into skeletons every time the manager tabs back is worse
@@ -98,24 +108,56 @@ export default function PassesPage() {
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search truck number, company, or receipt…"
-          className="h-11 pl-9 sm:h-10 sm:pl-9"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full max-w-md flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search truck number, company, or receipt…"
+            className="h-11 pl-9 sm:h-10 sm:pl-9"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="issued-on" className="whitespace-nowrap text-xs font-medium text-muted-foreground">
+            Issued on
+          </label>
+          <Input
+            id="issued-on"
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="h-11 w-auto sm:h-10"
+          />
+          {dateFilter && (
+            <button
+              type="button"
+              onClick={() => setDateFilter("")}
+              className="text-muted-foreground hover:text-foreground"
+              title="Clear date"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
+
+      {dateFilter && filtered && (
+        <p className="-mt-2 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{filtered.length}</span> pass
+          {filtered.length === 1 ? "" : "es"} issued on {dateFilter} ·{" "}
+          <span className="font-mono">{currency(dayTotal)}</span>
+        </p>
+      )}
 
       <div className="card-paper overflow-hidden rounded-2xl">
         {err && passes === null ? (
@@ -132,7 +174,8 @@ export default function PassesPage() {
           </p>
         ) : filtered && filtered.length === 0 ? (
           <p className="p-6 text-sm text-[var(--cream-foreground)]/60">
-            No pass matches “{query}”.
+            No passes match your filters
+            {dateFilter ? ` (issued on ${dateFilter})` : query ? ` (“${query}”)` : ""}.
           </p>
         ) : (
           <div className="overflow-x-auto">
