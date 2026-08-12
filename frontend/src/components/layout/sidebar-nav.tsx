@@ -63,7 +63,7 @@ export function SidebarNav() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-[var(--amber-500)] text-[var(--forest-950)] shadow-sm"
+                  ? "btn-embossed bg-[var(--amber-500)] font-semibold text-[var(--forest-950)]"
                   : "text-[var(--stone-300)] hover:bg-white/5 hover:text-[var(--ivory-100)]",
               )}
             >

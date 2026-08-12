@@ -173,18 +173,31 @@
   --sidebar-ring: var(--amber-500);
 }
 
+/* Dark mode: a cool forest glow instead of the ivory sheen. */
+.dark body {
+  background-image:
+    radial-gradient(125% 80% at 50% -15%, oklch(1 0 0 / 6%), transparent 60%),
+    radial-gradient(85% 55% at 100% 0%, color-mix(in oklch, var(--forest-600) 22%, transparent), transparent 55%);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    /* Not a flat fill — a soft top light + a faint warm corner so the ivory
+       reads as crafted paper, not a dead background. */
+    background-image:
+      radial-gradient(125% 80% at 50% -15%, oklch(1 0 0 / 55%), transparent 60%),
+      radial-gradient(90% 55% at 100% 0%, color-mix(in oklch, var(--amber-500) 7%, transparent), transparent 55%);
   }
   html {
     @apply font-sans;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
+    letter-spacing: -0.014em; /* tighter display tracking — reads considered */
   }
 }
 
@@ -224,17 +237,19 @@
     --border: oklch(0.3 0.05 152 / 16%);
     --input: oklch(0.3 0.05 152 / 18%);
     box-shadow:
-      0 1px 0 0 oklch(1 0 0 / 60%) inset,
-      0 1px 2px 0 oklch(0 0 0 / 10%),
-      0 8px 20px -8px oklch(0 0 0 / 30%);
+      0 0 0 1px oklch(0.3 0.05 152 / 7%),
+      0 1px 0 0 oklch(1 0 0 / 65%) inset,
+      0 1px 2px 0 oklch(0 0 0 / 8%),
+      0 12px 28px -12px oklch(0 0 0 / 32%);
     transition: transform 180ms ease, box-shadow 180ms ease;
   }
   .card-paper:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 1px 0 0 oklch(1 0 0 / 60%) inset,
-      0 2px 4px 0 oklch(0 0 0 / 12%),
-      0 14px 28px -10px oklch(0 0 0 / 40%);
+      0 0 0 1px oklch(0.3 0.05 152 / 9%),
+      0 1px 0 0 oklch(1 0 0 / 65%) inset,
+      0 2px 6px 0 oklch(0 0 0 / 10%),
+      0 20px 40px -14px oklch(0 0 0 / 40%);
   }
 
   /* Brushed forest-green panel (sidebar, headers) */
@@ -318,4 +333,27 @@
   .animate-pulse { animation: none; }
   .tile-option,
   .card-paper { transition: none; }
+}
+
+/* Premium finishing touches, app-wide. */
+::selection {
+  background: color-mix(in oklch, var(--amber-500) 28%, transparent);
+  color: var(--forest-950);
+}
+/* Slim, themed scrollbars instead of the OS default chrome. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--forest-700) 32%, transparent) transparent;
+}
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background: color-mix(in oklch, var(--forest-700) 32%, transparent);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--forest-700) 50%, transparent);
+  background-clip: padding-box;
 }
