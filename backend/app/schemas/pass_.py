@@ -62,6 +62,15 @@ class RenewPassRequest(BaseModel):
     mode: Literal["continue", "close_out"] = "continue"
 
 
+class EditPassRequest(BaseModel):
+    """Owner/manager correction of a pass's dates or price — e.g. undoing a bad
+    renewal that predates the auto-roll fix. All optional: only what's sent
+    changes, and every change is audit-logged."""
+    issue_date: date | None = None
+    end_date: date | None = None  # the new expiration date
+    price: float | None = Field(default=None, ge=0, le=PRICE_MAX)
+
+
 class PassRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

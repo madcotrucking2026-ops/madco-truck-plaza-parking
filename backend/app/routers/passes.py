@@ -23,7 +23,7 @@ from app.models.enums import (
     ReminderStatus,
     VehicleType,
 )
-from app.schemas.pass_ import IssuePassRequest, PassListItem, PassRead, RenewPassRequest
+from app.schemas.pass_ import EditPassRequest, IssuePassRequest, PassListItem, PassRead, RenewPassRequest
 
 router = APIRouter(prefix="/api/passes", tags=["passes"])
 
@@ -532,6 +532,38 @@ def renew_pass(pass_id: int, payload: RenewPassRequest, db: Session = Depends(ge
     if parking_pass is None:
         raise HTTPException(status_code=404, detail="Pass not found")
     return apply_renewal(db, parking_pass, payload.end_date, payload.payment_method, payload.check_number, mode=payload.mode)
+
+
+@router.patch("/{pass_id}", response_model=PassRead, dependencies=[Depends(require_manager)])
+def edit_pass(pass_id: int, payload: EditPassRequest, db: Session = Depends(get_db)) -> ParkingPass:
+    """Correct a pass's dates or price (manager/owner only) — for fixing a
+    mistaken renewal or bad data entry. Every change is recorded in the audit log.
+    Does NOT touch payments; use Void on the Payments page for the money."""
+    parking_pass = db.get(ParkingPass, pass_id)
+    if parking_pass is None:
+        raise HTTPException(status_code=404, detail="Pass not found")
+
+    before = f"{parking_pass.issue_date}→{parking_pass.expiration_date} ${float(parking_pass.price):.2f}"
+    if payload.issue_date is not None:
+        parking_pass.issue_date = payload.issue_date
+    if payload.end_date is not None:
+        parking_pass.expiration_date = payload.end_date
+    if payload.price is not None:
+        parking_pass.price = payload.price
+    if parking_pass.expiration_date <= parking_pass.issue_date:
+        raise HTTPException(status_code=400, detail="Expiration must be after the issue date.")
+
+    log_audit(
+        db,
+        AuditAction.edited,
+        "parking_pass",
+        f"Edited pass #{parking_pass.id}: {before} → "
+        f"{parking_pass.issue_date}→{parking_pass.expiration_date} ${float(parking_pass.price):.2f}",
+        entity_id=parking_pass.id,
+    )
+    db.commit()
+    db.refresh(parking_pass)
+    return parking_pass
 
 
 @router.post("/{pass_id}/cancel", response_model=PassRead, dependencies=[Depends(require_manager)])

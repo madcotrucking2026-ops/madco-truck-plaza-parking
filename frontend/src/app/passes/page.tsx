@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { FilePlus2, RefreshCcw, X, QrCode, RotateCw, Search } from "lucide-react";
+import { FilePlus2, RefreshCcw, X, QrCode, RotateCw, Search, Pencil } from "lucide-react";
 import { api, ApiError, type PassListItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/passes/status-badge";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { RenewDialog } from "@/components/passes/renew-dialog";
+import { EditPassDialog } from "@/components/passes/edit-pass-dialog";
 import { PassTicket } from "@/components/passes/pass-ticket";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -23,6 +24,7 @@ export default function PassesPage() {
   const [query, setQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [renewingPass, setRenewingPass] = useState<PassListItem | null>(null);
+  const [editingPass, setEditingPass] = useState<PassListItem | null>(null);
   const [viewingPass, setViewingPass] = useState<PassListItem | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
 
@@ -214,6 +216,10 @@ export default function PassesPage() {
                           <QrCode className="h-3.5 w-3.5" />
                           View
                         </Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditingPass(p)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </Button>
                         {p.status !== "cancelled" && (
                           <>
                             <Button
@@ -251,6 +257,14 @@ export default function PassesPage() {
           pass={renewingPass}
           onOpenChange={(open) => !open && setRenewingPass(null)}
           onRenewed={load}
+        />
+      )}
+
+      {editingPass && (
+        <EditPassDialog
+          pass={editingPass}
+          onOpenChange={(open) => !open && setEditingPass(null)}
+          onSaved={load}
         />
       )}
 
