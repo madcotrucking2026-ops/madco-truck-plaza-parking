@@ -25,6 +25,17 @@ class TruckStat(BaseModel):
     visits: int
 
 
+class TrendPoint(BaseModel):
+    label: str  # the bucket key: YYYY-MM-DD (day/week), YYYY-MM (month), YYYY (year)
+    value: float
+
+
+class TrendResponse(BaseModel):
+    bucket: str
+    metric: str
+    points: list[TrendPoint]
+
+
 class ReportsSummary(BaseModel):
     revenue_series: list[RevenuePoint]
     revenue_30d: float

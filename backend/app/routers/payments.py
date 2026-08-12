@@ -9,7 +9,7 @@ from app.core.clock import business_today
 from app.core.codes import generate_receipt_number
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models import Payment, User
+from app.models import ParkingPass, Payment, User
 from app.models.enums import AuditAction
 from app.schemas.payment import PaymentCreate, PaymentRead
 
@@ -72,11 +72,33 @@ def void_payment(
     )
     db.add(reversal)
     db.flush()
+
+    # If the voided payment was a RENEWAL, undo the renewal too — roll the pass
+    # back to the state that payment recorded (its pre-renewal dates + price), so
+    # a mistaken renewal reverts fully, not just the money. Only when nothing has
+    # renewed on top of it (voiding an older renewal must not wipe a later one).
+    revert_note = ""
+    if original.prev_expiration_date is not None and original.parking_pass_id is not None:
+        latest_id = db.scalar(
+            select(Payment.id)
+            .where(
+                Payment.parking_pass_id == original.parking_pass_id,
+                Payment.reversal_of_payment_id.is_(None),
+            )
+            .order_by(Payment.paid_at.desc(), Payment.id.desc())
+        )
+        parking_pass = db.get(ParkingPass, original.parking_pass_id)
+        if latest_id == original.id and parking_pass is not None:
+            parking_pass.issue_date = original.prev_issue_date
+            parking_pass.expiration_date = original.prev_expiration_date
+            parking_pass.price = original.prev_price
+            revert_note = f" — pass rolled back to {original.prev_issue_date}→{original.prev_expiration_date}"
+
     log_audit(
         db,
         AuditAction.cancelled,
         "payment",
-        f"Voided payment #{original.id} (${float(original.amount):.2f}) — reversal #{reversal.id} recorded",
+        f"Voided payment #{original.id} (${float(original.amount):.2f}) — reversal #{reversal.id} recorded{revert_note}",
         entity_id=original.id,
         employee_name=user.name,
     )

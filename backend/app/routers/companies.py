@@ -184,6 +184,10 @@ def company_profile(
         1 for p in passes if p.status != PassStatus.cancelled and p.expiration_date >= today
     )
     issue_dates = [p.issue_date for p in passes]
+    # "Since" = when this company FIRST parked, which must not drift when a pass is
+    # renewed (renewal rolls issue_date forward to the current period). created_at
+    # is stamped once at issue and never changes, so it's the stable first-seen.
+    created_dates = [p.created_at.date() for p in passes]
 
     # Group passes into per-truck rows (visits + last seen).
     trucks_by_vehicle: dict[int, dict] = {}
@@ -232,7 +236,7 @@ def company_profile(
         total_visits=len(passes),
         total_spent=total_spent,
         active_passes=active_passes,
-        first_seen=min(issue_dates) if issue_dates else None,
+        first_seen=min(created_dates) if created_dates else None,
         last_seen=max(issue_dates) if issue_dates else None,
         loyalty_score=loyalty_score,
         trucks=[

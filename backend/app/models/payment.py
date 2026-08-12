@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, func
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.clock import business_now
@@ -31,6 +31,12 @@ class Payment(Base):
     # id — recorded instead of deleting the original (payments are permanent).
     # Its presence on another row is also how we know the original was voided.
     reversal_of_payment_id: Mapped[int | None] = mapped_column(ForeignKey("payments.id"))
+
+    # On a RENEWAL payment: the pass's state BEFORE the renewal was applied. Lets a
+    # void roll the pass back (undo the renewal), not just reverse the money.
+    prev_issue_date: Mapped[date | None] = mapped_column(Date)
+    prev_expiration_date: Mapped[date | None] = mapped_column(Date)
+    prev_price: Mapped[float | None] = mapped_column(Numeric(10, 2))
 
     # Stamped in the PLAZA's timezone, not the database's. This column is bucketed
     # by calendar day for "today's revenue" and the daily report, and the database's

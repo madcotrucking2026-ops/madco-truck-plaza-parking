@@ -1,17 +1,20 @@
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import business_today
 from app.core.database import get_db
 from app.models import Company, ParkingPass, Payment, Vehicle
+from app.models.enums import PassStatus
 from app.schemas.reports import (
     CompanyStat,
     PaymentMethodStat,
     ReportsSummary,
     RevenuePoint,
+    TrendPoint,
+    TrendResponse,
     TruckStat,
 )
 
@@ -91,4 +94,90 @@ def reports_summary(db: Session = Depends(get_db)) -> ReportsSummary:
         top_companies=top_companies,
         payment_methods=payment_methods,
         frequent_trucks=frequent_trucks,
+    )
+
+
+_BUCKET_COUNTS = {"day": 30, "week": 12, "month": 12, "year": 5}
+
+
+def _bucket_key(d: date, bucket: str) -> str:
+    if bucket == "day":
+        return d.isoformat()
+    if bucket == "week":
+        return (d - timedelta(days=d.weekday())).isoformat()  # that week's Monday
+    if bucket == "month":
+        return f"{d.year:04d}-{d.month:02d}"
+    return f"{d.year:04d}"
+
+
+def _series_keys(today: date, bucket: str) -> list[str]:
+    """Ordered bucket keys to plot, oldest → newest, so gaps fill with zero and
+    the line stays continuous."""
+    if bucket == "day":
+        return [(today - timedelta(days=i)).isoformat() for i in range(29, -1, -1)]
+    if bucket == "week":
+        monday = today - timedelta(days=today.weekday())
+        return [(monday - timedelta(weeks=i)).isoformat() for i in range(11, -1, -1)]
+    if bucket == "month":
+        keys = []
+        for i in range(11, -1, -1):
+            m, y = today.month - i, today.year
+            while m <= 0:
+                m += 12
+                y -= 1
+            keys.append(f"{y:04d}-{m:02d}")
+        return keys
+    return [f"{today.year - i:04d}" for i in range(4, -1, -1)]
+
+
+def _series_start(keys: list[str], bucket: str) -> date:
+    first = keys[0]
+    if bucket in ("day", "week"):
+        return date.fromisoformat(first)
+    if bucket == "month":
+        return date(int(first[:4]), int(first[5:7]), 1)
+    return date(int(first), 1, 1)
+
+
+@router.get("/trend", response_model=TrendResponse)
+def revenue_trend(
+    bucket: str = Query("month"),
+    metric: str = Query("revenue"),
+    db: Session = Depends(get_db),
+) -> TrendResponse:
+    """Revenue (or pass count) bucketed by day/week/month/year for the trend line.
+    Buckets are computed in Python so the same code runs on SQLite and Postgres."""
+    if bucket not in _BUCKET_COUNTS:
+        bucket = "month"
+    if metric not in ("revenue", "passes"):
+        metric = "revenue"
+
+    today = business_today()
+    keys = _series_keys(today, bucket)
+    start = _series_start(keys, bucket)
+    totals: dict[str, float] = {k: 0.0 for k in keys}
+
+    if metric == "revenue":
+        # Sum every payment (a void nets out via its negative reversal row), by day.
+        for paid_at, amount in db.execute(
+            select(Payment.paid_at, Payment.amount).where(Payment.paid_at >= datetime.combine(start, time.min))
+        ).all():
+            key = _bucket_key(paid_at.date(), bucket)
+            if key in totals:
+                totals[key] += float(amount)
+    else:
+        # Count passes actually issued — a mistaken-cancelled pass isn't a sale.
+        for (issue_date,) in db.execute(
+            select(ParkingPass.issue_date).where(
+                ParkingPass.issue_date >= start, ParkingPass.status != PassStatus.cancelled
+            )
+        ).all():
+            key = _bucket_key(issue_date, bucket)
+            if key in totals:
+                totals[key] += 1
+
+    return TrendResponse(
+        bucket=bucket,
+        metric=metric,
+        points=[TrendPoint(label=k, value=totals[k]) for k in keys],
     )

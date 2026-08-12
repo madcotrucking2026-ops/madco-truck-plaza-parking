@@ -222,6 +222,11 @@ export type LotCheckResult = {
 
 export type VehicleType = "truck" | "trailer" | "bobtail" | "flatbed" | "car" | "other";
 export type PassType = "daily" | "weekly" | "monthly" | "yearly";
+
+export type TrendBucket = "day" | "week" | "month" | "year";
+export type TrendMetric = "revenue" | "passes";
+export type TrendPoint = { label: string; value: number };
+export type TrendResponse = { bucket: TrendBucket; metric: TrendMetric; points: TrendPoint[] };
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "check" | "phone" | "tender_card" | "house_account";
 
 export type IssuePassRequest = {

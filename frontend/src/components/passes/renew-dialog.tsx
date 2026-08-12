@@ -121,6 +121,14 @@ export function RenewDialog({
   const days = daysBetween(renewalStart, endDate);
   const months = monthsBetween(renewalStart, endDate);
   const weeks = Math.max(Math.floor(days / 7), 1);
+  // The pass carries its OWN rate (price ÷ its term). Use it as the fallback for
+  // the monthly rate so a renewal is never blocked when the company-rate lookup
+  // returns nothing — the backend prices it the same way on confirm.
+  const derivedMonthlyRate =
+    pass.pass_type === "monthly"
+      ? Number(pass.price) / Math.max(monthsBetween(pass.issue_date, pass.expiration_date), 1)
+      : null;
+  const rate = monthlyRate ?? derivedMonthlyRate;
   // Whole-weeks requirement only applies to a continuing weekly; a close-out can
   // land on any number of days.
   const weeklyInvalid = mode === "continue" && pass.pass_type === "weekly" && (days <= 0 || days % 7 !== 0);
@@ -130,7 +138,7 @@ export function RenewDialog({
       ? closeOutPrice(pass.pass_type, renewalStart, endDate, {
           daily: DAILY_RATE,
           weekly: WEEKLY_RATE,
-          monthly: monthlyRate,
+          monthly: rate,
         })
       : pass.pass_type === "daily"
         ? DAILY_RATE * Math.max(days, 1)
@@ -138,8 +146,8 @@ export function RenewDialog({
           ? weeklyInvalid
             ? null
             : WEEKLY_RATE * weeks
-          : monthlyRate != null
-            ? monthlyRate * months
+          : rate != null
+            ? rate * months
             : null;
 
   async function handleConfirm() {
@@ -250,8 +258,8 @@ export function RenewDialog({
                             ? ` (${days} day${days === 1 ? "" : "s"} × $${DAILY_RATE})`
                             : pass.pass_type === "weekly"
                               ? ` (${weeks} week${weeks === 1 ? "" : "s"} × $${WEEKLY_RATE})`
-                              : pass.pass_type === "monthly" && monthlyRate != null
-                                ? ` (${months} month${months === 1 ? "" : "s"} × ${currency(monthlyRate)})`
+                              : pass.pass_type === "monthly" && rate != null
+                                ? ` (${months} month${months === 1 ? "" : "s"} × ${currency(rate)})`
                                 : ""
                       }`
                     : rateLookupDone

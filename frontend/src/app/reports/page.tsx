@@ -5,7 +5,7 @@ import Link from "next/link";
 import { DollarSign, Ticket, Wallet, Building2 } from "lucide-react";
 import { api, type ReportsSummary } from "@/lib/api";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { RevenueChart } from "@/components/reports/revenue-chart";
+import { TrendSection } from "@/components/reports/trend-section";
 import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { SubTabs } from "@/components/common/sub-tabs";
@@ -69,12 +69,7 @@ export default function ReportsPage() {
         <StatCard label="Active Companies" value={data.active_companies} icon={Building2} accent="forest" />
       </div>
 
-      <section className="card-paper rounded-2xl p-5">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/60">
-          Daily Revenue — Last 30 Days
-        </h2>
-        <RevenueChart data={data.revenue_series} />
-      </section>
+      <TrendSection />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="card-paper rounded-2xl p-5">

@@ -441,11 +441,22 @@ def apply_renewal(
     # today" floor can shift between link-creation and payment (e.g. a weekly span
     # is no longer exactly 7 days a day later), raising 400 and leaving the
     # customer charged with no pass. Trust the amount actually paid instead.
+    old_expiration = parking_pass.expiration_date  # the renewal always continues from here
+    prev_issue = parking_pass.issue_date            # the pass state BEFORE this renewal,
+    prev_price = float(parking_pass.price)          # stored on the payment so a void can undo it
     if price_from_charge is not None:
         price = price_from_charge
     else:
         _, price = renewal_quote(db, parking_pass, end_date, mode)
 
+    # Roll the pass forward to the CURRENT period: issue_date becomes the period's
+    # start (the old end), so the ticket shows the span just paid for — 7/4→8/4
+    # renewed to 9/4 reads 8/4→9/4 for $150, not the whole history for one month's
+    # price. It also keeps price ÷ term the true per-month rate on the NEXT renewal
+    # (otherwise it dilutes across the accumulated span and silently halves).
+    # NOTE: computed AFTER renewal_quote, which prices off the OLD issue/expiration.
+    # first_seen is derived from created_at, so a company's "Since" never shifts.
+    parking_pass.issue_date = old_expiration
     parking_pass.expiration_date = end_date
     parking_pass.price = price
     parking_pass.status = PassStatus.active
@@ -458,6 +469,9 @@ def apply_renewal(
             check_number=check_number,
             stripe_payment_intent_id=stripe_payment_intent_id,
             receipt_number=generate_receipt_number("PMT", business_today()),
+            prev_issue_date=prev_issue,
+            prev_expiration_date=old_expiration,
+            prev_price=prev_price,
         )
     )
 
