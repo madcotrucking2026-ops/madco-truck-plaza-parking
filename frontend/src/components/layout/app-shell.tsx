@@ -72,7 +72,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           column past the viewport and pushing the sidebar off-screen. */}
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <MobileNav />
-        <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-8">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-8">
+          {/* Keyed by route so the entrance replays on every navigation. The
+              dashboard ("/") runs its own rise-stagger cascade, so it opts out
+              of the wrapper rise to avoid doubling up. */}
+          <div key={pathname} className={pathname === "/" ? undefined : "animate-rise"}>
+            {children}
+          </div>
+        </main>
       </div>
       <CommandPalette />
     </div>

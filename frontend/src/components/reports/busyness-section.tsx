@@ -46,7 +46,7 @@ function BarStrip({
   const max = Math.max(...bars.map((b) => b.value), 1);
   return (
     <div>
-      <div className="flex h-28 items-end gap-[3px]">
+      <div className="flex h-28 items-end gap-[3px] border-b border-[var(--cream-foreground)]/10">
         {bars.map((b, i) => (
           <div key={b.label} className="group relative flex h-full flex-1 items-end">
             <div

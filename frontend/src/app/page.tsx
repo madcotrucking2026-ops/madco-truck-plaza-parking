@@ -155,9 +155,9 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Today's Revenue" value={money(stats?.todays_revenue)} icon={DollarSign} accent="orange" />
-          <StatCard label="This Week" value={money(stats?.weekly_revenue)} icon={CalendarClock} accent="forest" />
-          <StatCard label="This Month" value={money(stats?.monthly_revenue)} icon={TrendingUp} accent="forest" />
+          <StatCard label="Today's Revenue" value={money(stats?.todays_revenue)} countTo={stats?.todays_revenue} format={money} icon={DollarSign} accent="orange" />
+          <StatCard label="This Week" value={money(stats?.weekly_revenue)} countTo={stats?.weekly_revenue} format={money} icon={CalendarClock} accent="forest" />
+          <StatCard label="This Month" value={money(stats?.monthly_revenue)} countTo={stats?.monthly_revenue} format={money} icon={TrendingUp} accent="forest" />
         </div>
       </div>
 

@@ -48,7 +48,8 @@ export function RevenueBars() {
         </p>
       ) : (
         <>
-          <div className="flex h-28 items-end gap-[3px]">
+          <div className="mb-1 font-mono text-[11px] text-[var(--cream-foreground)]/35">{money(max)}</div>
+          <div className="flex h-28 items-end gap-[3px] border-b border-[var(--cream-foreground)]/10">
             {pts.map((p, i) => (
               <div key={p.label} className="group relative flex h-full flex-1 items-end">
                 <div

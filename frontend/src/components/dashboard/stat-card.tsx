@@ -1,5 +1,8 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCountUp } from "@/lib/use-count-up";
 
 export function StatCard({
   label,
@@ -7,13 +10,21 @@ export function StatCard({
   icon: Icon,
   accent = "steel",
   sub,
+  countTo,
+  format,
 }: {
   label: string;
   value: string | number;
   icon: LucideIcon;
   accent?: "steel" | "orange" | "forest" | "destructive" | "success";
   sub?: string;
+  // When set, the number rolls up to `countTo` (formatted by `format`) instead of
+  // rendering `value` statically. `value` is still the pre-data / reduced fallback.
+  countTo?: number | null;
+  format?: (n: number) => string;
 }) {
+  const counted = useCountUp(countTo ?? null);
+  const display = countTo != null && format ? format(counted) : value;
   return (
     <div className="card-paper rounded-2xl p-4">
       <div className="flex items-start justify-between">
@@ -34,7 +45,7 @@ export function StatCard({
         </div>
       </div>
       <p className="mt-3 font-mono text-2xl font-semibold tracking-tight text-[var(--cream-foreground)]">
-        {value}
+        {display}
       </p>
       {sub && <p className="mt-0.5 text-xs text-[var(--cream-foreground)]/50">{sub}</p>}
     </div>
