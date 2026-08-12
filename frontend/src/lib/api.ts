@@ -227,6 +227,8 @@ export type TrendBucket = "day" | "week" | "month" | "year";
 export type TrendMetric = "revenue" | "passes";
 export type TrendPoint = { label: string; value: number };
 export type TrendResponse = { bucket: TrendBucket; metric: TrendMetric; points: TrendPoint[] };
+export type BusyBar = { label: string; value: number };
+export type BusynessResponse = { total: number; window_days: number; by_weekday: BusyBar[]; by_hour: BusyBar[] };
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "check" | "phone" | "tender_card" | "house_account";
 
 export type IssuePassRequest = {

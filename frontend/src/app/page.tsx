@@ -32,7 +32,7 @@ import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { InfoTip } from "@/components/common/info-tip";
 import { addDaysISO, todayISO } from "@/lib/pricing";
-import { TrendSection } from "@/components/reports/trend-section";
+import { BusynessSection } from "@/components/reports/busyness-section";
 
 const QUICK_ACTIONS = [
   { label: "Issue Pass", href: "/passes/issue", icon: FilePlus2 },
@@ -160,7 +160,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <TrendSection />
+      <BusynessSection />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* THE screen's primary job. Deliberately the loudest thing here. */}

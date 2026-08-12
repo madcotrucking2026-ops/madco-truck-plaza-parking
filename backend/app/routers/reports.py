@@ -9,6 +9,8 @@ from app.core.database import get_db
 from app.models import Company, ParkingPass, Payment, Vehicle
 from app.models.enums import PassStatus
 from app.schemas.reports import (
+    BusyBar,
+    BusynessResponse,
     CompanyStat,
     PaymentMethodStat,
     ReportsSummary,
@@ -19,6 +21,12 @@ from app.schemas.reports import (
 )
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
+
+# Mon→Sun so the row reads left-to-right like a calendar week.
+_WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+# How far back "busy" looks. Long enough to average out a quiet week, short
+# enough that last year's pattern doesn't drown out how the lot runs now.
+_BUSY_WINDOW_DAYS = 90
 
 
 @router.get("/summary", response_model=ReportsSummary)
@@ -185,4 +193,33 @@ def revenue_trend(
         bucket=bucket,
         metric=metric,
         points=[TrendPoint(label=k, value=totals[k]) for k in keys],
+    )
+
+
+@router.get("/busyness", response_model=BusynessResponse)
+def busyness(db: Session = Depends(get_db)) -> BusynessResponse:
+    """When is the lot busy — by day of week and hour of day. Counts passes over
+    the recent window: a pass is one truck arriving. Weekday comes from the day
+    the truck parks (issue_date); hour comes from when the pass was written at the
+    desk (created_at) — the app stores both as naive plaza-local time, so no
+    timezone conversion is needed and this runs the same on SQLite and Postgres."""
+    start = business_today() - timedelta(days=_BUSY_WINDOW_DAYS)
+    weekday_counts = [0] * 7
+    hour_counts = [0] * 24
+    total = 0
+    for issue_date, created_at in db.execute(
+        select(ParkingPass.issue_date, ParkingPass.created_at).where(
+            ParkingPass.issue_date >= start, ParkingPass.status != PassStatus.cancelled
+        )
+    ).all():
+        total += 1
+        weekday_counts[issue_date.weekday()] += 1
+        if created_at is not None:
+            hour_counts[created_at.hour] += 1
+
+    return BusynessResponse(
+        total=total,
+        window_days=_BUSY_WINDOW_DAYS,
+        by_weekday=[BusyBar(label=_WEEKDAYS[i], value=weekday_counts[i]) for i in range(7)],
+        by_hour=[BusyBar(label=str(h), value=hour_counts[h]) for h in range(24)],
     )

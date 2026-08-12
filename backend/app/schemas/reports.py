@@ -36,6 +36,20 @@ class TrendResponse(BaseModel):
     points: list[TrendPoint]
 
 
+class BusyBar(BaseModel):
+    label: str  # weekday ("Mon"…"Sun") or hour ("0"…"23")
+    value: int  # number of passes issued in that bucket
+
+
+class BusynessResponse(BaseModel):
+    """How busy the lot is by day-of-week and hour-of-day — the owner's actual
+    question ("what days / what times is it busy"), not revenue."""
+    total: int  # passes counted in the window (0 → not enough data yet)
+    window_days: int
+    by_weekday: list[BusyBar]  # always 7, Mon→Sun
+    by_hour: list[BusyBar]  # always 24, 0→23 (plaza local hour)
+
+
 class ReportsSummary(BaseModel):
     revenue_series: list[RevenuePoint]
     revenue_30d: float
