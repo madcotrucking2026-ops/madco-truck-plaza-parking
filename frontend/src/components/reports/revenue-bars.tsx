@@ -53,11 +53,15 @@ export function RevenueBars() {
               <div key={p.label} className="group relative flex h-full flex-1 items-end">
                 <div
                   className={cn(
-                    "w-full rounded-t transition-colors",
+                    "bar-grow w-full rounded-t transition-colors",
                     // Money highlight is amber (60-30-10); the rest sit back in forest.
                     i === peak ? "bg-[var(--amber-500)]" : "bg-[var(--forest-600)]/30",
                   )}
-                  style={{ height: `${(p.value / max) * 100}%`, minHeight: p.value > 0 ? 2 : 0 }}
+                  style={{
+                    height: `${(p.value / max) * 100}%`,
+                    minHeight: p.value > 0 ? 2 : 0,
+                    animationDelay: `${i * 12}ms`,
+                  }}
                 />
                 <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-[var(--forest-950)] px-2 py-1 text-[11px] shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
                   <span className="font-mono font-semibold text-white">{money(p.value)}</span>

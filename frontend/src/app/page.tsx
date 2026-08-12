@@ -116,7 +116,7 @@ export default function DashboardPage() {
   const money = (v: number | undefined) => (stats ? currency(v ?? 0) : "—");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 rise-stagger">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dispatch Dashboard</h1>
         <p className="text-sm text-muted-foreground">Madco Truck Plaza &middot; 27416 Ecorse Rd, Romulus, MI</p>

@@ -51,12 +51,16 @@ function BarStrip({
           <div key={b.label} className="group relative flex h-full flex-1 items-end">
             <div
               className={cn(
-                "w-full rounded-t transition-colors",
+                "bar-grow w-full rounded-t transition-colors",
                 // Peak bar solid forest; the rest faded. No amber — that stays
                 // reserved for money/primary actions (60-30-10).
                 i === peak ? "bg-[var(--forest-700)]" : "bg-[var(--forest-600)]/25",
               )}
-              style={{ height: `${(b.value / max) * 100}%`, minHeight: b.value > 0 ? 2 : 0 }}
+              style={{
+                height: `${(b.value / max) * 100}%`,
+                minHeight: b.value > 0 ? 2 : 0,
+                animationDelay: `${i * 14}ms`,
+              }}
             />
             <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-[var(--forest-950)] px-2 py-1 text-[11px] text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
               {b.value} pass{b.value === 1 ? "" : "es"}
