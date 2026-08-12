@@ -100,7 +100,7 @@ export function BusynessSection() {
   const dayPeak = data ? peakIndex(data.by_weekday) : 0;
 
   return (
-    <section className="card-paper rounded-2xl p-5">
+    <div>
       <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
         <Activity className="h-4 w-4 shrink-0 text-[var(--forest-700)]" />
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/60">
@@ -143,6 +143,6 @@ export function BusynessSection() {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

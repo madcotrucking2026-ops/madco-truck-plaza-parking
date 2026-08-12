@@ -161,9 +161,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <RevenueBars />
-
-      <BusynessSection />
+      {/* One "at a glance" card: money on top, when-is-it-busy below. Merged so
+          the dashboard reads as a single glance, not a stack of chart cards. */}
+      <section className="card-paper overflow-hidden rounded-2xl">
+        <div className="p-5">
+          <RevenueBars />
+        </div>
+        <div className="border-t border-black/5 p-5">
+          <BusynessSection />
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* THE screen's primary job. Deliberately the loudest thing here. */}

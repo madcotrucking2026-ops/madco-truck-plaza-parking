@@ -31,7 +31,7 @@ export function RevenueBars() {
   for (let i = 1; i < pts.length; i++) if (pts[i].value > pts[peak].value) peak = i;
 
   return (
-    <section className="card-paper rounded-2xl p-5">
+    <div>
       <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
         <DollarSign className="h-4 w-4 shrink-0 text-[var(--amber-600)]" />
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/60">Revenue</h2>
@@ -79,6 +79,6 @@ export function RevenueBars() {
           </p>
         </>
       )}
-    </section>
+    </div>
   );
 }
