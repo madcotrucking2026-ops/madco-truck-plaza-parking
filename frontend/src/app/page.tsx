@@ -33,6 +33,7 @@ import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { InfoTip } from "@/components/common/info-tip";
 import { addDaysISO, todayISO } from "@/lib/pricing";
 import { BusynessSection } from "@/components/reports/busyness-section";
+import { RevenueBars } from "@/components/reports/revenue-bars";
 
 const QUICK_ACTIONS = [
   { label: "Issue Pass", href: "/passes/issue", icon: FilePlus2 },
@@ -159,6 +160,8 @@ export default function DashboardPage() {
           <StatCard label="This Month" value={money(stats?.monthly_revenue)} icon={TrendingUp} accent="forest" />
         </div>
       </div>
+
+      <RevenueBars />
 
       <BusynessSection />
 
