@@ -120,10 +120,17 @@ AI-generated).
 Restrained and orchestrated, never a fade on every element.
 
 - **`.animate-rise`** — one page entrance: rise+fade, `460ms cubic-bezier(0.16,1,0.3,1)`.
+- **`.rise-stagger`** — on a top-level container, cascades its direct children in
+  on load (same rise, `+55ms` per child, capped at child 8). Still a load
+  entrance, not a scroll-triggered fade-per-element. Used on the dashboard.
+- **`.bar-grow`** — chart bars grow up from the baseline (`transform-origin:
+  bottom` + `scaleY`, `560ms`); stagger left-to-right with an inline
+  `animation-delay`. Used on the revenue / busyness bars.
 - Surface transitions: `160–180ms ease` on `.card-paper` / `.tile-option`.
 - Only animate `transform` / `opacity` / `box-shadow`. Never `transition: all`.
-- **`prefers-reduced-motion`** collapses rise, stops skeleton pulse, kills surface
-  transitions. Every new animation must have a reduced-motion fallback.
+- **`prefers-reduced-motion`** collapses rise/stagger/bar-grow, stops skeleton
+  pulse, kills surface transitions. Every new animation must have a
+  reduced-motion fallback.
 
 ---
 
