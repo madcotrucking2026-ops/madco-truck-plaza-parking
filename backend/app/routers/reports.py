@@ -36,7 +36,7 @@ def reports_summary(db: Session = Depends(get_db)) -> ReportsSummary:
 
     rows = db.execute(
         select(func.date(Payment.paid_at), func.sum(Payment.amount))
-        .where(func.date(Payment.paid_at) >= period_start.isoformat())
+        .where(func.date(Payment.paid_at) >= period_start)
         .group_by(func.date(Payment.paid_at))
     ).all()
     by_day = {str(day): float(total) for day, total in rows}
@@ -167,11 +167,12 @@ def revenue_trend(
 
     if metric == "revenue":
         # Sum every payment (a void nets out via its negative reversal row), by day.
-        # Compare on func.date (like reports_summary): the paid_at column is
-        # timestamptz on Postgres, and a raw `>= naive datetime` throws there.
+        # Compare func.date(paid_at) against a date OBJECT, not start.isoformat():
+        # Postgres binds a string as text and `date >= text` has no operator (500).
+        # SQLite is lax about it — which is why this only broke in production.
         for d, amount in db.execute(
             select(func.date(Payment.paid_at), Payment.amount).where(
-                func.date(Payment.paid_at) >= start.isoformat()
+                func.date(Payment.paid_at) >= start
             )
         ).all():
             day = d if isinstance(d, date) else date.fromisoformat(str(d))
