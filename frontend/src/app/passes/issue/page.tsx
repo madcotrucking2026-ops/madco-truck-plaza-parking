@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PassTicket } from "@/components/passes/pass-ticket";
+import { Receipt } from "lucide-react";
 import { DAILY_RATE, WEEKLY_RATE, todayISO, currency, defaultEndDate, daysBetween, monthsBetween } from "@/lib/pricing";
 
 const VEHICLE_TYPES: VehicleType[] = ["truck", "trailer", "bobtail", "flatbed", "car", "other"];
@@ -47,6 +48,16 @@ const PAY_CHOICES: { value: PayChoice; label: string }[] = [
   { value: "tender_card", label: "Tender Card" },
   { value: "house_account", label: "House Account" },
 ];
+
+// One line of the right-hand live summary (label on the left, value on the right).
+function SummaryRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <dt className="shrink-0 text-[var(--cream-foreground)]/50">{label}</dt>
+      <dd className="min-w-0 text-right text-[var(--cream-foreground)]">{children}</dd>
+    </div>
+  );
+}
 
 export default function IssuePassPage() {
   return (
@@ -193,6 +204,14 @@ function IssuePassForm() {
             ? monthlyRate * months
             : null;
 
+  const identifierValue = form[identifierField.key];
+  const breakdownText =
+    form.pass_type === "daily"
+      ? `${days} day${days === 1 ? "" : "s"} × ${currency(rates.daily)}`
+      : form.pass_type === "monthly" && monthlyRate != null
+        ? `${months} month${months === 1 ? "" : "s"} × ${currency(monthlyRate)}`
+        : "";
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.company_name || !form.phone) {
@@ -312,12 +331,14 @@ function IssuePassForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl space-y-6 print:hidden">
+    <form onSubmit={handleSubmit} className="space-y-6 print:hidden">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">{heading}</h1>
         <p className="text-sm text-muted-foreground">{subheading}</p>
       </div>
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="space-y-6">
       <Card className="card-paper border-none">
         <CardHeader>
           <CardTitle className="text-[var(--cream-foreground)]">Vehicle &amp; company</CardTitle>
@@ -514,17 +535,61 @@ function IssuePassForm() {
         </CardContent>
       </Card>
 
-      <Button
-        type="submit"
-        disabled={submitting || weeklyInvalid}
-        className="btn-embossed w-full bg-[var(--amber-500)] py-6 text-base font-semibold text-[var(--forest-950)] hover:bg-[var(--amber-600)] disabled:opacity-50"
-      >
-        {submitting
-          ? "Working…"
-          : form.record_payment
-            ? `Issue Pass & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`
-            : "Register — No Charge"}
-      </Button>
+        </div>
+
+        <aside className="lg:sticky lg:top-8 lg:self-start">
+          <div className="card-paper space-y-4 rounded-2xl p-5">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-[var(--forest-700)]" />
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--cream-foreground)]/60">
+                Summary
+              </h2>
+            </div>
+
+            <dl className="space-y-2 text-sm">
+              <SummaryRow label="Vehicle">
+                <span className="capitalize">{form.vehicle_type}</span>
+                {identifierValue && <span className="font-mono text-[var(--cream-foreground)]/70"> · {identifierValue}</span>}
+              </SummaryRow>
+              <SummaryRow label="Company">{form.company_name || "—"}</SummaryRow>
+              <SummaryRow label="Type">{PASS_TYPES.find((p) => p.value === form.pass_type)?.label}</SummaryRow>
+              <SummaryRow label="Dates">
+                <span className="font-mono">
+                  {form.start_date}
+                  {form.end_date ? ` → ${form.end_date}` : ""}
+                </span>
+              </SummaryRow>
+              <SummaryRow label="Payment">
+                {form.record_payment ? PAY_CHOICES.find((p) => p.value === form.pay_choice)?.label : "No charge"}
+              </SummaryRow>
+            </dl>
+
+            <div className="border-t border-[var(--cream-foreground)]/10 pt-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-[var(--cream-foreground)]/70">Total</span>
+                <span className="font-mono text-2xl font-semibold text-[var(--cream-foreground)]">
+                  {finalPrice !== null ? currency(finalPrice) : "—"}
+                </span>
+              </div>
+              {finalPrice !== null && breakdownText && (
+                <p className="mt-0.5 text-right text-xs text-[var(--cream-foreground)]/50">{breakdownText}</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              disabled={submitting || weeklyInvalid}
+              className="btn-embossed w-full bg-[var(--amber-500)] py-6 text-base font-semibold text-[var(--forest-950)] hover:bg-[var(--amber-600)] disabled:opacity-50"
+            >
+              {submitting
+                ? "Working…"
+                : form.record_payment
+                  ? `Issue Pass & Take Payment${finalPrice !== null ? ` — ${currency(finalPrice)}` : ""}`
+                  : "Register — No Charge"}
+            </Button>
+          </div>
+        </aside>
+      </div>
     </form>
   );
 }
