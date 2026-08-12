@@ -32,6 +32,7 @@ import { LoadError } from "@/components/common/load-error";
 import { SkeletonRows } from "@/components/common/skeleton-rows";
 import { InfoTip } from "@/components/common/info-tip";
 import { addDaysISO, todayISO } from "@/lib/pricing";
+import { TrendSection } from "@/components/reports/trend-section";
 
 const QUICK_ACTIONS = [
   { label: "Issue Pass", href: "/passes/issue", icon: FilePlus2 },
@@ -158,6 +159,8 @@ export default function DashboardPage() {
           <StatCard label="This Month" value={money(stats?.monthly_revenue)} icon={TrendingUp} accent="forest" />
         </div>
       </div>
+
+      <TrendSection />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* THE screen's primary job. Deliberately the loudest thing here. */}

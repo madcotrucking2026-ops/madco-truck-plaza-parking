@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timedelta
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
@@ -159,10 +159,15 @@ def revenue_trend(
 
     if metric == "revenue":
         # Sum every payment (a void nets out via its negative reversal row), by day.
-        for paid_at, amount in db.execute(
-            select(Payment.paid_at, Payment.amount).where(Payment.paid_at >= datetime.combine(start, time.min))
+        # Compare on func.date (like reports_summary): the paid_at column is
+        # timestamptz on Postgres, and a raw `>= naive datetime` throws there.
+        for d, amount in db.execute(
+            select(func.date(Payment.paid_at), Payment.amount).where(
+                func.date(Payment.paid_at) >= start.isoformat()
+            )
         ).all():
-            key = _bucket_key(paid_at.date(), bucket)
+            day = d if isinstance(d, date) else date.fromisoformat(str(d))
+            key = _bucket_key(day, bucket)
             if key in totals:
                 totals[key] += float(amount)
     else:
