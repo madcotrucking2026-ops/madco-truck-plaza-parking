@@ -243,7 +243,8 @@ export default function PaymentsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-y border-black/10 bg-black/[0.02] text-left text-xs uppercase tracking-wide text-[var(--cream-foreground)]/60">
@@ -316,6 +317,67 @@ export default function PaymentsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile: one card per payment instead of a sideways-scrolling table. */}
+          <ul className="divide-y divide-black/5 md:hidden">
+            {(filtered ?? []).map((p) => {
+              const dt = new Date(p.paid_at);
+              const isReversal = p.reversal_of_payment_id != null;
+              const isVoided = voidedIds.has(p.id);
+              return (
+                <li
+                  key={p.id}
+                  className={cn(
+                    "space-y-2 p-4 text-[var(--cream-foreground)]",
+                    (isVoided || isReversal) && "text-[var(--cream-foreground)]/50",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium">{p.company_name ?? "—"}</p>
+                      <p className="font-mono text-xs text-[var(--cream-foreground)]/60">
+                        {p.truck_number ?? "—"}
+                        {p.pass_type ? ` · ${p.pass_type}` : ""}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 font-mono text-base font-bold",
+                        isVoided && "line-through",
+                        isReversal && "text-[var(--danger-ink)]",
+                      )}
+                    >
+                      {currency(p.amount)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <MethodBadge method={p.method} checkNumber={p.check_number} />
+                    <span className="font-mono text-xs text-[var(--cream-foreground)]/50">
+                      {p.paid_at.slice(0, 10)} {dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs text-[var(--cream-foreground)]/50">{p.receipt_number ?? "—"}</span>
+                    {isReversal ? (
+                      <span className="rounded-full bg-black/5 px-2 py-0.5 text-xs font-semibold text-[var(--cream-foreground)]/60">
+                        Reversal
+                      </span>
+                    ) : isVoided ? (
+                      <span className="rounded-full bg-[var(--danger)]/12 px-2 py-0.5 text-xs font-semibold text-[var(--danger-ink)]">
+                        Voided
+                      </span>
+                    ) : p.amount > 0 ? (
+                      <Button variant="outline" size="sm" className="min-h-9" onClick={() => setVoiding(p)}>
+                        <Ban className="h-3.5 w-3.5" />
+                        Void
+                      </Button>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          </>
         )}
       </section>
 

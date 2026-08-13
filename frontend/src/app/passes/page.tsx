@@ -180,7 +180,8 @@ export default function PassesPage() {
             {dateFilter ? ` (issued on ${dateFilter})` : query ? ` (“${query}”)` : ""}.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-black/10 text-left text-xs uppercase tracking-wide text-[var(--cream-foreground)]/60">
@@ -249,6 +250,63 @@ export default function PassesPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile: one card per pass instead of a sideways-scrolling table. */}
+          <ul className="divide-y divide-black/5 md:hidden">
+            {(filtered ?? []).map((p) => (
+              <li key={p.id} className="space-y-3 p-4 text-[var(--cream-foreground)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    {p.company_id ? (
+                      <Link href={`/companies/${p.company_id}`} className="font-medium hover:underline">
+                        {p.company_name ?? "—"}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">{p.company_name ?? "—"}</p>
+                    )}
+                    <p className="font-mono text-sm text-[var(--cream-foreground)]/60">
+                      {p.truck_number ?? p.trailer_number ?? p.license_plate ?? "—"}
+                      <span className="capitalize"> · {p.pass_type}</span>
+                    </p>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-mono font-semibold">{currency(p.price)}</span>
+                  <span className="text-[var(--cream-foreground)]/60">expires {p.expiration_date}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setViewingPass(p)}>
+                    <QrCode className="h-3.5 w-3.5" />
+                    View
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setEditingPass(p)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                  {p.status !== "cancelled" && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setRenewingPass(p)}>
+                        <RefreshCcw className="h-3.5 w-3.5" />
+                        Renew
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={cancellingId === p.id}
+                        onClick={() => cancel(p.id)}
+                        className="text-[var(--danger-ink)] hover:text-[var(--danger-ink)]"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          </>
         )}
       </div>
 
